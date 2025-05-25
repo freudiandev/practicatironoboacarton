@@ -37,6 +37,9 @@ const ASSETS = {
 };
 let images = {};
 
+// Tamaño del enemigo 
+const enemyScale = 12.5;
+
 // Precarga de PNGs
 function preload() {
   for (let key in ASSETS) {
@@ -49,11 +52,15 @@ function setup() {
   createCanvas(800, 600).parent('game-container');
   imageMode(CENTER);
 
-  // Genera enemigos en celdas libres con probabilidad 5%
-  for (let r = 1; r < gridRows - 1; r++) {
-    for (let c = 1; c < gridCols - 1; c++) {
+  // Generar enemigos en TODAS las celdas libres
+  enemies = [];
+  for (let r = 1; r < gridRows-1; r++) {
+    for (let c = 1; c < gridCols-1; c++) {
       if (labyrinth[r][c] === 0 && random() < 0.05) {
-        enemies.push(new Enemy((c + 0.5) * cellSize, (r + 0.5) * cellSize));
+        enemies.push(new Enemy(
+          c*cellSize + cellSize/2,
+          r*cellSize + cellSize/2
+        ));
       }
     }
   }
@@ -61,16 +68,75 @@ function setup() {
 
 // Bucle principal: input, render, actualización de enemigos
 function draw() {
-  handleMovement();   // WASD + strafing
-  handleRotation();   // ←/→ flechas
+  // procesa input antes de renderizar
+  handleMovement();
+  handleRotation();
   background(100);
-  drawScene();        // Raycasting de paredes
 
-  // Actualiza y dibuja cada enemigo en 3D
-  for (let e of enemies) {
-    e.update();
-    e.draw3D();
+  drawScene();        // tu raycasting
+  enemies.forEach(e => { e.update(); e.draw3D(); });
+  drawMinimap();      // siempre al final
+}
+
+// Dibuja un minimapa en la esquina superior izquierda
+function drawMinimap(){
+  const ms = 150;
+  const tile = ms / gridCols;   // cada celda en pixeles del minimapa
+
+  push();
+    translate(10, 10);
+    noStroke();
+    fill(30);
+    rect(0, 0, ms, ms);
+
+    // dibujar muro/suelo
+    for (let r = 0; r < gridRows; r++) {
+      for (let c = 0; c < gridCols; c++) {
+        fill(labyrinth[r][c] ? 100 : 200);
+        rect(c*tile, r*tile, tile, tile);
+      }
+    }
+
+    // jugador
+    fill(0,0,255);
+    ellipse(
+      (player.x/cellSize)*tile,
+      (player.z/cellSize)*tile,
+      8,8
+    );
+
+    // enemigos sólo si visibles
+    fill(255,0,0);
+    for (let e of enemies) {
+      if (canSee(e.x, e.z)) {
+        ellipse(
+          (e.x/cellSize)*tile,
+          (e.z/cellSize)*tile,
+          8, 8
+        );
+      }
+    }
+  pop();
+}
+
+// Nuevo helper: comprueba línea de visión en la grilla
+function canSee(x, z) {
+  const r0 = floor(player.z / cellSize),
+        c0 = floor(player.x / cellSize),
+        r1 = floor(z        / cellSize),
+        c1 = floor(x        / cellSize);
+  let dr = abs(r1 - r0), dc = abs(c1 - c0);
+  let sr = r0 < r1 ? 1 : -1, sc = c0 < c1 ? 1 : -1;
+  let err = (dr>dc?dr: -dc)/2;
+  let r = r0, c = c0;
+
+  while (!(r === r1 && c === c1)) {
+    if (labyrinth[r][c] === 1) return false;
+    let e2 = err;
+    if (e2 > -dr) { err -= dc; r += sr; }
+    if (e2 <  dc) { err += dr; c += sc; }
   }
+  return true;
 }
 
 // --- Clase Enemy: movimiento y dibujo de sprite --- 
@@ -89,15 +155,16 @@ class Enemy {
     this.img = images[this.tipo];
   }
   update() {
-    // Mueve y rebota con colisiones
-    const nx = this.x + this.dx * this.speed;
-    const nz = this.z + this.dz * this.speed;
-    if (collides(nx, nz)) {
+    const dx = this.dx * this.speed;
+    const dz = this.dz * this.speed;
+    // Avanzar solo si no colisiona en la dirección combinada
+    if (!collides(this.x + dx, this.z + dz)) {
+      this.x += dx;
+      this.z += dz;
+    } else {
+      // Rebotar al chocar contra la pared
       this.dx *= -1;
       this.dz *= -1;
-    } else {
-      this.x = nx;
-      this.z = nz;
     }
   }
   draw3D() {
@@ -110,12 +177,26 @@ class Enemy {
     const tx = inv * (dirZ * relX - dirX * relZ);
     const ty = inv * (-planeZ * relX + planeX * relZ);
     if (ty <= 0) return;
-    const sx = (width / 2) * (1 + tx / ty);
-    const size = constrain(500 / ty, 20, height);
+    // sólo dibujar si hay visibilidad
+    if (!canSee(this.x, this.z)) return;
+    const sx = (width/2)*(1+tx/ty);
+    // sombreado según distancia (ty)
+    const alpha = constrain(map(ty, 0, 5, 200, 50), 50, 200);
+
+    // escala y proporción
+    const size = constrain(500/ty, 10, height)*enemyScale;
+    const aspect = this.img.width/this.img.height;
+    const w = size*aspect, h=size;
+    const sy = height - h/2;
 
     push();
       imageMode(CENTER);
-      image(this.img, sx, height / 2, size, size);
+      // elimina tint()
+      if (this.img) image(this.img, sx, sy, w, h);
+      else {
+        noStroke(); fill(255,0,0,200);
+        ellipse(sx, sy, h*0.6, h*0.6);
+      }
     pop();
   }
 }
@@ -129,18 +210,31 @@ function collides(x, z) {
 
 // --- Input: WASD con strafing ---
 function handleMovement() {
-  const m = player.speed;
   let dx = 0, dz = 0;
-  if (keyIsDown(87)) { dx += sin(player.angle) * m; dz += -cos(player.angle) * m; } // W
-  if (keyIsDown(83)) { dx -= sin(player.angle) * m; dz -= -cos(player.angle) * m; } // S
-  if (keyIsDown(65)) { // A strafe izquierda
-    dx += sin(player.angle - HALF_PI) * m;
-    dz += -cos(player.angle - HALF_PI) * m;
+  const m = player.speed;
+
+  // W = adelante
+  if (keyIsDown(87)) {
+    dx += sin(player.angle) * m;
+    dz += -cos(player.angle) * m;
   }
-  if (keyIsDown(68)) { // D strafe derecha
+  // S = atrás
+  if (keyIsDown(83)) {
+    dx -= sin(player.angle) * m;
+    dz -= -cos(player.angle) * m;
+  }
+
+  // A = strafe izquierda (ahora usa + HALF_PI)
+  if (keyIsDown(65)) {
     dx += sin(player.angle + HALF_PI) * m;
     dz += -cos(player.angle + HALF_PI) * m;
   }
+  // D = strafe derecha (ahora usa - HALF_PI)
+  if (keyIsDown(68)) {
+    dx += sin(player.angle - HALF_PI) * m;
+    dz += -cos(player.angle - HALF_PI) * m;
+  }
+
   const nx = player.x + dx,
         nz = player.z + dz;
   if (!collides(nx, nz)) {
@@ -159,10 +253,9 @@ function handleRotation() {
 // --- Raycasting: dibujar paredes en pseudo‐3D ---
 function drawScene() {
   noStroke();
-  // Cielo y suelo
-  fill(135,206,235); rect(0, 0, width, height/2);
-  fill(50); rect(0, height/2, width, height/2);
-
+  // cielo y suelo
+  fill(135,206,235); rect(0,0,width,height/2);
+  fill(50);         rect(0,height/2,width,height/2);
   for (let x = 0; x < width; x++) {
     const camX = 2 * x / width - 1;
     const dirX = sin(player.angle), dirZ = -cos(player.angle);
