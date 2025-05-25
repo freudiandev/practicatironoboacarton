@@ -1,208 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Juego de Laberinto - Pseudo 3D</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
-    <style>
-      body { padding: 0; margin: 0; }
-      canvas { display: block; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Práctica de Tiro - Noboa de Cartón</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <script>
-        // Tamaño del mapa y de la rejilla (20x20 celdas de 50px = 1000x1000)
-        const gridCols = 20, gridRows = 20;
-        const cellSize = 50;
+  <header>
+    <h1>Práctica de Tiro - Noboa de Cartón</h1>
+    <p>Desarrollado por <a href="#">Tu Nombre</a></p>
+  </header>
+  <main>
+    <section id="game-container"></section>
+    <p>Bienvenido a la práctica de tiro con la noboa de cartón. Usa el ratón para apuntar y disparar.</p>
+    <p>R = Reiniciar · Esc = Salir</p>
+  </main>
+  <footer>
+    <p>&copy; 2023 Tu Nombre. Todos los derechos reservados.</p>
+  </footer>
 
-        // Estructura del laberinto: 0 = celda libre; 1 = pared
-        let labyrinth = [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1],
-            [1,0,1,1,1,0,0,1,0,1,1,1,0,1,0,1,1,1,0,1],
-            [1,0,1,0,0,0,1,1,0,1,0,1,0,1,0,0,0,1,0,1],
-            [1,0,1,0,1,0,0,0,0,1,0,1,0,1,1,1,0,1,0,1],
-            [1,0,1,0,1,1,1,1,0,1,0,1,0,0,0,1,0,1,0,1],
-            [1,0,0,0,0,0,0,1,0,0,0,1,1,1,0,1,0,0,0,1],
-            [1,1,1,1,1,1,0,1,1,1,0,0,0,1,0,1,1,1,0,1],
-            [1,0,0,0,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0,1],
-            [1,0,1,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1],
-            [1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
-            [1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1],
-            [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
-            [1,0,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1],
-            [1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,1],
-            [1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,0,1],
-            [1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1],
-            [1,0,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1],
-            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-        ];
-
-        // Propiedades del jugador en world coordinates (en píxeles)
-        // Se asume que el jugador siempre mira hacia el "norte" (direccion = (0, -1))
-        let player = {
-            x: cellSize * 1.5,
-            z: cellSize * 1.5,
-            speed: 2,
-            radius: 10,
-            angle: 0    // ahora sí rotamos
-        };
-
-        function setup() {
-            createCanvas(800, 600);
-        }
-
-        function draw() {
-            handlePlayerRotation();
-            handlePlayerMovement();
-            draw3DScene();
-        }
-
-        // Rota al presionar flechas: derecha = cw, izquierda = ccw
-        function handlePlayerRotation() {
-            const rotSpeed = 0.03; // rad/frame
-            if (keyIsDown(RIGHT_ARROW)) player.angle -= rotSpeed;
-            if (keyIsDown(LEFT_ARROW))  player.angle += rotSpeed;
-        }
-
-        // Función de colisión: verifica (en la rejilla) si la celda a la que se quiere mover es libre.
-        function collides(x, z) {
-            let col = floor(x / cellSize);
-            let row = floor(z / cellSize);
-            if (row < 0 || row >= gridRows || col < 0 || col >= gridCols) return true;
-            return (labyrinth[row][col] === 1);
-        }
-
-        // Movimientos W/A/S/D relativos a la orientación del jugador
-        function handlePlayerMovement() {
-            const moveSpeed = player.speed;
-            let moveX = 0, moveZ = 0;
-            // Adelante (W)
-            if (keyIsDown(87)) {
-                moveX += sin(player.angle) * moveSpeed;
-                moveZ += -cos(player.angle) * moveSpeed;
-            }
-            // Atrás (S)
-            if (keyIsDown(83)) {
-                moveX -= sin(player.angle) * moveSpeed;
-                moveZ -= -cos(player.angle) * moveSpeed;
-            }
-            // Izquierda (A) — ahora desplaza a la derecha (invertido)
-            if (keyIsDown(65)) {
-                moveX += cos(player.angle) * moveSpeed;
-                moveZ += sin(player.angle) * moveSpeed;
-            }
-            // Derecha (D) — ahora desplaza a la izquierda (invertido)
-            if (keyIsDown(68)) {
-                moveX -= cos(player.angle) * moveSpeed;
-                moveZ -= sin(player.angle) * moveSpeed;
-            }
-
-            const newX = player.x + moveX;
-            const newZ = player.z + moveZ;
-            if (!collides(newX, newZ)) {
-                player.x = newX;
-                player.z = newZ;
-            }
-        }
-
-        // Dibujar el escenario usando raycasting para simular una vista 3D (fija, sin rotación)
-        function draw3DScene(){
-            // Dibuja el techo y piso
-            noStroke();
-            // Techo
-            fill(135, 206, 235);
-            rect(0, 0, width, height/2);
-            // Piso
-            fill(50,50,50);
-            rect(0, height/2, width, height/2);
-
-            // Para cada columna de la pantalla, dispara un rayo (raycasting simplificado)
-            for (let x = 0; x < width; x++){
-                let cameraX = 2 * x / width - 1;
-                // calculo dinámico de dirección y plano tras rotación
-                const dirX   =  Math.sin(player.angle);
-                const dirZ   = -Math.cos(player.angle);
-                const planeX =  dirZ * 0.66;
-                const planeZ = -dirX * 0.66;
-
-                let rayDirX = dirX + planeX * cameraX;
-                let rayDirZ = dirZ + planeZ * cameraX;
-
-                // Posición del jugador en coordenadas de rejilla (flotantes)
-                let posX = player.x / cellSize;
-                let posZ = player.z / cellSize;
-                let mapX = floor(posX);
-                let mapZ = floor(posZ);
-
-                // Distancias a las siguientes líneas de la rejilla para el rayo
-                let deltaDistX = (rayDirX === 0) ? 1e30 : abs(1 / rayDirX);
-                let deltaDistZ = (rayDirZ === 0) ? 1e30 : abs(1 / rayDirZ);
-
-                let stepX, stepZ;
-                let sideDistX, sideDistZ;
-                if(rayDirX < 0){
-                    stepX = -1;
-                    sideDistX = (posX - mapX) * deltaDistX;
-                } else {
-                    stepX = 1;
-                    sideDistX = (mapX + 1.0 - posX) * deltaDistX;
-                }
-                if(rayDirZ < 0){
-                    stepZ = -1;
-                    sideDistZ = (posZ - mapZ) * deltaDistZ;
-                } else {
-                    stepZ = 1;
-                    sideDistZ = (mapZ + 1.0 - posZ) * deltaDistZ;
-                }
-
-                // DDA para encontrar la pared
-                let hit = 0;
-                let side;
-                while(hit === 0){
-                    if(sideDistX < sideDistZ){
-                        sideDistX += deltaDistX;
-                        mapX += stepX;
-                        side = 0;
-                    } else {
-                        sideDistZ += deltaDistZ;
-                        mapZ += stepZ;
-                        side = 1;
-                    }
-                    // Si el rayo sale del mapa, forzamos el hit
-                    if(mapX < 0 || mapX >= gridCols || mapZ < 0 || mapZ >= gridRows) {
-                        hit = 1;
-                        break;
-                    }
-                    if(labyrinth[mapZ][mapX] === 1) hit = 1;
-                }
-
-                // Calculamos la distancia perpendicular a la pared
-                let perpWallDist;
-                if(side === 0)
-                    perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
-                else
-                    perpWallDist = (mapZ - posZ + (1 - stepZ) / 2) / rayDirZ;
-                // Evitamos divisiones por cero
-                if (perpWallDist <= 0) perpWallDist = 0.1;
-
-                // Altura de la pared en pantalla, inversamente proporcional a la distancia
-                let lineHeight = floor(height / perpWallDist);
-                let drawStart = -lineHeight / 2 + height/2;
-                if(drawStart < 0) drawStart = 0;
-                let drawEnd = lineHeight / 2 + height/2;
-                if(drawEnd >= height) drawEnd = height - 1;
-
-                // Color de la pared (oscurece según el lado golpeado)
-                let wallColor = color(139, 69, 19);
-                if(side === 1){
-                    wallColor = lerpColor(wallColor, color(0,0,0), 0.5);
-                }
-                stroke(wallColor);
-                line(x, drawStart, x, drawEnd);
-            }
-        }
-    </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
