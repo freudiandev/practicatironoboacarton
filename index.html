@@ -1,24 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- Metadatos y título -->
   <meta charset="UTF-8" />
-  <title>Práctica de Tiro - Noboa de Cartón</title>
+  <title>Practica Doom-Like</title>
+  <!-- Hoja de estilos -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header>
-    <h1>Práctica de Tiro - Noboa de Cartón</h1>
-    <p>Desarrollado por <a href="#">Tu Nombre</a></p>
-  </header>
-  <main>
-    <section id="game-container"></section>
-    <p>Bienvenido a la práctica de tiro con la noboa de cartón. Usa el ratón para apuntar y disparar.</p>
-    <p>R = Reiniciar · Esc = Salir</p>
-  </main>
-  <footer>
-    <p>&copy; 2023 Tu Nombre. Todos los derechos reservados.</p>
-  </footer>
+  <!-- Donde p5.js insertará el canvas -->
+  <div id="game-container"></div>
 
+  <!-- Carga de librería y script principal -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
   <script src="main.js"></script>
 </body>

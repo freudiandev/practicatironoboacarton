@@ -1,20 +1,22 @@
+/* Reset y fondo general */
 body {
   margin: 0;
   padding: 0;
   background: #222;
 }
 
-#game {
+/* Contenedor del juego */
+#game-container {
   position: relative;
   width: 800px;
   height: 600px;
-  margin: 0 auto; /* centra el canvas horizontalmente */
+  margin: 0 auto; /* Centra horizontalmente */
   overflow: hidden;
 }
 
+/* Canvas ocupa todo el contenedor */
 canvas {
   display: block;
-  /* ocupa todo el contenedor #game */
   width: 100%;
   height: 100%;
 }
