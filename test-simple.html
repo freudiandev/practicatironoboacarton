@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Simple - DOOM Game</title>
+  <style>
+    body { margin: 0; padding: 20px; background: #222; color: white; font-family: Arial; }
+    #game-container { width: 800px; height: 600px; border: 2px solid #ff6b6b; margin: 20px 0; }
+    button { padding: 10px 20px; background: #ff6b6b; color: white; border: none; border-radius: 5px; margin: 10px; cursor: pointer; }
+    #log { background: #111; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Test Simple - Sistema de Canvas</h1>
+  
+  <div id="game-container"></div>
+  
+  <button onclick="testCanvasSystem()">Test Canvas System</button>
+  <button onclick="testFullGame()">Test Juego Completo</button>
+  
+  <div id="log"></div>
+  
+  <!-- Scripts en orden -->
+  <script src="config.js"></script>
+  <script src="canvas-system.js"></script>
+  <script src="doom-engine.js"></script>
+  <script src="player.js"></script>
+  <script src="enemies.js"></script>
+  <script src="game.js"></script>
+  
+  <script>
+    // Función de log
+    function log(message) {
+      const logDiv = document.getElementById('log');
+      logDiv.innerHTML += message + '<br>';
+      logDiv.scrollTop = logDiv.scrollHeight;
+      console.log(message);
+    }
+    
+    // Test de Canvas System
+    function testCanvasSystem() {
+      log('=== TEST CANVAS SYSTEM ===');
+      log('window.CanvasSystem disponible: ' + !!window.CanvasSystem);
+      
+      if (window.CanvasSystem) {
+        log('Ejecutando CanvasSystem.init()...');
+        const result = window.CanvasSystem.init();
+        log('Resultado: ' + result);
+      } else {
+        log('ERROR: CanvasSystem no está disponible');
+      }
+    }
+    
+    // Test del juego completo
+    function testFullGame() {
+      log('=== TEST JUEGO COMPLETO ===');
+      
+      if (window.Game) {
+        log('Ejecutando Game.init()...');
+        window.Game.init().then(() => {
+          log('Game.init() exitoso, iniciando...');
+          window.Game.start();
+          log('Juego iniciado');
+        }).catch(error => {
+          log('ERROR en Game.init(): ' + error.message);
+        });
+      } else {
+        log('ERROR: Game no está disponible');
+      }
+    }
+    
+    // Log inicial
+    window.addEventListener('load', () => {
+      log('=== SISTEMAS CARGADOS ===');
+      log('GAME_CONFIG: ' + !!window.GAME_CONFIG);
+      log('CanvasSystem: ' + !!window.CanvasSystem);
+      log('DoomEngine: ' + !!window.DoomEngine);
+      log('Player: ' + !!window.Player);
+      log('EnemyManager: ' + !!window.EnemyManager);
+      log('Game: ' + !!window.Game);
+      log('=== LISTO PARA TESTING ===');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generar Iconos del Juego</title>
+    <style>
+        canvas { 
+            border: 1px solid #000; 
+            margin: 10px; 
+            image-rendering: pixelated; 
+        }
+        .icon-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generador de Iconos - DOOM Game</h1>
+    
+    <div class="icon-section">
+        <h3>Favicon 16x16</h3>
+        <canvas id="favicon16" width="16" height="16" style="width: 64px; height: 64px;"></canvas>
+        <button onclick="download('favicon16', 'favicon-16x16.png')">Descargar</button>
+    </div>
+    
+    <div class="icon-section">
+        <h3>Favicon 32x32</h3>
+        <canvas id="favicon32" width="32" height="32" style="width: 128px; height: 128px;"></canvas>
+        <button onclick="download('favicon32', 'favicon-32x32.png')">Descargar</button>
+    </div>
+    
+    <div class="icon-section">
+        <h3>Apple Touch Icon 180x180</h3>
+        <canvas id="apple180" width="180" height="180" style="width: 180px; height: 180px;"></canvas>
+        <button onclick="download('apple180', 'apple-touch-icon.png')">Descargar</button>
+    </div>
+    
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Limpiar canvas
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Escalar elementos según el tamaño
+            const scale = size / 32;
+            
+            // Crosshair rojo principal
+            ctx.fillStyle = '#FF0000';
+            const crossSize = Math.max(2, Math.floor(16 * scale));
+            const crossThickness = Math.max(1, Math.floor(2 * scale));
+            const centerX = size / 2;
+            const centerY = size / 2;
+            
+            // Líneas del crosshair
+            ctx.fillRect(centerX - crossSize/2, centerY - crossThickness/2, crossSize, crossThickness);
+            ctx.fillRect(centerX - crossThickness/2, centerY - crossSize/2, crossThickness, crossSize);
+            
+            // Bordes blancos
+            ctx.fillStyle = '#FFFFFF';
+            const borderSize = Math.max(1, Math.floor(scale));
+            ctx.fillRect(centerX - crossSize/2 - borderSize, centerY - crossThickness/2 - borderSize, borderSize, crossThickness + 2*borderSize);
+            ctx.fillRect(centerX + crossSize/2, centerY - crossThickness/2 - borderSize, borderSize, crossThickness + 2*borderSize);
+            ctx.fillRect(centerX - crossThickness/2 - borderSize, centerY - crossSize/2 - borderSize, crossThickness + 2*borderSize, borderSize);
+            ctx.fillRect(centerX - crossThickness/2 - borderSize, centerY + crossSize/2, crossThickness + 2*borderSize, borderSize);
+            
+            // Esquinas decorativas si hay espacio
+            if (size >= 32) {
+                ctx.fillStyle = '#FF6B6B';
+                const cornerSize = Math.max(2, Math.floor(3 * scale));
+                const margin = Math.floor(2 * scale);
+                ctx.fillRect(margin, margin, cornerSize, cornerSize);
+                ctx.fillRect(size - margin - cornerSize, margin, cornerSize, cornerSize);
+                ctx.fillRect(margin, size - margin - cornerSize, cornerSize, cornerSize);
+                ctx.fillRect(size - margin - cornerSize, size - margin - cornerSize, cornerSize, cornerSize);
+            }
+            
+            // Detalles adicionales para iconos grandes
+            if (size >= 64) {
+                ctx.fillStyle = '#AA0000';
+                const detailSize = Math.floor(scale);
+                // Agregar algunos píxeles de detalle alrededor del crosshair
+                ctx.fillRect(centerX - crossSize/2 - 3*detailSize, centerY, detailSize, detailSize);
+                ctx.fillRect(centerX + crossSize/2 + 2*detailSize, centerY, detailSize, detailSize);
+                ctx.fillRect(centerX, centerY - crossSize/2 - 3*detailSize, detailSize, detailSize);
+                ctx.fillRect(centerX, centerY + crossSize/2 + 2*detailSize, detailSize, detailSize);
+            }
+        }
+        
+        function download(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            canvas.toBlob(function(blob) {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            });
+        }
+        
+        // Crear todos los iconos al cargar la página
+        window.onload = function() {
+            createIcon('favicon16', 16);
+            createIcon('favicon32', 32);
+            createIcon('apple180', 180);
+        };
+    </script>
+</body>
+</html>

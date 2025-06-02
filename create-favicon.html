@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generar Favicon</title>
+</head>
+<body>
+    <h2>Generador de Favicon para DOOM Game</h2>
+    <canvas id="favicon" width="32" height="32" style="border: 1px solid #000; image-rendering: pixelated; width: 128px; height: 128px;"></canvas>
+    <br><br>
+    <button onclick="downloadFavicon()">Descargar favicon.ico</button>
+    <br><br>
+    <p>1. Haz clic en "Descargar favicon.ico"</p>
+    <p>2. Guarda el archivo como "favicon.ico" en la carpeta del proyecto</p>
+    
+    <script>
+        // Crear favicon de 32x32 con diseño DOOM
+        const canvas = document.getElementById('favicon');
+        const ctx = canvas.getContext('2d');
+        
+        // Fondo negro
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 32, 32);
+        
+        // Crosshair rojo (símbolo del juego)
+        ctx.fillStyle = '#FF0000';
+        // Línea horizontal
+        ctx.fillRect(8, 15, 16, 2);
+        // Línea vertical
+        ctx.fillRect(15, 8, 2, 16);
+        
+        // Bordes del crosshair en blanco
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(7, 14, 1, 4);
+        ctx.fillRect(24, 14, 1, 4);
+        ctx.fillRect(14, 7, 4, 1);
+        ctx.fillRect(14, 24, 4, 1);
+        
+        // Esquinas decorativas
+        ctx.fillStyle = '#FF6B6B';
+        ctx.fillRect(2, 2, 3, 3);
+        ctx.fillRect(27, 2, 3, 3);
+        ctx.fillRect(2, 27, 3, 3);
+        ctx.fillRect(27, 27, 3, 3);
+        
+        function downloadFavicon() {
+            // Crear un canvas de 16x16 para el favicon estándar
+            const faviconCanvas = document.createElement('canvas');
+            faviconCanvas.width = 16;
+            faviconCanvas.height = 16;
+            const faviconCtx = faviconCanvas.getContext('2d');
+            
+            // Escalar el diseño a 16x16
+            faviconCtx.drawImage(canvas, 0, 0, 32, 32, 0, 0, 16, 16);
+            
+            // Convertir a blob y descargar
+            faviconCanvas.toBlob(function(blob) {
+                const link = document.createElement('a');
+                link.download = 'favicon.ico';
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

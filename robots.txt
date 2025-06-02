@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /assets/
+Disallow: /*.js$
+Disallow: /*.css$
+
+Sitemap: https://freudiandev.github.io/practicatironoboacarton/sitemap.xml
+
+# Específico para bots de redes sociales
+User-agent: facebookexternalhit/1.1
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
