@@ -1,150 +1,55 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DOOM: Noboa de Cartón - Juego de Disparos</title>
+  <title>Doom Game - Tiro con Noboa de Cartón</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23ff6600'/><path d='M16 8v16M8 16h16' stroke='%23fff' stroke-width='2'/></svg>">
   
-  <!-- Favicon y iconos -->
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  
-  <!-- Meta tags para SEO y redes sociales -->
-  <meta name="description" content="Juego estilo DOOM con laberintos, enemigos y combate en primera persona. ¡Explora, dispara y sobrevive!">
-  <meta name="keywords" content="doom, juego, fps, laberinto, disparos, javascript, canvas">
-  <meta name="author" content="DOOM Game Team">
-  
-  <!-- Open Graph para redes sociales -->
-  <meta property="og:title" content="DOOM: Noboa de Cartón">
-  <meta property="og:description" content="Juego estilo DOOM con laberintos y combate en primera persona">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="game-preview.png">
-  
-  <!-- Estilos separados por funcionalidad -->
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/menus.css">
-  <link rel="stylesheet" href="css/game-ui.css">
-  <link rel="stylesheet" href="css/effects.css">
+  <!-- Solo CSS que existe -->
+  <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
-  <!-- Menú de inicio -->
-  <div id="main-menu" class="menu-screen">
-    <div class="menu-container">
-      <h1 class="game-title">DOOM: Noboa de Cartón</h1>
-      <div class="menu-buttons">
-        <button id="start-btn" class="menu-btn">INICIAR PARTIDA</button>
-        <button id="highscores-btn" class="menu-btn">PUNTAJES MÁS ALTOS</button>
-        <button id="donate-btn" class="menu-btn">DONACIONES</button>
-      </div>
-    </div>
+  <div id="menu">
+    <h1>🎯 DOOM NOBOA</h1>
+    <p>¡Practica tu puntería contra Noboa de cartón!</p>
+    <button class="menu-button" data-action="start">🚀 Iniciar Juego</button>
+    <button class="menu-button" data-action="instructions">📖 Instrucciones</button>
+    <button class="menu-button" data-action="credits">👨‍💻 Créditos</button>
   </div>
 
-  <!-- Pantalla de puntajes -->
-  <div id="highscores-screen" class="menu-screen hidden">
-    <div class="menu-container">
-      <h1 class="game-title">MEJORES PUNTAJES</h1>
-      <div id="highscores-list" class="highscores-list">
-        <!-- Los puntajes se cargarán aquí -->
-      </div>
-      <button id="back-to-menu-btn" class="menu-btn">VOLVER AL MENÚ</button>
-    </div>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  
+  <div id="gameInfo">
+    <div>Salud: <span id="health">100</span></div>
+    <div>Munición: <span id="ammo">30</span></div>
+    <div>Enemigos: <span id="enemies">0</span></div>
+    <div>Puntuación: <span id="score">0</span></div>
   </div>
 
-  <!-- Pantalla de juego -->
-  <div id="game-screen" class="hidden">
-    <!-- HUD del juego mejorado -->
-    <div id="game-hud">
-      <div class="hud-item">
-        <span class="hud-label">TIEMPO:</span>
-        <span id="timer-display" class="hud-value">0:00</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">KILLS:</span>
-        <span id="kills-display" class="hud-value">0</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">ENEMIGOS:</span>
-        <span id="enemy-count" class="hud-value">0</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">PUNTOS:</span>
-        <span id="score-display" class="hud-value">0</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">VIDA:</span>
-        <span id="health-display" class="hud-value">100</span>
-      </div>
-    </div>
-    
-    <!-- Layout del juego -->
-    <div class="game-layout-improved">
-      <!-- Container del juego -->
-      <div id="game-container"></div>
-      
-      <!-- Panel derecho mejorado -->
-      <aside class="right-panel-improved">
-        <h3>🎮 Controles</h3>
-        <p><strong>WASD:</strong> Movimiento</p>
-        <p><strong>Mouse:</strong> Mirar</p>
-        <p><strong>Click:</strong> Disparar</p>
-        <p><strong>R:</strong> Recargar</p>
-        <p><strong>← →:</strong> Girar</p>
-        <p><strong>↑ ↓:</strong> Mirar arriba/abajo</p>
-        <p><strong>ESC:</strong> Menú</p>
-        
-        <h3>🎯 Objetivos</h3>
-        <p>• Elimina todos los enemigos</p>
-        <p>• Recoge munición (dorado)</p>
-        <p>• Recoge vida (rojo)</p>
-        <p>• Explora la casa-laberinto</p>
-        
-        <h3>📊 Estado</h3>
-        <div class="status-bar">
-          <div class="status-item">
-            <span>Vida:</span>
-            <div class="health-bar">
-              <div id="health-bar-fill" class="health-bar-fill"></div>
-            </div>
-          </div>
-          <div class="status-item">
-            <span>Munición:</span>
-            <span id="ammo-display">30/30</span>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
+  <div id="headshotIndicator"></div>
 
-  <!-- SCRIPTS - ORDEN CRÍTICO CON DEBUG -->
-  <script src="debug-system.js"></script>
-  <script src="game-all-in-one.js"></script>
-  <script src="menu-manager.js"></script>
-
-  <!-- Verificación mejorada -->
-  <script>
-    console.log('🔍 === VERIFICACIÓN DE SISTEMAS ===');
-    console.log('- DoomGame disponible:', !!window.DoomGame ? '✅' : '❌');
-    console.log('- MenuManager disponible:', !!window.MenuManager ? '✅' : '❌');
-    
-    if (!window.DoomGame) {
-      console.error('❌ CRÍTICO: DoomGame no se cargó correctamente');
-      console.log('Verificando si game-all-in-one.js se cargó...');
-    }
-    
-    // Asegurar que MenuManager se inicialice correctamente
-    window.addEventListener('load', () => {
-      console.log('🔍 === VERIFICACIÓN FINAL ===');
-      console.log('- DoomGame:', !!window.DoomGame ? '✅ DISPONIBLE' : '❌ NO DISPONIBLE');
-      
-      if (window.MenuManager && !window.MenuManager.initialized) {
-        console.log('🔄 Inicializando MenuManager...');
-        window.MenuManager.init();
-        window.MenuManager.initialized = true;
-      }
-    });
-  </script>
-
+  <!-- Solo archivos JavaScript únicos (sin duplicados) -->
+  
+  <!-- Configuración base -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/utils.js"></script>
+  
+  <!-- Sistemas principales -->
+  <script src="assets/js/audio.js"></script>
+  <script src="assets/js/input.js"></script>
+  <script src="assets/js/sprites.js"></script>
+  
+  <!-- Motor de juego -->
+  <script src="assets/js/raycasting.js"></script>
+  <script src="assets/js/bullets.js"></script>
+  <script src="assets/js/enemies.js"></script>
+  
+  <!-- Lógica principal -->
+  <script src="assets/js/game.js"></script>
+  <script src="assets/js/menu.js"></script>
+  
+  <!-- Inicialización final -->
+  <script src="assets/js/app.js"></script>
 </body>
 </html>

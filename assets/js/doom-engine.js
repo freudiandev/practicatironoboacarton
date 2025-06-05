@@ -110,41 +110,35 @@ window.DoomEngine = {
     this.ctx.stroke();
   },
   
-  renderDebugInfo() {
-    if (!window.player) return;
-    
-    this.ctx.fillStyle = '#fff';
-    this.ctx.font = '14px Arial';
-    this.ctx.textAlign = 'left';
-    this.ctx.fillText(`Pos: ${window.player.x.toFixed(1)}, ${window.player.z.toFixed(1)}`, 10, 30);
-    this.ctx.fillText(`Angle: ${(window.player.angle * 180 / Math.PI).toFixed(1)}°`, 10, 50);
-  }
-};
+renderDebugInfo() {
+  if (!window.player) return;
+  
+  this.ctx.fillStyle = '#fff';
+  this.ctx.font = '14px Arial';
+  this.ctx.textAlign = 'left';
+  this.ctx.fillText(`Pos: ${window.player.x.toFixed(1)}, ${window.player.z.toFixed(1)}`, 10, 30);
+  this.ctx.fillText(`Angle: ${(window.player.angle * 180 / Math.PI).toFixed(1)}°`, 10, 50);
+},
 
-console.log('🎮 DOOM Engine definido en window.DoomEngine');
-console.log('🎮 Verificación inmediata - DoomEngine disponible:', !!window.DoomEngine);
-      case 0: r = 180; g = 100; b = 100; break; // Rojo
-      case 1: r = 100; g = 180; b = 100; break; // Verde
-      case 2: r = 100; g = 100; b = 180; break; // Azul
-      default: r = 140; g = 140; b = 140; break;
-    }
-    
-    // Sombra en lados perpendiculares
-    if (side === 1) {
-      r *= 0.8;
-      g *= 0.8;
-      b *= 0.8;
-    }
-    
-    // Atenuación por distancia
-    const brightness = Math.max(0.3, 1.0 - distance / GAME_CONFIG.renderDistance * 0.7);
-    
-    return {
-      r: Math.floor(r * brightness),
-      g: Math.floor(g * brightness),
-      b: Math.floor(b * brightness)
-    };
-  },
+getWallColor(distance, side) {
+  let r = 200, g = 150, b = 100;
+  
+  // Sombra en lados perpendiculares
+  if (side === 1) {
+    r *= 0.8;
+    g *= 0.8;
+    b *= 0.8;
+  }
+  
+  // Atenuación por distancia
+  const brightness = Math.max(0.3, 1.0 - distance / window.GAME_CONFIG.renderDistance * 0.7);
+  
+  return {
+    r: Math.floor(r * brightness),
+    g: Math.floor(g * brightness),
+    b: Math.floor(b * brightness)
+  };
+},
 
   renderSprites() {
     if (!window.enemies || window.enemies.length === 0) return;
@@ -236,4 +230,6 @@ console.log('🎮 Verificación inmediata - DoomEngine disponible:', !!window.Do
   }
 };
 
+console.log('🎮 DOOM Engine definido en window.DoomEngine');
+console.log('🎮 Verificación inmediata - DoomEngine disponible:', !!window.DoomEngine);
 console.log('🎮 DOOM Engine cargado');

@@ -442,3 +442,98 @@
   font-weight: bold;
   margin: 20px 0;
 }
+
+/* Estilos para el área de juego */
+#game-container {
+  cursor: none; /* Ocultar cursor predeterminado */
+  position: relative;
+}
+
+/* Crear cursor personalizado con cruz roja */
+#game-container::after {
+  content: '';
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 1000;
+  background: transparent;
+  border: none;
+  /* La posición se actualizará dinámicamente con JavaScript */
+}
+
+/* Mira de cruz roja usando CSS puro */
+.crosshair-cursor {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  z-index: 1000;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+.crosshair-cursor::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: calc(100% - 4px);
+  height: 3px;
+  background: linear-gradient(90deg, #FF0000, #FF4444, #FF0000);
+  transform: translateY(-50%);
+  border-radius: 1px;
+}
+
+.crosshair-cursor::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  width: 3px;
+  height: calc(100% - 4px);
+  background: linear-gradient(180deg, #FF0000, #FF4444, #FF0000);
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+/* Efecto de brillo en el centro */
+.crosshair-cursor::before,
+.crosshair-cursor::after {
+  box-shadow: 
+    0 0 3px rgba(255, 0, 0, 0.8),
+    inset 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+/* Animación mejorada de disparo */
+@keyframes crosshair-flash {
+  0% { 
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8)) brightness(1);
+  }
+  30% { 
+    transform: translate(-50%, -50%) scale(1.4);
+    filter: drop-shadow(0 0 8px rgba(255, 0, 0, 1)) brightness(2);
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8)) brightness(1);
+  }
+}
+
+/* Estilo para cuando no hay munición */
+.crosshair-cursor.no-ammo::before,
+.crosshair-cursor.no-ammo::after {
+  background: #666;
+  animation: crosshair-empty 1s infinite;
+}
+
+@keyframes crosshair-empty {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Estilo alternativo para cuando el pointer lock esté activo */
+.game-container-locked {
+  cursor: none !important;
+}

@@ -1,5 +1,5 @@
 // Utilidades del juego
-window.Utils = {
+const Utils = {
   // Configuración del mapa (debe coincidir con GAME_CONFIG)
   mapConfig: {
     cellSize: 40,
@@ -454,8 +454,70 @@ window.Utils = {
       }
       console.log(`${y.toString().padStart(2, '0')}: ${row}`);
     }
+  },
+
+  // Verificar si se puede mover a una posición
+  canMoveTo(x, z) {
+    const gridX = Math.floor(x / CONFIG.world.cellSize);
+    const gridZ = Math.floor(z / CONFIG.world.cellSize);
+    
+    if (gridX < 0 || gridX >= CONFIG.world.gridCols || 
+        gridZ < 0 || gridZ >= CONFIG.world.gridRows) {
+      return false;
+    }
+    
+    return MAZE[gridZ][gridX] === 0;
+  },
+
+  // Calcular distancia entre dos puntos
+  distance(x1, z1, x2, z2) {
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    return Math.sqrt(dx * dx + dz * dz);
+  },
+
+  // Encontrar posiciones válidas para spawn
+  findSpawnPositions(playerX, playerZ, minDistance = 200) {
+    const positions = [];
+    const minDistSquared = minDistance * minDistance;
+    
+    for (let z = 1; z < CONFIG.world.gridRows - 1; z++) {
+      for (let x = 1; x < CONFIG.world.gridCols - 1; x++) {
+        if (MAZE[z][x] === 0) {
+          const worldX = x * CONFIG.world.cellSize + CONFIG.world.cellSize / 2;
+          const worldZ = z * CONFIG.world.cellSize + CONFIG.world.cellSize / 2;
+          
+          const dx = worldX - playerX;
+          const dz = worldZ - playerZ;
+          
+          if (dx * dx + dz * dz > minDistSquared) {
+            positions.push({ x: worldX, z: worldZ });
+          }
+        }
+      }
+    }
+    return positions;
+  },
+
+  // Normalizar ángulo
+  normalizeAngle(angle) {
+    while (angle > Math.PI) angle -= 2 * Math.PI;
+    while (angle < -Math.PI) angle += 2 * Math.PI;
+    return angle;
+  },
+
+  // Interpolar entre dos valores
+  lerp(a, b, t) {
+    return a + (b - a) * t;
+  },
+
+  // Clamp valor entre min y max
+  clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
   }
 };
+
+window.Utils = Utils;
 
 // Inicializar automáticamente
 window.Utils.init();
