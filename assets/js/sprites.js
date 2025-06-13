@@ -6,13 +6,14 @@ class SpriteSystem {
     this.loadingPromises = new Map();
     this.loadEnemySprites();
   }
-
   async loadEnemySprites() {
+    console.log('🖼️ Cargando sprites de Noboa...');
     const spritePromises = CONFIG.enemy.sprites.map(async (src, index) => {
       try {
         const img = await this.loadImage(src);
         this.loadedImages.set(`enemy_${index}`, img);
-        console.log(`✅ Sprite cargado: ${src}`);
+        const variantNames = ['Presidencial', 'Deportivo', 'Casual'];
+        console.log(`✅ Sprite cargado: Noboa ${variantNames[index]} (${src})`);
       } catch (error) {
         console.warn(`⚠️ Error cargando sprite ${src}, usando placeholder`);
         this.loadedImages.set(`enemy_${index}`, this.createEnemyPlaceholder(index + 1));
@@ -20,7 +21,7 @@ class SpriteSystem {
     });
 
     await Promise.all(spritePromises);
-    console.log('✅ Todos los sprites de enemigos cargados');
+    console.log('✅ Todos los sprites de Noboa cargados correctamente');
   }
 
   loadImage(src) {

@@ -1,35 +1,35 @@
-// Utilidades del juego
+// Como una caja de herramientas útiles para el juego
 const Utils = {
-  // Configuración del mapa (debe coincidir con GAME_CONFIG)
+  // Configuración del mapa (como las medidas de una casa)
   mapConfig: {
-    cellSize: 40,
-    gridCols: 20,
-    gridRows: 15
+    cellSize: 40, // Qué tan grande es cada casilla
+    gridCols: 20, // Cuántas columnas tiene el mapa
+    gridRows: 15  // Cuántas filas tiene el mapa
   },
 
-  // Mapa de colisiones (1 = pared, 0 = espacio libre)
+  // Mapa de colisiones (1 = pared que bloquea, 0 = espacio libre para caminar)
   collisionMap: [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
-    [1,0,1,1,0,1,0,1,1,1,1,1,1,0,1,0,1,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1],
-    [1,1,1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,1,1],
-    [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
-    [1,1,1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,1,1],
-    [1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,0,1,0,1,1,1,1,1,1,0,1,0,1,1,0,1],
-    [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // Fila de paredes arriba
+    [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1], // Pasillos y cuartos
+    [1,0,1,1,0,1,0,1,1,1,1,1,1,0,1,0,1,1,0,1], // Más paredes internas
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Pasillo largo
+    [1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,0,1], // Laberinto complicado
+    [1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1], // Más pasillos
+    [1,1,1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,1,1], // Patrón de paredes
+    [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1], // Área abierta
+    [1,1,1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1,1,1], // Más laberinto
+    [1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1], // Pasillos
+    [1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1,0,1], // Paredes complejas
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // Otro pasillo largo
+    [1,0,1,1,0,1,0,1,1,1,1,1,1,0,1,0,1,1,0,1], // Más estructura
+    [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1], // Casi al final
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]  // Fila de paredes abajo
   ],
 
   init() {
     console.log('🔧 Sistema de utilidades inicializado');
     
-    // Sincronizar configuración si GAME_CONFIG existe
+    // Sincronizar configuración si existe configuración global
     if (window.GAME_CONFIG) {
       this.mapConfig = {
         cellSize: window.GAME_CONFIG.cellSize || 40,
@@ -38,15 +38,15 @@ const Utils = {
       };
     }
     
-    // IMPORTANTE: Sincronizar con el laberinto global
+    // IMPORTANTE: Asegurarse de usar el mismo laberinto en todo el juego
     this.syncWithGlobalLabyrinth();
     
     console.log('📐 Configuración del mapa:', this.mapConfig);
   },
 
-  // Nueva función para sincronizar laberintos
+  // Como asegurarse de que todos usen el mismo mapa
   syncWithGlobalLabyrinth() {
-    // Si no existe laberinto global, usar el de utils
+    // Si no existe un laberinto global, usar el nuestro
     if (!window.labyrinth) {
       window.labyrinth = JSON.parse(JSON.stringify(this.collisionMap)); // Copia profunda
       console.log('🔄 Laberinto global establecido desde utils');

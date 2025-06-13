@@ -6,10 +6,11 @@
   <title>Doom Game - Tiro con Noboa de Cartón</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23ff6600'/><path d='M16 8v16M8 16h16' stroke='%23fff' stroke-width='2'/></svg>">
   
-  <!-- Solo CSS que existe -->
+  <!-- Los estilos que hacen que todo se vea bonito -->
   <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
+  <!-- El menú principal como la portada de un libro -->
   <div id="menu">
     <h1>🎯 DOOM NOBOA</h1>
     <p>¡Practica tu puntería contra Noboa de cartón!</p>
@@ -18,8 +19,10 @@
     <button class="menu-button" data-action="credits">👨‍💻 Créditos</button>
   </div>
 
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <!-- El lienzo donde se dibuja todo el juego, como un papel gigante -->
+  <canvas id="gameCanvas" width="1067" height="800" tabindex="0"></canvas>
   
+  <!-- La información del jugador que aparece en pantalla -->
   <div id="gameInfo">
     <div>Salud: <span id="health">100</span></div>
     <div>Munición: <span id="ammo">30</span></div>
@@ -27,29 +30,47 @@
     <div>Puntuación: <span id="score">0</span></div>
   </div>
 
+  <!-- El mensaje especial que aparece cuando haces headshot -->
   <div id="headshotIndicator"></div>
 
-  <!-- Solo archivos JavaScript únicos (sin duplicados) -->
+  <!-- Todos los archivos JavaScript que hacen funcionar el juego -->
   
-  <!-- Configuración base -->
+  <!-- El libro de reglas del juego -->
   <script src="assets/js/config.js"></script>
+  <!-- La caja de herramientas útiles -->
   <script src="assets/js/utils.js"></script>
   
-  <!-- Sistemas principales -->
+  <!-- Los sistemas que hacen funcionar el juego -->
+  <!-- La radio que toca sonidos -->
   <script src="assets/js/audio.js"></script>
+  <!-- Los oídos que escuchan teclado y mouse -->
   <script src="assets/js/input.js"></script>
+  <!-- El artista que dibuja a los enemigos -->
   <script src="assets/js/sprites.js"></script>
+  <!-- La caja de fuegos artificiales y efectos especiales -->
+  <script src="assets/js/particle-system.js"></script>
   
-  <!-- Motor de juego -->
+  <!-- El motor que hace funcionar el juego -->
+  <!-- Los ojos láser que crean el mundo 3D -->
   <script src="assets/js/raycasting.js"></script>
+  <!-- El administrador de balas voladoras -->
   <script src="assets/js/bullets.js"></script>
+  <!-- El jefe de todos los enemigos -->
   <script src="assets/js/enemies.js"></script>
   
-  <!-- Lógica principal -->
+  <!-- El cerebro principal del juego -->
+  <!-- El director de orquesta que coordina todo -->
   <script src="assets/js/game.js"></script>
+  <!-- El controlador de menús -->
   <script src="assets/js/menu.js"></script>
   
   <!-- Inicialización final -->
   <script src="assets/js/app.js"></script>
+  <script>
+    // Debug global keydown listener
+    window.addEventListener('keydown', e => {
+      console.log('🔑 GLOBAL KEYDOWN:', e.code);
+    });
+  </script>
 </body>
 </html>

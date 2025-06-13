@@ -145,16 +145,38 @@ window.Weapons = {
     const hit = this.raycastShot(1.2, this.weaponStats.rifle.spread);
     this.processHits([hit]);
   },
-  
-  raycastShot(damageMultiplier = 1, spread = 0) {
-    if (!window.player) return { hit: false };
+    raycastShot(damageMultiplier = 1, spread = 0) {
+    if (!window.player || !window.inputSystem) return { hit: false };
     
-    const { x, z, angle } = window.player;
+    const { x, z } = window.player;
     const weapon = this.weaponStats[this.currentWeapon];
+    
+    // CORREGIDO: Calcular ángulo de disparo desde la posición del jugador hacia la posición del mouse
+    let shotAngle;
+    
+    if (window.inputSystem.isMouseActive() && window.inputSystem.getCrosshairPosition()) {
+      // Si el mouse está activo, calcular ángulo desde jugador hacia mouse
+      const crosshairPos = window.inputSystem.getCrosshairPosition();
+      const canvas = window.inputSystem.canvas;
+      
+      // Convertir posición del mouse a ángulo de disparo relativo al jugador
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      const deltaX = crosshairPos.x - centerX;
+      const deltaY = crosshairPos.y - centerY;
+        // Calcular ángulo base del jugador y añadir offset del mouse
+      const mouseAngleOffset = Math.atan2(deltaY, deltaX);
+      const sensitivity = window.CONFIG ? window.CONFIG.controls.mouseSensitivity : 0.5;
+      shotAngle = window.player.angle + mouseAngleOffset * sensitivity; // Usar sensibilidad configurable
+    } else {
+      // Fallback: usar ángulo del jugador si no hay mouse activo
+      shotAngle = window.player.angle;
+    }
     
     // Añadir dispersión
     const spreadAngle = (Math.random() - 0.5) * spread;
-    const shotAngle = angle + spreadAngle;
+    shotAngle += spreadAngle;
     
     const rayDirX = Math.cos(shotAngle);
     const rayDirZ = Math.sin(shotAngle);

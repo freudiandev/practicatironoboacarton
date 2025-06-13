@@ -1,6 +1,6 @@
 // Sistema de jugador simple
 window.Player = {
-  x: 0, z: 0, angle: 0,
+  x: 0, z: 0, angle: 0, pitch: 0,
   health: 100, maxHealth: 100,
   keys: {},
   
@@ -10,74 +10,30 @@ window.Player = {
     window.player = this; // Hacer global
     console.log('👤 Player inicializado');
   },
-  
-  spawn() {
+    spawn() {
     // Spawn en el centro del mapa
     this.x = 12 * window.GAME_CONFIG.cellSize;
     this.z = 8 * window.GAME_CONFIG.cellSize;
     this.angle = 0;
+    this.pitch = 0;
     this.health = this.maxHealth;
     
     console.log(`👤 Player spawned at (${this.x}, ${this.z})`);
   },
-  
-  setupControls() {
-    document.addEventListener('keydown', (e) => {
-      this.keys[e.code] = true;
-    });
-    
-    document.addEventListener('keyup', (e) => {
-      this.keys[e.code] = false;
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-      if (document.pointerLockElement) {
-        this.angle += e.movementX * 0.002;
-      }
-    });
-    
-    document.addEventListener('click', () => {
-      if (!document.pointerLockElement) {
-        document.body.requestPointerLock();
-      }
-    });
+    setupControls() {
+    // DESACTIVADO: Los controles ahora se manejan desde InputSystem y game.js
+    // para evitar conflictos entre múltiples listeners de teclado
+    console.log('👤 Player controls desactivados - usando InputSystem');
   },
   
   update() {
     this.handleMovement();
     window.player = this; // Mantener referencia global
   },
-  
-  handleMovement() {
-    const speed = window.GAME_CONFIG.playerSpeed;
-    let moveX = 0, moveZ = 0;
-    
-    if (this.keys['KeyW']) {
-      moveX += Math.cos(this.angle) * speed;
-      moveZ += Math.sin(this.angle) * speed;
-    }
-    if (this.keys['KeyS']) {
-      moveX -= Math.cos(this.angle) * speed;
-      moveZ -= Math.sin(this.angle) * speed;
-    }
-    if (this.keys['KeyA']) {
-      moveX += Math.cos(this.angle - Math.PI/2) * speed;
-      moveZ += Math.sin(this.angle - Math.PI/2) * speed;
-    }
-    if (this.keys['KeyD']) {
-      moveX += Math.cos(this.angle + Math.PI/2) * speed;
-      moveZ += Math.sin(this.angle + Math.PI/2) * speed;
-    }
-    
-    // Aplicar movimiento
-    if (this.canMoveTo(this.x + moveX, this.z + moveZ)) {
-      this.x += moveX;
-      this.z += moveZ;
-    }
-    
-    // Rotación con flechas
-    if (this.keys['ArrowLeft']) this.angle -= 0.05;
-    if (this.keys['ArrowRight']) this.angle += 0.05;
+    handleMovement() {
+    // DESACTIVADO: El movimiento ahora se maneja desde game.js con InputSystem
+    // para evitar conflictos entre múltiples sistemas de control
+    console.log('👤 Player movement desactivado - usando InputSystem');
   },
   
   canMoveTo(x, z) {

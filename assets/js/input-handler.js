@@ -127,8 +127,7 @@ window.InputHandler = {
       moveZ += Math.sin(window.player.angle + Math.PI/2) * moveSpeed;
       console.log('Moviendo a la derecha');
     }
-    
-    // Rotación con flechas
+      // Rotación con flechas
     if (this.keys['ArrowLeft']) {
       window.player.angle -= rotSpeed;
       console.log('Rotando izquierda, nuevo ángulo:', window.player.angle);
@@ -136,6 +135,22 @@ window.InputHandler = {
     if (this.keys['ArrowRight']) {
       window.player.angle += rotSpeed;
       console.log('Rotando derecha, nuevo ángulo:', window.player.angle);
+    }
+    
+    // Inicializar pitch si no existe
+    if (typeof window.player.pitch === 'undefined') {
+      window.player.pitch = 0;
+    }
+    
+    // Pitch con flechas arriba/abajo (vista vertical)
+    const pitchSpeed = 2;
+    if (this.keys['ArrowUp']) {
+      window.player.pitch = Math.max(window.player.pitch - pitchSpeed, -100);
+      console.log('🔼 Mirando hacia arriba, nuevo pitch:', window.player.pitch);
+    }
+    if (this.keys['ArrowDown']) {
+      window.player.pitch = Math.min(window.player.pitch + pitchSpeed, 100);
+      console.log('🔽 Mirando hacia abajo, nuevo pitch:', window.player.pitch);
     }
     
     // Aplicar movimiento si hay alguno

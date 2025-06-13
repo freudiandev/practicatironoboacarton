@@ -4,8 +4,8 @@ console.log('🎮 Iniciando carga de DOOM Engine...');
 
 window.DoomEngine = {
   ctx: null,
-  width: 800,
-  height: 600,
+  width: 1067,
+  height: 800,
   
   init() {
     console.log('🎮 DoomEngine.init() ejecutándose...');
@@ -27,7 +27,6 @@ window.DoomEngine = {
     console.log('✅ DOOM Engine inicializado');
     return true;
   },
-  
   render() {
     if (!this.ctx) return;
     
@@ -35,37 +34,57 @@ window.DoomEngine = {
     this.ctx.fillStyle = '#000';
     this.ctx.fillRect(0, 0, this.width, this.height);
     
-    // Renderizar cielo
+    // Calcular offset de altura de cámara Y pitch (vista arriba/abajo)
+    const playerHeight = window.player?.y || 32;
+    const playerPitch = window.player?.pitch || 0; // Ángulo de vista vertical
+    
+    // El pitch afecta dónde se ve el horizonte
+    const cameraOffset = (playerHeight - 32) * 2;
+    const pitchOffset = playerPitch * (this.height * 0.3); // El pitch mueve el horizonte
+    const horizonLine = this.height / 2 - cameraOffset - pitchOffset;
+    
+    // Renderizar cielo (ajustado por altura de cámara Y pitch)
     this.ctx.fillStyle = '#4a90e2';
-    this.ctx.fillRect(0, 0, this.width, this.height / 2);
+    this.ctx.fillRect(0, 0, this.width, Math.max(0, horizonLine));
     
-    // Renderizar suelo
+    // Renderizar suelo (ajustado por altura de cámara Y pitch)
     this.ctx.fillStyle = '#8b4513';
-    this.ctx.fillRect(0, this.height / 2, this.width, this.height / 2);
-    
-    // Renderizar walls simples
+    this.ctx.fillRect(0, Math.max(0, horizonLine), this.width, this.height - Math.max(0, horizonLine));
+      // Renderizar walls simples
     this.renderWalls();
+    
+    // Renderizar sprites/enemigos
+    this.renderSprites();
     
     // Renderizar crosshair
     this.renderCrosshair();
     
+    // Renderizar mensaje de escape si es necesario
+    this.renderEscapeMessage();
+    
     // Renderizar info debug
     this.renderDebugInfo();
   },
-  
   renderWalls() {
     if (!window.player || !window.MAZE) return;
     
-    const { x, z, angle } = window.player;
+    const { x, z, angle, y, pitch } = window.player;
+    const playerHeight = y || 32; // Altura de la cámara del jugador
+    const playerPitch = pitch || 0; // Ángulo de vista vertical
     
-    // Raycasting simple
+    // Raycasting simple con altura de cámara y pitch
     for (let screenX = 0; screenX < this.width; screenX += 4) {
       const rayAngle = angle + (screenX - this.width/2) * 0.001;
       const hit = this.castRay(x, z, rayAngle);
       
       if (hit.distance > 0) {
         const wallHeight = (this.height * 100) / hit.distance;
-        const wallTop = (this.height - wallHeight) / 2;
+        
+        // Ajustar posición vertical basada en la altura de la cámara Y el pitch
+        const wallMidpoint = this.height / 2;
+        const cameraOffset = (playerHeight - 32) * 2; // Factor de escala para el offset
+        const pitchOffset = playerPitch * (this.height * 0.3); // El pitch mueve las paredes
+        const wallTop = wallMidpoint - wallHeight / 2 - cameraOffset - pitchOffset;
         
         // Color basado en distancia
         const brightness = Math.max(50, 255 - hit.distance);
@@ -117,7 +136,8 @@ renderDebugInfo() {
   this.ctx.font = '14px Arial';
   this.ctx.textAlign = 'left';
   this.ctx.fillText(`Pos: ${window.player.x.toFixed(1)}, ${window.player.z.toFixed(1)}`, 10, 30);
-  this.ctx.fillText(`Angle: ${(window.player.angle * 180 / Math.PI).toFixed(1)}°`, 10, 50);
+  this.ctx.fillText(`Altura: ${window.player.y.toFixed(1)}`, 10, 50);
+  this.ctx.fillText(`Ángulo: ${(window.player.angle * 180 / Math.PI).toFixed(1)}°`, 10, 70);
 },
 
 getWallColor(distance, side) {
@@ -132,13 +152,12 @@ getWallColor(distance, side) {
   
   // Atenuación por distancia
   const brightness = Math.max(0.3, 1.0 - distance / window.GAME_CONFIG.renderDistance * 0.7);
-  
-  return {
+    return {
     r: Math.floor(r * brightness),
     g: Math.floor(g * brightness),
     b: Math.floor(b * brightness)
   };
-},
+  },
 
   renderSprites() {
     if (!window.enemies || window.enemies.length === 0) return;
@@ -152,9 +171,9 @@ getWallColor(distance, side) {
     
     sortedEnemies.forEach(enemy => this.renderSprite(enemy));
   },
-
   renderSprite(enemy) {
-    const { x: playerX, z: playerZ, angle } = window.player;
+    const { x: playerX, z: playerZ, angle, pitch } = window.player;
+    const playerPitch = pitch || 0; // Ángulo de vista vertical
     
     const spriteX = enemy.x - playerX;
     const spriteZ = enemy.z - playerZ;
@@ -173,8 +192,10 @@ getWallColor(distance, side) {
     const spriteHeight = Math.abs(Math.floor(this.screenHeight / transformY));
     const spriteWidth = spriteHeight;
     
-    const drawStartY = Math.max(0, (this.screenHeight - spriteHeight) / 2);
-    const drawEndY = Math.min(this.screenHeight, (this.screenHeight + spriteHeight) / 2);
+    // Aplicar pitch al renderizado del sprite
+    const pitchOffset = playerPitch * (this.height * 0.3); // El pitch mueve los sprites
+    const drawStartY = Math.max(0, (this.screenHeight - spriteHeight) / 2 - pitchOffset);
+    const drawEndY = Math.min(this.screenHeight, (this.screenHeight + spriteHeight) / 2 - pitchOffset);
     const drawStartX = Math.max(0, spriteScreenX - spriteWidth / 2);
     const drawEndX = Math.min(this.screenWidth, spriteScreenX + spriteWidth / 2);
     
@@ -187,15 +208,28 @@ getWallColor(distance, side) {
       }
     }
   },
-
   renderUI() {
-    // Crosshair
+    // Crosshair - SIEMPRE en la posición del mouse
     stroke(255, 0, 0);
-    strokeWeight(2);
-    const centerX = width / 2;
-    const centerY = height / 2;
-    line(centerX - 10, centerY, centerX + 10, centerY);
-    line(centerX, centerY - 10, centerX, centerY + 10);
+    strokeWeight(3);
+    
+    // Obtener posición del mouse desde el sistema de input
+    let crosshairX = width / 2;
+    let crosshairY = height / 2;
+    
+    if (window.inputSystem && window.inputSystem.getCrosshairPosition()) {
+      const crosshairPos = window.inputSystem.getCrosshairPosition();
+      crosshairX = crosshairPos.x;
+      crosshairY = crosshairPos.y;
+    }
+    
+    // Cruz roja siempre en la posición exacta del mouse
+    line(crosshairX - 12, crosshairY, crosshairX + 12, crosshairY);
+    line(crosshairX, crosshairY - 12, crosshairX, crosshairY + 12);
+    
+    // Punto central para mayor precisión
+    strokeWeight(5);
+    point(crosshairX, crosshairY);
     
     // Stats
     fill(255);
@@ -222,7 +256,20 @@ getWallColor(distance, side) {
     
     // Instrucciones
     textSize(12);
-    text('1/2/3: Cambiar arma | R: Recargar', 10, height - 20);
+    text('1/2/3: Cambiar arma | R: Recargar', 10, height - 20);  },
+
+  renderEscapeMessage() {
+    // Mostrar mensaje de escape cuando el mouse está bloqueado
+    if (window.inputSystem && window.inputSystem.shouldShowEscapeMessage()) {
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      this.ctx.fillRect(10, 10, 350, 60);
+      
+      this.ctx.fillStyle = '#fff';
+      this.ctx.font = '14px Arial';
+      this.ctx.textAlign = 'left';
+      this.ctx.fillText('🔒 Mouse bloqueado - Presiona ESC para liberar', 20, 35);
+      this.ctx.fillText('💡 Haz clic en el juego para volver a bloquear', 20, 55);
+    }
   },
 
   getDistance(x1, z1, x2, z2) {

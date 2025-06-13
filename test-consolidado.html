@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEST: Versión Consolidada - Tiro con Noboa</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .test-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .test-header {
+      background: #333;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .test-controls {
+      background: #444;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .test-controls button {
+      background: #007acc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .test-controls button:hover {
+      background: #005a9e;
+    }
+    .test-status {
+      background: #2a2a2a;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    #gameCanvas {
+      border: 2px solid #666;
+      display: block;
+      margin: 20px auto;
+      background: #000;
+    }
+    .features-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .feature-card {
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #007acc;
+    }
+    .feature-card.working {
+      border-left-color: #00aa00;
+    }
+    .feature-card.broken {
+      border-left-color: #aa0000;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <div class="test-header">
+      <h1>🎯 TEST: Versión Consolidada</h1>
+      <p>Prueba de todas las funcionalidades del juego DOOM-style</p>
+    </div>
+
+    <div class="test-controls">
+      <h3>Controles de Prueba:</h3>
+      <button onclick="testSystems()">🔍 Verificar Sistemas</button>
+      <button onclick="testInput()">⌨️ Test Input</button>
+      <button onclick="testPitch('up')">🔼 Pitch Arriba</button>
+      <button onclick="testPitch('down')">🔽 Pitch Abajo</button>
+      <button onclick="testPitch('reset')">↩️ Reset Pitch</button>
+      <button onclick="testShoot()">🔫 Disparo Manual</button>
+      <button onclick="spawnEnemy()">👤 Spawn Enemigo</button>
+      <button onclick="window.location.reload()">🔄 Recargar</button>
+    </div>
+
+    <div class="test-status" id="testStatus">
+      Estado: Esperando tests...
+    </div>
+
+    <canvas id="gameCanvas" width="1067" height="600" tabindex="0"></canvas>
+    
+    <div id="gameInfo" style="display: none;">
+      <div>Salud: <span id="health">100</span></div>
+      <div>Munición: <span id="ammo">30</span></div>
+      <div>Enemigos: <span id="enemies">0</span></div>
+      <div>Puntuación: <span id="score">0</span></div>
+    </div>
+
+    <div id="headshotIndicator" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: red; font-size: 24px; font-weight: bold; z-index: 1000;"></div>
+
+    <div class="features-list">
+      <div class="feature-card" id="feature-raycasting">
+        <h4>🎯 Raycasting</h4>
+        <p>Motor de renderizado DOOM-style con pitch</p>
+        <div class="status">Estado: Verificando...</div>
+      </div>
+      <div class="feature-card" id="feature-input">
+        <h4>⌨️ Sistema de Input</h4>
+        <p>WASD + Mouse + Flechas</p>
+        <div class="status">Estado: Verificando...</div>
+      </div>
+      <div class="feature-card" id="feature-shooting">
+        <h4>🔫 Sistema de Disparo</h4>
+        <p>Balas con efectos y colisiones</p>
+        <div class="status">Estado: Verificando...</div>
+      </div>
+      <div class="feature-card" id="feature-enemies">
+        <h4>👤 Enemigos</h4>
+        <p>IA con 100 HP, headshots</p>
+        <div class="status">Estado: Verificando...</div>
+      </div>
+      <div class="feature-card" id="feature-particles">
+        <h4>✨ Partículas</h4>
+        <p>Chispas, destellos, efectos</p>
+        <div class="status">Estado: Verificando...</div>
+      </div>
+      <div class="feature-card" id="feature-audio">
+        <h4>🔊 Audio</h4>
+        <p>Disparos, impactos, efectos</p>
+        <div class="status">Estado: Verificando...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cargar todos los scripts en orden correcto -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/audio.js"></script>
+  <script src="assets/js/input.js"></script>
+  <script src="assets/js/sprites.js"></script>
+  <script src="assets/js/particle-system.js"></script>
+  <script src="assets/js/raycasting.js"></script>
+  <script src="assets/js/bullets.js"></script>
+  <script src="assets/js/enemies.js"></script>
+  <script src="assets/js/game.js"></script>
+  
+  <script>
+    let game = null;
+    let testResults = {};
+
+    function log(message) {
+      const status = document.getElementById('testStatus');
+      status.innerHTML += message + '<br>';
+      console.log(message);
+    }
+
+    function updateFeatureStatus(featureId, status, message) {
+      const card = document.getElementById(featureId);
+      const statusDiv = card.querySelector('.status');
+      card.className = `feature-card ${status}`;
+      statusDiv.textContent = `Estado: ${message}`;
+    }
+
+    function testSystems() {
+      log('🔍 Verificando sistemas disponibles...');
+      
+      const systems = [
+        { name: 'CONFIG', obj: window.CONFIG, feature: 'feature-raycasting' },
+        { name: 'Utils', obj: window.Utils, feature: 'feature-raycasting' },
+        { name: 'InputSystem', obj: window.InputSystem, feature: 'feature-input' },
+        { name: 'AudioSystem', obj: window.AudioSystem, feature: 'feature-audio' },
+        { name: 'RaycastingEngine', obj: window.RaycastingEngine, feature: 'feature-raycasting' },
+        { name: 'BulletSystem', obj: window.BulletSystem, feature: 'feature-shooting' },
+        { name: 'EnemySystem', obj: window.EnemySystem, feature: 'feature-enemies' },
+        { name: 'ParticleSystem', obj: window.ParticleSystem, feature: 'feature-particles' },
+        { name: 'DoomGame', obj: window.DoomGame, feature: 'feature-raycasting' }
+      ];
+
+      systems.forEach(sys => {
+        if (sys.obj) {
+          log(`✅ ${sys.name} - OK`);
+          updateFeatureStatus(sys.feature, 'working', 'Disponible');
+        } else {
+          log(`❌ ${sys.name} - FALTANTE`);
+          updateFeatureStatus(sys.feature, 'broken', 'Faltante');
+        }
+      });
+
+      // Intentar inicializar el juego
+      try {
+        game = new DoomGame();
+        if (game.init()) {
+          log('✅ Juego inicializado correctamente');
+          game.start();
+          updateFeatureStatus('feature-raycasting', 'working', 'Funcionando');
+        } else {
+          log('❌ Error inicializando juego');
+          updateFeatureStatus('feature-raycasting', 'broken', 'Error init');
+        }
+      } catch (error) {
+        log(`❌ Error: ${error.message}`);
+        updateFeatureStatus('feature-raycasting', 'broken', error.message);
+      }
+    }
+
+    function testInput() {
+      log('⌨️ Probando sistema de input...');
+      if (game && game.inputSystem) {
+        const movement = game.inputSystem.getMovement();
+        const camera = game.inputSystem.getCameraRotation();
+        log(`Movimiento: x=${movement.x}, z=${movement.z}`);
+        log(`Cámara: h=${camera.horizontal}, p=${camera.pitch}`);
+        updateFeatureStatus('feature-input', 'working', 'Funcionando');
+      } else {
+        log('❌ InputSystem no disponible');
+        updateFeatureStatus('feature-input', 'broken', 'No disponible');
+      }
+    }
+
+    function testPitch(direction) {
+      if (window.debugPitch) {
+        window.debugPitch(direction);
+        log(`🎯 Pitch test: ${direction}`);
+      } else {
+        log('❌ debugPitch no disponible');
+      }
+    }
+
+    function testShoot() {
+      if (game && game.shoot) {
+        game.shoot();
+        log('🔫 Disparo manual ejecutado');
+        updateFeatureStatus('feature-shooting', 'working', 'Funcionando');
+      } else {
+        log('❌ Sistema de disparo no disponible');
+        updateFeatureStatus('feature-shooting', 'broken', 'No disponible');
+      }
+    }
+
+    function spawnEnemy() {
+      if (game && game.enemySystem) {
+        const x = Math.random() * 800 + 100;
+        const z = Math.random() * 600 + 100;
+        game.enemySystem.spawnEnemy(x, z);
+        log(`👤 Enemigo spawned en (${x.toFixed(0)}, ${z.toFixed(0)})`);
+        updateFeatureStatus('feature-enemies', 'working', 'Funcionando');
+      } else {
+        log('❌ EnemySystem no disponible');
+        updateFeatureStatus('feature-enemies', 'broken', 'No disponible');
+      }
+    }
+
+    // Auto-inicializar al cargar
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        testSystems();
+      }, 1000);
+    });
+
+    // Eventos de teclado para pruebas
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyT') testSystems();
+      if (e.code === 'KeyI') testInput();
+      if (e.code === 'KeyP') testPitch('up');
+      if (e.code === 'KeyL') testPitch('down');
+      if (e.code === 'KeyR') testPitch('reset');
+      if (e.code === 'KeyS' && e.ctrlKey) {
+        e.preventDefault();
+        testShoot();
+      }
+      if (e.code === 'KeyE') spawnEnemy();
+    });
+
+    log('🎮 Página de test cargada');
+    log('Usa T=Test, I=Input, P/L=Pitch, Ctrl+S=Shoot, E=Enemy');
+  </script>
+</body>
+</html>

@@ -81,10 +81,12 @@ window.DoomRenderer = {
       if (!hit) {
         continue; // El cielo y suelo ya están dibujados
       }
-      
-      // Calcular altura de la pared en pantalla
+      // Calcular altura de la pared en pantalla y desplazar según pitch
       const wallHeight = (window.GAME_CONFIG.cellSize * screenHeight) / Math.max(distance, 1);
-      const wallTop = (screenHeight - wallHeight) / 2;
+      // Mapear pitch radianes a píxeles verticales coherentes
+      const maxPitch = window.CONFIG?.player?.maxPitch || Math.PI/3;
+      const pixelOffset = ((window.player.pitch || 0) / maxPitch) * (screenHeight / 2);
+      const wallTop = (screenHeight - wallHeight) / 2 + pixelOffset;
       const wallBottom = wallTop + wallHeight;
       
       // Determinar color de la pared
@@ -262,10 +264,9 @@ window.DoomRenderer = {
     const perspectiveSize = Math.floor(baseSpriteSize / transformY);
     const spriteHeight = Math.floor(perspectiveSize * (enemy.scale || 1.5));
     const spriteWidth = Math.floor(spriteHeight * 0.8);
-    
-    // POSICIONAMIENTO EN EL SUELO - NIVEL DEL JUGADOR
+      // POSICIONAMIENTO EN EL SUELO - NIVEL DEL JUGADOR
     const centerY = height / 2;
-    const pitchOffset = window.player.pitch || 0;
+    const pitchOffset = (window.player.pitch || 0) * 3; // Factor de 3 para consistencia
     const horizonY = centerY + pitchOffset;
     
     // El enemigo está en el suelo, su base toca el horizonte
@@ -359,17 +360,23 @@ window.DoomRenderer = {
       }
     }
   },
-
   drawSkyAndFloor() {
+    // Aplicar pitch para el efecto de mirar arriba/abajo
+    // Mapear pitch (radianes) a desplazamiento vertical en píxeles
+    const maxPitch = window.CONFIG?.player?.maxPitch || Math.PI/3; // debe coincidir con límites en game.js
+    // Desplazar cielo/suelo según pitch: positivo = mirar arriba
+    const pixelOffset = ((window.player?.pitch || 0) / maxPitch) * (height / 2);
+    const horizonY = height / 2 + pixelOffset;
+    
     // Dibujar cielo (parte superior)
     push();
     fill(135, 206, 235); // Azul cielo
     noStroke();
-    rect(0, 0, width, height / 2);
+    rect(0, 0, width, Math.max(0, horizonY));
     
     // Dibujar suelo (parte inferior)
     fill(101, 67, 33); // Marrón tierra
-    rect(0, height / 2, width, height / 2);
+    rect(0, Math.min(height, horizonY), width, height - Math.min(height, horizonY));
     pop();
   },
 

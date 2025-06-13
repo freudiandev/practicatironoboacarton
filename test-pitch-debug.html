@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Debug - Pitch Control</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+        }
+        #canvas {
+            border: 2px solid #0f0;
+            background: #333;
+            display: block;
+            margin: 20px auto;
+        }
+        .status {
+            text-align: center;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .instructions {
+            text-align: center;
+            margin: 20px;
+            color: #ff0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test de Debug - Control de Pitch</h1>
+    
+    <div class="instructions">
+        <p>🎯 <strong>INSTRUCCIONES:</strong></p>
+        <p>1. Haz clic en el canvas para activar el focus</p>
+        <p>2. Presiona las teclas flecha ↑ y flecha ↓</p>
+        <p>3. Observa los valores de pitch en tiempo real</p>
+    </div>
+    
+    <canvas id="canvas" width="800" height="600" tabindex="0"></canvas>
+    
+    <div class="status" id="keyStatus">Estado de Teclas: Esperando...</div>
+    <div class="status" id="pitchStatus">Pitch: 0.000</div>
+    <div class="status" id="debugInfo">Debug: Iniciando...</div>
+    
+    <script src="assets/js/config.js"></script>
+    <script>
+        // Sistema de debug independiente
+        class PitchDebugSystem {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.keys = {};
+                this.pitch = 0;
+                this.running = false;
+                
+                this.setupEvents();
+                this.start();
+                
+                console.log('🔧 PitchDebugSystem inicializado');
+            }
+            
+            setupEvents() {
+                // Eventos de teclado con múltiples mapeos
+                window.addEventListener('keydown', (e) => {
+                    console.log(`🔽 KEYDOWN: key="${e.key}", code="${e.code}"`);
+                    
+                    // Mapeo múltiple para asegurar detección
+                    this.keys[e.key] = true;
+                    this.keys[e.key.toLowerCase()] = true;
+                    this.keys[e.code] = true;
+                    this.keys[e.code.toLowerCase()] = true;
+                    
+                    // Mapeo específico para flechas
+                    if (e.code === 'ArrowUp') {
+                        this.keys['ArrowUp'] = true;
+                        this.keys['arrowup'] = true;
+                        console.log('🔼 FLECHA ARRIBA DETECTADA');
+                    }
+                    if (e.code === 'ArrowDown') {
+                        this.keys['ArrowDown'] = true;
+                        this.keys['arrowdown'] = true;
+                        console.log('🔽 FLECHA ABAJO DETECTADA');
+                    }
+                    
+                    this.updateStatus();
+                });
+                
+                window.addEventListener('keyup', (e) => {
+                    console.log(`🔼 KEYUP: key="${e.key}", code="${e.code}"`);
+                    
+                    // Limpiar mapeo múltiple
+                    this.keys[e.key] = false;
+                    this.keys[e.key.toLowerCase()] = false;
+                    this.keys[e.code] = false;
+                    this.keys[e.code.toLowerCase()] = false;
+                    
+                    // Limpiar mapeo específico para flechas
+                    if (e.code === 'ArrowUp') {
+                        this.keys['ArrowUp'] = false;
+                        this.keys['arrowup'] = false;
+                        console.log('🔼 FLECHA ARRIBA LIBERADA');
+                    }
+                    if (e.code === 'ArrowDown') {
+                        this.keys['ArrowDown'] = false;
+                        this.keys['arrowdown'] = false;
+                        console.log('🔽 FLECHA ABAJO LIBERADA');
+                    }
+                    
+                    this.updateStatus();
+                });
+                
+                // Focus del canvas
+                this.canvas.addEventListener('click', () => {
+                    this.canvas.focus();
+                    console.log('🎯 Canvas enfocado');
+                });
+            }
+            
+            updateStatus() {
+                const pressedKeys = Object.keys(this.keys).filter(key => this.keys[key]);
+                document.getElementById('keyStatus').textContent = 
+                    `Teclas presionadas: ${pressedKeys.length > 0 ? pressedKeys.join(', ') : 'Ninguna'}`;
+            }
+            
+            update() {
+                if (!this.running) return;
+                
+                const pitchSpeed = CONFIG.controls?.pitchSpeed || 1.5;
+                const dt = 0.016; // ~60 FPS
+                
+                // Aplicar cambios de pitch
+                let pitchChanged = false;
+                
+                if (this.keys['ArrowUp'] || this.keys['arrowup']) {
+                    this.pitch = Math.min(CONFIG.player.maxPitch, this.pitch + pitchSpeed * dt);
+                    pitchChanged = true;
+                    console.log('🔼 Aplicando pitch ARRIBA');
+                }
+                
+                if (this.keys['ArrowDown'] || this.keys['arrowdown']) {
+                    this.pitch = Math.max(CONFIG.player.minPitch, this.pitch - pitchSpeed * dt);
+                    pitchChanged = true;
+                    console.log('🔽 Aplicando pitch ABAJO');
+                }
+                
+                if (pitchChanged) {
+                    document.getElementById('pitchStatus').textContent = 
+                        `Pitch: ${this.pitch.toFixed(3)} (min: ${CONFIG.player.minPitch.toFixed(3)}, max: ${CONFIG.player.maxPitch.toFixed(3)})`;
+                    
+                    console.log(`📊 Pitch actualizado: ${this.pitch.toFixed(3)}`);
+                }
+                
+                // Debug info
+                const arrowUpActive = this.keys['ArrowUp'] || this.keys['arrowup'];
+                const arrowDownActive = this.keys['ArrowDown'] || this.keys['arrowdown'];
+                
+                document.getElementById('debugInfo').textContent = 
+                    `Debug: ArrowUp=${arrowUpActive}, ArrowDown=${arrowDownActive}, Keys count=${Object.keys(this.keys).filter(k => this.keys[k]).length}`;
+            }
+            
+            render() {
+                if (!this.running) return;
+                
+                this.ctx.fillStyle = '#001100';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Dibujar horizonte basado en pitch
+                const centerY = this.canvas.height / 2;
+                const horizonY = centerY - (this.pitch * 200); // Amplificar para visualización
+                
+                // Línea del horizonte
+                this.ctx.strokeStyle = '#00ff00';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, horizonY);
+                this.ctx.lineTo(this.canvas.width, horizonY);
+                this.ctx.stroke();
+                
+                // Texto en el canvas
+                this.ctx.fillStyle = '#00ff00';
+                this.ctx.font = '20px monospace';
+                this.ctx.fillText(`Pitch: ${this.pitch.toFixed(3)}`, 20, 40);
+                this.ctx.fillText(`Horizonte Y: ${horizonY.toFixed(1)}`, 20, 70);
+                
+                // Indicadores de teclas
+                if (this.keys['ArrowUp'] || this.keys['arrowup']) {
+                    this.ctx.fillStyle = '#ffff00';
+                    this.ctx.fillText('🔼 FLECHA ARRIBA', 20, 120);
+                }
+                
+                if (this.keys['ArrowDown'] || this.keys['arrowdown']) {
+                    this.ctx.fillStyle = '#ffff00';
+                    this.ctx.fillText('🔽 FLECHA ABAJO', 20, 150);
+                }
+            }
+            
+            start() {
+                this.running = true;
+                this.gameLoop();
+                console.log('🚀 Debug system iniciado');
+            }
+            
+            gameLoop() {
+                if (!this.running) return;
+                
+                this.update();
+                this.render();
+                
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+        
+        // Inicializar cuando se cargue la página
+        window.addEventListener('load', () => {
+            const canvas = document.getElementById('canvas');
+            const debugSystem = new PitchDebugSystem(canvas);
+            
+            console.log('✅ Test de debug inicializado');
+            console.log('🎯 Haz clic en el canvas y presiona las flechas ↑ y ↓');
+        });
+    </script>
+</body>
+</html>

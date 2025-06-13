@@ -39,6 +39,13 @@ class MenuManager {
   startGame() {
     this.menu.style.display = 'none';
     this.canvas.style.display = 'block';
+    // Dar foco al canvas para recibir eventos de teclado
+    this.canvas.setAttribute('tabindex', '0');
+    this.canvas.focus();
+    // Asegurar foco en el body y ventana
+    document.body.setAttribute('tabindex', '0');
+    document.body.focus();
+    if (window.focus) window.focus();
     this.gameInfo.style.display = 'block';
     
     setTimeout(() => {
@@ -47,6 +54,19 @@ class MenuManager {
         if (this.game.init()) {
           this.game.start();
           console.log('✅ Juego iniciado correctamente');
+          // Asignar listener de flechas para ajustar pitch directamente
+          document.addEventListener('keydown', e => {
+            if (!window.player) return;
+            const step = 0.1; // incremento de pitch
+            if (e.code === 'ArrowUp') {
+              e.preventDefault();
+              window.player.pitch = Math.min(window.CONFIG.player.maxPitch, window.player.pitch + step);
+            }
+            if (e.code === 'ArrowDown') {
+              e.preventDefault();
+              window.player.pitch = Math.max(window.CONFIG.player.minPitch, window.player.pitch - step);
+            }
+          });
         } else {
           throw new Error('Error en la inicialización del juego');
         }

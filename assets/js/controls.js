@@ -6,11 +6,11 @@ window.Controls = {
     y: 0,
     sensitivity: 0.002
   },
-  
-  init() {
-    console.log('🎮 Controls inicializando...');
-    this.setupKeyboardListeners();
-    this.setupMouseListeners();
+    init() {
+    console.log('🎮 Controls desactivado - usando InputSystem');
+    // DESACTIVADO: Para evitar conflictos con InputSystem y game.js
+    // this.setupKeyboardListeners();
+    // this.setupMouseListeners();
   },
   
   setupKeyboardListeners() {

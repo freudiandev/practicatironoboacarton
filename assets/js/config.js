@@ -1,41 +1,61 @@
+// Como el libro de reglas del juego - aquí están todas las configuraciones
 const CONFIG = {
   world: {
-    gridRows: 25,
-    gridCols: 25,
-    cellSize: 64,
-    fov: Math.PI / 3, // 60 grados como DOOM
-    maxRenderDistance: 1000,
-    wallHeight: 64
+    gridRows: 25, // Cuántas filas tiene el laberinto (como una cuadrícula)
+    gridCols: 25, // Cuántas columnas tiene el laberinto
+    cellSize: 64, // Qué tan grande es cada casilla del mapa
+    fov: Math.PI / 3, // Cuánto vemos a los lados (como un campo de visión de 60 grados)
+    maxRenderDistance: 1000, // Qué tan lejos podemos ver
+    wallHeight: 64 // Qué tan altas son las paredes
   },
-  
+
   player: {
-    health: 100,
-    maxAmmo: 30,
-    speed: 120,
-    startX: 192, // 3 * 64
-    startZ: 192, // 3 * 64
-    startY: 32
+    health: 100, // Cuánta vida tiene nuestro héroe
+    maxAmmo: 30, // Cuántas balas puede tener máximo
+    speed: 120, // Qué tan rápido puede correr
+    startX: 192, // Dónde empieza en el mapa (lado a lado) - como 3 casillas
+    startZ: 192, // Dónde empieza en el mapa (adelante/atrás) - como 3 casillas
+    startY: 32, // Qué tan alto está del suelo al empezar
+    minCameraHeight: -30,  // Qué tan abajo puede mirar la cámara
+    maxCameraHeight: 100,  // Qué tan arriba puede mirar la cámara
+    cameraHeight: 32,      // Altura normal de los ojos
+    minPitch: -Math.PI/3,  // Límite para mirar hacia abajo (como -60 grados)
+    maxPitch: Math.PI/3,   // Límite para mirar hacia arriba (como 60 grados)
+    pitch: 0               // Hacia dónde mira verticalmente (0 = horizonte)
   },
-  
+
+  controls: {
+    mouseSensitivity: 0.2,              // Qué tan sensible es el mouse para apuntar
+    mouseRotationSensitivity: 0.002,    // Qué tan sensible es para girar la vista
+    rotationSpeed: 2.5,                 // Qué tan rápido giramos con las flechas
+    pitchSpeed: 1.5,                    // Qué tan rápido miramos arriba/abajo con flechas
+    mousePitchSensitivity: 0.001,       // Sensibilidad para mirar arriba/abajo con mouse
+    crosshairPrecision: true,           // La cruceta sigue exactamente el mouse
+    hideCursor: true,                   // Ocultar el cursor normal del mouse
+    enableMouseCamera: true,            // Permitir controlar la cámara con el mouse
+    enablePointerLock: true             // Bloquear el mouse en el juego como FPS
+  },
+
   enemy: {
-    health: 100,
-    speed: 40,
-    maxCount: 10,
-    spawnCooldown: 2500,
-    detectionRange: 300,
-    size: 48,
-    headHeight: 0.15,
-    sprites: [
-      'assets/images/noboa-presidencial.png',
-      'assets/images/noboa-deportivo.png',
-      'assets/images/noboa-casual.png'
+    health: 100, // Cuánta vida tiene cada enemigo
+    speed: 40, // Qué tan rápido caminan los enemigos
+    maxCount: 10, // Cuántos enemigos máximo puede haber al mismo tiempo
+    spawnCooldown: 2500, // Cuánto tiempo esperar antes de crear un nuevo enemigo
+    detectionRange: 300, // Qué tan lejos pueden ver a nuestro héroe
+    size: 48, // Qué tan grandes son (ancho)
+    heightMultiplier: 1.5625, // Cuánto más altos son (56.25% más altos)
+    headHeight: 0.15, // La cabeza es el 15% de arriba del enemigo
+    sprites: [ // Lista de imágenes para los enemigos
+      'assets/images/noboa-presidencial.png', // Noboa en traje
+      'assets/images/noboa-deportivo.png', // Noboa en ropa deportiva
+      'assets/images/noboa-casual.png' // Noboa en ropa casual
     ]
   },
-  
+
   bullet: {
-    speed: 800,
-    bodyDamage: 25,
-    headDamage: 75,
+    speed: 800, // Qué tan rápido vuelan las balas
+    bodyDamage: 25, // Cuánto daño hacen las balas al cuerpo
+    headDamage: 100, // Daño a la cabeza (mata instantáneamente)
     lifetime: 3000,
     cooldown: 150,
     size: 6
@@ -45,11 +65,13 @@ const CONFIG = {
     volume: 0.8,
     enabled: true
   },
-
   ui: {
     crosshairColor: '#FF0000',
     crosshairSize: 25,
-    headshotDuration: 1500
+    headshotDuration: 1500,
+    headshotColor: '#FF0000',
+    headshotFontSize: 48,
+    headshotText: 'HEADSHOT!'
   }
 };
 
