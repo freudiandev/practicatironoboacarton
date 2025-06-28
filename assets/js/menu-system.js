@@ -121,7 +121,7 @@ class GameMenuSystem {
     
     // Registrar en learning memory
     if (window.learningMemory) {
-      window.learningMemory.logEvent('GAME_STARTED_FROM_MENU', {
+      window.learningMemory.registrarEvento('GAME_STARTED_FROM_MENU', {
         timestamp: Date.now(),
         menuSystem: 'active'
       });
@@ -184,16 +184,26 @@ class GameMenuSystem {
   }
   
   initializeGameEngine() {
-    // Esperar a que el motor del juego esté disponible
+    // Intentar usar el nuevo sistema DOOM-INTERMEDIO
     const tryInitialize = () => {
-      if (typeof UnifiedGame !== 'undefined' && !window.unifiedGame) {
+      if (window.doomGame && typeof window.doomGame.start === 'function') {
         try {
-          console.log('🎯 Inicializando motor del juego...');
+          console.log('🎯 Iniciando DOOM Intermedio...');
+          window.doomGame.start();
+          console.log('✅ DOOM Intermedio iniciado exitosamente');
+        } catch (error) {
+          console.error('❌ Error al iniciar DOOM Intermedio:', error);
+          // Fallback a otros sistemas
+          this.tryAlternativeGameSystems();
+        }
+      } else if (typeof UnifiedGame !== 'undefined' && !window.unifiedGame) {
+        try {
+          console.log('🎯 Fallback: Inicializando motor unificado...');
           window.unifiedGame = new UnifiedGame();
           window.unifiedGame.start();
-          console.log('✅ Motor del juego inicializado exitosamente');
+          console.log('✅ Motor unificado inicializado exitosamente');
         } catch (error) {
-          console.error('❌ Error al inicializar motor del juego:', error);
+          console.error('❌ Error al inicializar motor unificado:', error);
         }
       } else if (window.unifiedGame) {
         console.log('✅ Motor del juego ya estaba inicializado');
@@ -204,6 +214,30 @@ class GameMenuSystem {
     };
     
     tryInitialize();
+  }
+  
+  tryAlternativeGameSystems() {
+    console.log('🔄 Intentando sistemas alternativos...');
+    
+    // Lista de sistemas de juego alternativos
+    const alternatives = [
+      () => window.unifiedGame && window.unifiedGame.start(),
+      () => window.startGame && window.startGame(),
+      () => window.init && window.init(),
+      () => typeof gameLoop === 'function' && gameLoop()
+    ];
+    
+    for (let alternative of alternatives) {
+      try {
+        alternative();
+        console.log('✅ Sistema alternativo iniciado');
+        return;
+      } catch (error) {
+        console.log('⚠️ Sistema alternativo falló, probando siguiente...');
+      }
+    }
+    
+    console.error('❌ No se pudo iniciar ningún sistema de juego');
   }
   
   // Método para alternar entre menú y juego

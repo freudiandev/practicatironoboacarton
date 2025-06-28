@@ -3,18 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tiro con Noboa de Cartón - Juego DOOM</title>
+  <title>DOOM: Versión Presidencial - Noboa de Cartón</title>
   
   <!-- Meta tags para SEO y redes sociales -->
   <meta name="description" content="Juego de tiro en primera persona estilo DOOM con Noboa de cartón como protagonista">
   <meta name="keywords" content="juego, doom, fps, tiro, noboa, javascript">
   <meta name="author" content="Samy y Álex">
-  
-  <!-- Open Graph para redes sociales -->
-  <meta property="og:title" content="Tiro con Noboa de Cartón">
-  <meta property="og:description" content="Juego de tiro en primera persona estilo DOOM">
-  <meta property="og:type" content="game">
-  <meta property="og:image" content="assets/images/thumbnail.jpeg">
   
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
@@ -22,16 +16,25 @@
   
   <!-- Estilos CSS -->
   <link rel="stylesheet" href="assets/css/game-main.css">
+
+  <!-- 🤖 SISTEMAS DE IA Y MACHINE LEARNING (OPTIMIZADOS PARA RENDIMIENTO) -->
+  <!-- DESHABILITADOS TEMPORALMENTE PARA MEJOR RENDIMIENTO -->
+  <!-- <script src="assets/js/correctors/CORRECTOR-CRITICO-LEARNING-MEMORY.js"></script> -->
+  <!-- <script src="assets/js/ai/learning-memory-advanced.js"></script> -->
+  <!-- <script src="assets/js/ai/learning-machine-advanced.js"></script> -->
+  <!-- <script src="assets/js/ai/CLASIFICADOR-INTELIGENTE-JS.js"></script> -->
+  
 </head>
 
-<body>  <!-- Menú Principal del Juego -->
+<body>
+  <!-- Menú Principal del Juego -->
   <div class="main-menu" id="mainMenu">
     <div class="menu-background">
       <div class="menu-container">
         <div class="game-title">
           <h1>🎯 TIRO CON NOBOA</h1>
           <h2>DE CARTÓN</h2>
-          <p class="subtitle">Edición DOOM Presidencial</p>
+          <p class="subtitle">Edición DOOM Presidencial - VERSIÓN LIMPIA</p>
         </div>
         
         <div class="menu-buttons">
@@ -57,8 +60,8 @@
         </div>
         
         <div class="menu-footer">
-          <p>Desarrollado con ❤️ por Samy y Álex</p>
-          <p class="version">Versión 3.0 - Sistema Unificado</p>
+          <p>Desarrollado con ❤️ por <a href="https://www.instagram.com/freudiandev/" target="_blank">freudianDev</a> by <a href="https://cpunkec.6te.net" target="_blank"> CiberPunk EC </a></p>
+          <p class="version">Versión Optimizada 0.5.0 - Alto Rendimiento</p>
         </div>
       </div>
     </div>
@@ -76,10 +79,6 @@
             <span class="key">W A S D</span>
             <span class="desc">Caminar (adelante, izquierda, atrás, derecha)</span>
           </div>
-          <div class="control-item">
-            <span class="key">↑ ↓ ← →</span>
-            <span class="desc">Movimiento alternativo</span>
-          </div>
         </div>
         
         <div class="control-section">
@@ -89,24 +88,40 @@
             <span class="desc">Mirar alrededor (requiere clic para bloquear)</span>
           </div>
           <div class="control-item">
-            <span class="key">Q / E</span>
-            <span class="desc">Girar cámara (alternativo)</span>
-          </div>
-          <div class="control-item">
             <span class="key">↑ ↓</span>
-            <span class="desc">Mirar arriba/abajo (pitch)</span>
+            <span class="desc">Mirar arriba/abajo (flechas como alternativa)</span>
           </div>
         </div>
         
         <div class="control-section">
-          <h3>⚔️ Combate</h3>
+          <h3>🔫 Combate Unificado</h3>
           <div class="control-item">
             <span class="key">ESPACIO</span>
-            <span class="desc">Disparar</span>
+            <span class="desc">Disparar (sistema unificado + emergencia)</span>
           </div>
           <div class="control-item">
-            <span class="key">ENTER</span>
-            <span class="desc">Disparar (alternativo)</span>
+            <span class="key">🖱️ CLIC</span>
+            <span class="desc">Disparar (alternativo con mouse bloqueado)</span>
+          </div>
+          <div class="control-item">
+            <span class="key">ESC</span>
+            <span class="desc">Liberar mouse / Menú</span>
+          </div>
+        </div>
+        
+        <div class="control-section">
+          <h3>🔧 Debugging</h3>
+          <div class="control-item">
+            <span class="key">F1</span>
+            <span class="desc">window.BalasUnificadas.estado()</span>
+          </div>
+          <div class="control-item">
+            <span class="key">F2</span>
+            <span class="desc">Sistema de emergencia (respaldo)</span>
+          </div>
+          <div class="control-item">
+            <span class="key">F3</span>
+            <span class="desc">window.BalasUnificadas.test()</span>
           </div>
         </div>
       </div>
@@ -118,40 +133,14 @@
     <div class="panel-content">
       <button class="close-btn" id="closeDonations">✕</button>
       <h2>💖 APOYA EL PROYECTO</h2>
-      <div class="donation-content">
-        <p>¡Gracias por jugar Tiro con Noboa de Cartón!</p>
-        <p>Si te gusta el juego, considera apoyarnos:</p>
-        
-        <div class="donation-methods">
-          <div class="donation-item">
-            <h3>🏦 Banco Pichincha</h3>
-            <p>Cuenta de ahorros</p>
-            <div class="account-info">
-              <span class="account-number">2100123456</span>
-              <button class="copy-btn" onclick="copyToClipboard('2100123456')">📋 Copiar</button>
-            </div>
-          </div>
-          
-          <div class="donation-item">
-            <h3>📱 PayPal</h3>
-            <p>Donación internacional</p>
-            <div class="account-info">
-              <span class="account-number">samyalex.dev@gmail.com</span>
-              <button class="copy-btn" onclick="copyToClipboard('samyalex.dev@gmail.com')">📋 Copiar</button>
-            </div>
-          </div>
-          
-          <div class="donation-item">
-            <h3>💰 Crypto</h3>
-            <p>Bitcoin</p>
-            <div class="account-info">
-              <span class="account-number">1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span>
-              <button class="copy-btn" onclick="copyToClipboard('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')">📋 Copiar</button>
-            </div>
-          </div>
-        </div>
-        
-        <p class="donation-note">💝 Cualquier donación nos ayuda a seguir desarrollando juegos increíbles!</p>
+      <p>Si te gusta este juego, considera hacer una donación para apoyar el desarrollo.</p>
+      <div class="donation-buttons">
+        <a href="https://paypal.me/yourpaypal" target="_blank" class="donation-btn">
+          💳 PayPal
+        </a>
+        <a href="https://ko-fi.com/yourkofi" target="_blank" class="donation-btn">
+          ☕ Ko-fi
+        </a>
       </div>
     </div>
   </div>
@@ -160,142 +149,306 @@
   <div class="info-panel" id="creditsPanel">
     <div class="panel-content">
       <button class="close-btn" id="closeCredits">✕</button>
-      <h2>👥 CRÉDITOS DEL JUEGO</h2>
-      <div class="credits-content">
-        <div class="credit-section">
-          <h3>🎮 Desarrollo</h3>
-          <p><strong>Samy y Álex</strong> - Programación principal</p>
-          <p><strong>GitHub Copilot</strong> - Asistente de desarrollo</p>
-        </div>
-        
-        <div class="credit-section">
-          <h3>🎨 Arte y Diseño</h3>
-          <p><strong>Sprites de Noboa</strong> - Imágenes originales</p>
-          <p><strong>Interfaz</strong> - Diseño propio</p>
-        </div>
-        
-        <div class="credit-section">
-          <h3>🎵 Audio</h3>
-          <p><strong>Efectos de sonido</strong> - Biblioteca libre</p>
-          <p><strong>Música ambiente</strong> - Composición original</p>
-        </div>
-        
-        <div class="credit-section">
-          <h3>🔧 Tecnología</h3>
-          <p><strong>Motor</strong> - JavaScript puro + Canvas 2D</p>
-          <p><strong>Raycasting</strong> - Algoritmo personalizado</p>
-          <p><strong>IA de protección</strong> - Learning Memory System</p>
-        </div>
-        
-        <div class="credit-section">
-          <h3>🙏 Agradecimientos Especiales</h3>
-          <p><strong>Comunidad JavaScript</strong> - Por el apoyo</p>
-          <p><strong>Jugadores beta</strong> - Por las pruebas</p>
-          <p><strong>Tú</strong> - Por jugar nuestro juego!</p>
-        </div>
-        
-        <div class="version-info">
-          <p><strong>Versión:</strong> 3.0 DOOM Presidencial</p>
-          <p><strong>Fecha:</strong> 22 de junio de 2025</p>
-          <p><strong>Licencia:</strong> Uso personal y educativo</p>
-        </div>
+      <h2>👥 CRÉDITOS</h2>
+      <div class="credits-section">
+        <h3>🎮 Desarrollo</h3>
+        <p>freudianDev - Desarrollador Principal</p>
+        <p>CiberPunk EC - Equipo de Desarrollo</p>
+      </div>
+      
+      <div class="credits-section">
+        <h3>🎨 Arte y Diseño</h3>
+        <p>Assets originales de DOOM</p>
+        <p>Sprites personalizados de Noboa</p>
+      </div>
+      
+      <div class="credits-section">
+        <h3>🔧 Tecnología</h3>
+        <p>JavaScript ES6+</p>
+        <p>HTML5 Canvas</p>
+        <p>CSS3</p>
       </div>
     </div>
   </div>
+
+  <!-- Canvas del Juego -->
+  <canvas id="gameCanvas" style="display: none;"></canvas>
+
+  <!-- ========================================= -->
+  <!-- SCRIPTS ESENCIALES ÚNICAMENTE -->
+  <!-- CORRECTOR DE BUCLES SPAM IMPLEMENTADO -->
+  <!-- CORRECTOR CÁMARA VERTICAL IMPLEMENTADO -->
+  <!-- ========================================= -->
   
-  <!-- Panel de debug (oculto por defecto) -->
-  <div class="debug-panel" id="debugPanel" style="display: none;">
-    <div id="fpsCounter">FPS: 60</div>
-    <div id="playerInfo">Sistema: Optimizado</div>
-    <div id="gameStatus">Estado: Funcionando</div>
-  </div>
+  <!-- 1. MOTOR PRINCIPAL DEL JUEGO -->
+  <script src="assets/js/core/DOOM-INTERMEDIO.js"></script>
+  <script src="assets/js/physics/WorldPhysics.js"></script>
   
-  <!-- Canvas del juego -->
-  <canvas id="gameCanvas"></canvas>  <!-- Scripts del juego OPTIMIZADOS -->
-  <!-- 0. REPARACIÓN AUTOMÁTICA DE EMERGENCIA (EJECUTA PRIMERO) -->
-  <script src="REPARACION-AUTOMATICA.js"></script>
+  <!-- ⚡ SISTEMA DE OPTIMIZACIÓN DE RENDIMIENTO (CRÍTICO) -->
+  <script src="assets/js/optimization/SISTEMA-OPTIMIZACION-RENDIMIENTO.js"></script>
   
-  <!-- 0.1. SOLUCIÓN RÁPIDA DE ERRORES (CORRECCIÓN INMEDIATA) -->
-  <script src="SOLUCION-RAPIDA-ERRORES.js"></script>
+  <script>
+    if (window.learningMemory && window.learningMemory.registrarEvento) {
+      window.learningMemory.registrarEvento('LOAD_WORLD_PHYSICS', { timestamp: Date.now() });
+    }
+  </script>
   
-  <!-- 0.2. LIMPIEZA DE DUPLICADOS (Previene conflictos de UI) -->
-  <script src="LIMPIEZA-DUPLICADOS.js"></script>
+  <!-- 2. CORRECTOR MAESTRO UNIFICADO (CONTROLES PRINCIPALES) -->
+  <script src="assets/js/correctors/CORRECTOR-MAESTRO-UNIFICADO.js"></script>
   
-  <!-- 1. Sistema de Memoria IA (Crítico para proteger sistemas) -->
-  <script src="assets/js/learning-memory.js"></script>
+  <!-- 2.1. CORRECTOR DE BUCLES SPAM (ANTI-BUCLES INFINITOS) -->
+  <script src="assets/js/correctors/CORRECTOR-BUCLES-SPAM.js"></script>
   
-  <!-- 1.1. Sistema de Voz Activa para Learning Memory -->
-  <script src="learning-memory-voice.js"></script>
+  <!-- 2.2. CORRECTOR CÁMARA VERTICAL AVANZADO (RAYCASTING COMPLETO) -->
+  <script src="assets/js/correctors/CORRECTOR-CAMARA-VERTICAL-AVANZADO.js"></script>
+  <script>
+    if (window.learningMemory && window.learningMemory.registrarEvento) {
+      window.learningMemory.registrarEvento('REACTIVACION_CAMARA_VERTICAL', { timestamp: Date.now() });
+    }
+  </script>
   
-  <!-- 1.2. Integrador de Sistemas de Voz -->
-  <script src="integrador-voz.js"></script>
+  <!-- 2.3. INICIALIZADOR DE CONTROLES POST-DOOM (CRÍTICO) -->
+  <script src="assets/js/correctors/INICIALIZADOR-CONTROLES-POST-DOOM.js"></script>
   
-  <!-- 1.3. Sistema de Emergencia y Autocorrección -->
-  <script src="EMERGENCIA-AUTOCORRECCION.js"></script>
-    <!-- 2. Audio (Sistema independiente) -->
-  <script src="assets/js/audio.js"></script>
+   
+  <!-- ⚠️ SISTEMA ÚNICO FINAL - REEMPLAZA TODOS LOS ANTERIORES ⚠️ -->
+  <script src="assets/js/correctors/SISTEMA-BALA-UNIFICADO-DEFINITIVO.js"></script>
   
-  <!-- 2.1. Sistema de Menú Principal -->
+  <!-- 🚨 SISTEMA DE EMERGENCIA TEMPORAL (RESPALDO) -->
+  <script src="assets/js/correctors/SISTEMA-EMERGENCIA-DISPARO.js"></script>
+  
+  <!-- 3. SISTEMA DE COLORES VAPORWAVE (DESHABILITADO PARA RENDIMIENTO) -->
+  <!-- <script src="assets/js/systems/SISTEMA-COLORES-VAPORWAVE.js"></script> -->
+  
+  <!-- 4. SISTEMA DE GRILLA FIJA VAPORWAVE (DESHABILITADO PARA RENDIMIENTO) -->
+  <!-- <script src="assets/js/systems/SISTEMA-GRILLA-FIJA-VAPORWAVE.js"></script> -->
+  
+  <!-- 4.1. SISTEMA DE CÁMARA VERTICAL (DESHABILITADO PARA RENDIMIENTO) -->
+  <!-- <script src="assets/js/systems/SISTEMA-CAMARA-VERTICAL.js"></script> -->
+  
+  <!-- 5. SISTEMA DE CONSTRUCCIÓN DE LABERINTO -->
+  <script src="assets/js/systems/CONSTRUCCION-DEFINITIVA-LABERINTO.js"></script>
+  
+  <!-- 6. SISTEMA DE MENÚ -->
   <script src="assets/js/menu-system.js"></script>
   
-  <!-- 3. Sistema de decoración (Opcional pero funcional) -->
-  <script src="assets/js/decorative-system.js"></script>
-    <!-- 4. Sprites de Noboa (Específico del juego) -->
-  <script src="assets/js/noboa-sprites.js"></script>
+  <!-- 7. SISTEMA DE AUDIO -->
+  <script src="assets/js/audio.js"></script>
   
-  <!-- 5. SISTEMA UNIFICADO PRINCIPAL (VERSIÓN LIMPIA FUNCIONANDO) -->
-  <script src="DOOM-LIMPIO.js"></script>
   
-  <!-- 6. VALIDACIÓN FINAL DEL SISTEMA -->
-  <script src="VALIDACION-FINAL.js"></script>
-    <!-- 7. TEST DE CONTROLES DE MOUSE -->
-  <script src="TEST-CONTROLES-MOUSE.js"></script>
-    <!-- 8. TEST DIAGNÓSTICO ESPECÍFICO -->
-  <script src="TEST-DIAGNOSTICO-MOUSE.js"></script>
-    <!-- 9. TEST DE SEPARACIÓN DE EJES -->
-  <script src="TEST-SEPARACION-EJES.js"></script>
+  <!-- 9. LEARNING MEMORY E IA (OPCIONAL) -->
+  <!-- <script src="assets/js/ai/learning-memory-advanced.js"></script> -->
   
-  <!-- 10. TEST DE ARQUITECTURA SEPARADA -->
-  <script src="TEST-ARQUITECTURA-SEPARADA.js"></script>
+  <!-- 10. VALIDADOR FINAL -->
+  <script src="assets/js/systems/VALIDADOR-ARCHIVOS.js"></script>
   
-  <!-- 11. EMERGENCIA - REPARACIÓN DE PITCH -->
-  <script src="EMERGENCIA-COORDENADAS.js"></script>
-    <!-- 12. CORRECCIÓN AUTOMÁTICA DE ERRORES -->
-  <script src="CORRECCION-FINAL-MOUSE.js"></script>
-    <!-- 13. VALIDACIÓN COMPLETA DEL SISTEMA DE VOZ ACTIVA -->
-  <script src="VALIDACION-VOZ-ACTIVA.js"></script>
-    <!-- 14. CONSOLIDACIÓN FINAL DEL SISTEMA -->
-  <script src="CONSOLIDACION-FINAL.js"></script>
-    <!-- 15. DIAGNÓSTICO COMPLETO FINAL -->
-  <script src="DIAGNOSTICO-COMPLETO.js"></script>
-  
-  <!-- 16. VERIFICACIÓN FINAL DEL SISTEMA UNIFICADO -->
-  <script src="VERIFICACION-FINAL.js"></script>
-    <!-- Analytics y metadata -->
+  <!-- 11. DIAGNÓSTICO RÁPIDO DE CONTROLES -->
+  <script src="assets/js/systems/DIAGNOSTICO-RAPIDO-CONTROLES.js"></script>
+
+  <!-- ========================================= -->
+  <!-- SCRIPT DE INICIALIZACIÓN SIMPLIFICADO -->
+  <!-- ========================================= -->
   <script>
-    console.log('🎮 Tiro con Noboa de Cartón - Versión 3.0 OPTIMIZADA + MENÚ MODERNO');
-    console.log('👨‍💻 Desarrollado por Samy y Álex');
-    console.log('🚀 Motor: JavaScript puro + Canvas 2D (Sistema Unificado)');
-    console.log('📅 Fecha: 22 de junio de 2025 - MENÚ PRINCIPAL IMPLEMENTADO');
-    console.log('🧹 Código limpio y refactorizado + Sistema de IA + Menú Moderno');
+    console.log('🎮 Inicializando DOOM: Noboa de Cartón - Versión Limpia');
     
-    // Información de optimización
-    setTimeout(() => {
-      console.log('📊 NUEVAS CARACTERÍSTICAS:');
-      console.log('  ✅ Menú principal moderno y atractivo');
-      console.log('  ✅ Eliminada pantalla de carga molesta');
-      console.log('  ✅ Panel de controles interactivo');
-      console.log('  ✅ Sistema de donaciones integrado');
-      console.log('  ✅ Créditos completos del juego');
-      console.log('  ✅ Diseño responsive para móviles');
-      console.log('  ✅ Animaciones suaves y modernas');
-      console.log('  ✅ Navegación intuitiva con ESC');
-      console.log('  🚨 REPARACIÓN AUTOMÁTICA activada');
-      console.log('  🤖 SISTEMA DE VOZ ACTIVA implementado');
-      console.log('  🛡️ PROTECCIÓN EN TIEMPO REAL operativa');
-      console.log('  🎮 MENÚ INTERACTIVO completamente funcional');
-    }, 2000);
+    // Configuración de errores mínima
+    window.addEventListener('error', (e) => {
+      if (!e.filename.includes('404') && !e.message.includes('Failed to load')) {
+        console.log('⚠️ Error controlado:', e.message);
+      }
+    });
+    
+    // Handler para debugging F1, F2, F3
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        if (window.BalasUnificadas) {
+          console.log('🔧 DEBUGGING - Estado del sistema unificado:');
+          console.log(window.BalasUnificadas.estado());
+        } else {
+          console.log('⚠️ Sistema unificado no disponible aún');
+        }
+      }
+      
+      if (e.key === 'F3') {
+        e.preventDefault();
+        if (window.BalasUnificadas && window.BalasUnificadas.test) {
+          console.log('🧪 TESTING COMPLETO DEL SISTEMA:');
+          const resultado = window.BalasUnificadas.test();
+          console.log('📊 Resultado del test:', resultado);
+        } else {
+          console.log('⚠️ Sistema de testing no disponible');
+        }
+      }
+    });
+    
+    // Configuración simplificada del menú
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('📱 DOM cargado - Configurando interfaz...');
+      
+      // Configurar botón de inicio
+      const startButton = document.getElementById('startGame');
+      if (startButton) {
+        startButton.addEventListener('click', iniciarJuego);
+      }
+      
+      // Configurar paneles informativos
+      configurarPaneles();
+      
+      console.log('✅ Interfaz configurada correctamente');
+    });
+    
+    // Función para iniciar el juego
+    function iniciarJuego() {
+      console.log('🚀 Iniciando juego...');
+      
+      try {
+        // Ocultar menú
+        const menu = document.getElementById('mainMenu');
+        if (menu) menu.style.display = 'none';
+        
+        // Mostrar canvas
+        const canvas = document.getElementById('gameCanvas');
+        if (canvas) {
+          canvas.style.display = 'block';
+          canvas.style.cursor = 'crosshair';
+        }
+        
+        // Inicializar motor DOOM
+        if (typeof init === 'function') {
+          init();
+          console.log('✅ Motor del juego inicializado');
+        }
+        
+        // Iniciar el juego
+        if (typeof startGame === 'function') {
+          startGame();
+          console.log('✅ Juego iniciado');
+        }
+        
+        // Inicializar sistemas avanzados
+        setTimeout(() => {
+          // Sistema de disparo
+          if (window.SistemaDisparo) {
+            window.SistemaDisparo.inicializar();
+            console.log('✅ Sistema de disparo inicializado');
+          }
+          
+          // Efectos visuales
+          if (window.EfectosBala) {
+            window.EfectosBala.inicializar();
+            console.log('✅ Efectos visuales inicializados');
+          }
+          
+          // Audio 8-bits
+          if (window.Audio8Bits) {
+            window.Audio8Bits.inicializar();
+            console.log('✅ Audio 8-bits inicializado');
+          }
+          
+          // El corrector maestro se encarga de todo lo demás
+          console.log('🎮 JUEGO LISTO - El Corrector Maestro maneja todos los controles');
+          console.log('🖱️ Haz clic en la pantalla para capturar el mouse');
+          console.log('⌨️ Usa WASD para moverte, clic para disparar, ESC para liberar mouse');
+          
+        }, 500);
+        
+      } catch (error) {
+        console.error('❌ Error al iniciar juego:', error);
+        alert('Error al iniciar el juego. Revisa la consola para más detalles.');
+      }
+    }
+    
+    // Configurar paneles informativos
+    function configurarPaneles() {
+      // Panel de controles
+      const showControls = document.getElementById('showControls');
+      const controlsPanel = document.getElementById('controlsPanel');
+      const closeControls = document.getElementById('closeControls');
+      
+      if (showControls && controlsPanel && closeControls) {
+        showControls.addEventListener('click', () => {
+          controlsPanel.style.display = 'flex';
+        });
+        
+        closeControls.addEventListener('click', () => {
+          controlsPanel.style.display = 'none';
+        });
+      }
+      
+      // Panel de donaciones
+      const showDonations = document.getElementById('showDonations');
+      const donationsPanel = document.getElementById('donationsPanel');
+      const closeDonations = document.getElementById('closeDonations');
+      
+      if (showDonations && donationsPanel && closeDonations) {
+        showDonations.addEventListener('click', () => {
+          donationsPanel.style.display = 'flex';
+        });
+        
+        closeDonations.addEventListener('click', () => {
+          donationsPanel.style.display = 'none';
+        });
+      }
+      
+      // Panel de créditos
+      const showCredits = document.getElementById('showCredits');
+      const creditsPanel = document.getElementById('creditsPanel');
+      const closeCredits = document.getElementById('closeCredits');
+      
+      if (showCredits && creditsPanel && closeCredits) {
+        showCredits.addEventListener('click', () => {
+          creditsPanel.style.display = 'flex';
+        });
+        
+        closeCredits.addEventListener('click', () => {
+          creditsPanel.style.display = 'none';
+        });
+      }
+      
+      // Cerrar paneles con clic fuera
+      document.addEventListener('click', (e) => {
+        const panels = [controlsPanel, donationsPanel, creditsPanel];
+        panels.forEach(panel => {
+          if (panel && panel.style.display === 'flex' && 
+              !panel.contains(e.target) && 
+              !e.target.closest('.menu-btn')) {
+            panel.style.display = 'none';
+          }
+        });
+      });
+    }
+    
+    console.log('✅ Script de inicialización cargado correctamente');
   </script>
 
+  <!-- Registro en Learning Memory de desactivación de grilla/vaporwave -->
+  <script>
+    if (window.learningMemory && window.learningMemory.registrarEvento) {
+      window.learningMemory.registrarEvento('DESACTIVACION_SISTEMAS_VAPORWAVE', {
+        sistemasDesactivados: [
+          'SISTEMA-COLORES-VAPORWAVE.js',
+          'SISTEMA-GRILLA-FIJA-VAPORWAVE.js',
+          'SISTEMA-CAMARA-VERTICAL.js',
+          'CORRECTOR-CAMARA-VERTICAL-AVANZADO.js'
+        ],
+        descripcion: 'Se eliminaron grillas y líneas dinámicas del piso y cámara para corregir error de líneas verticales persistentes en pantalla.'
+      });
+    }
+  </script>
+  <!-- FIN registro Learning Memory -->
+
+  <!-- VALIDADOR DE ARCHIVOS POST-REORGANIZACIÓN -->
+  <script src="assets/js/systems/VALIDADOR-ARCHIVOS.js"></script>
+
+  <!-- ========================================= -->
+  <!-- VALIDADOR POST-CORRECCIÓN (FINAL) -->
+  <!-- ========================================= -->
+  <script src="assets/js/debug/VALIDADOR-POST-CORRECCION.js"></script>
+
+  <!-- ========================================= -->
+  <!-- FIN DE CARGA DE SCRIPTS -->
+  <!-- SISTEMA OPTIMIZADO Y VALIDADO -->
+  <!-- ========================================= -->
 </body>
 </html>

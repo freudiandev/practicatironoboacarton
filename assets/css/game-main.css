@@ -31,7 +31,7 @@ body {
   height: 100vh !important;
   z-index: 10 !important;
   background: #000 !important;
-  cursor: crosshair;
+  cursor: default; /* Cursor normal por defecto */
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
@@ -39,6 +39,16 @@ body {
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
+}
+
+/* Cursor de mira SOLO cuando el juego está activo (pointer locked) */
+#gameCanvas.pointer-locked {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><g fill="none" stroke="%23ff0000" stroke-width="3"><line x1="16" y1="2" x2="16" y2="14"/><line x1="16" y1="18" x2="16" y2="30"/><line x1="2" y1="16" x2="14" y2="16"/><line x1="18" y1="16" x2="30" y2="16"/><circle cx="16" cy="16" r="3" fill="%23ff0000" stroke="%23ffffff" stroke-width="1"/></g></svg>') 16 16, crosshair;
+}
+
+/* Cursor de disparo (cuando se hace clic y está en modo juego) */
+#gameCanvas.pointer-locked.shooting {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><g fill="none" stroke="%23ff4444" stroke-width="4"><line x1="16" y1="1" x2="16" y2="15"/><line x1="16" y1="17" x2="16" y2="31"/><line x1="1" y1="16" x2="15" y2="16"/><line x1="17" y1="16" x2="31" y2="16"/><circle cx="16" cy="16" r="4" fill="%23ff4444" stroke="%23ffff00" stroke-width="2"/></g></svg>') 16 16, crosshair;
 }
 
 /* UI del juego */
@@ -808,4 +818,125 @@ body {
 
 #gameCanvas.active {
   display: block !important;
+}
+
+/* ================================
+   POSTER OVERLAY SYSTEM
+   ================================ */
+
+/* Contenedor principal para posters HTML */
+#poster-overlay-container {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  z-index: 15 !important; /* Encima del canvas pero debajo de la UI */
+  overflow: hidden !important;
+}
+
+/* Estilos para las imágenes de posters */
+#poster-overlay-container img {
+  position: absolute !important;
+  display: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  user-select: none !important;
+  pointer-events: none !important;
+  
+  /* Optimización de renderizado para imágenes */
+  image-rendering: auto !important;
+  image-rendering: high-quality !important;
+  -webkit-image-rendering: -webkit-optimize-contrast !important;
+  
+  /* Transiciones suaves para aparición/desaparición */
+  transition: opacity 0.1s ease-out !important;
+  
+  /* Filtros para integración visual con el juego */
+  filter: brightness(0.9) contrast(1.1) !important;
+}
+
+/* Posters visibles */
+#poster-overlay-container img[style*="display: block"] {
+  display: block !important;
+}
+
+/* Efectos de profundidad para posters lejanos */
+#poster-overlay-container img.distant {
+  filter: brightness(0.7) contrast(0.9) blur(0.5px) !important;
+}
+
+/* Efectos para posters cercanos */
+#poster-overlay-container img.close {
+  filter: brightness(1.0) contrast(1.2) !important;
+}
+
+/* ================================
+   SISTEMA DE GALERÍA DE ARTE
+   ================================ */
+
+/* Posters como obras de arte - estilo galería MEJORADO */
+#poster-overlay-container img.gallery-close {
+  filter: brightness(1.0) contrast(1.1) saturate(1.05) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(139, 69, 19, 0.6) !important; /* Marco sutil */
+  border-radius: 2px !important;
+  transition: opacity 0.2s ease !important;
+}
+
+/* Posters distantes en galería */
+#poster-overlay-container img.gallery-distant {
+  filter: brightness(0.9) contrast(1.0) saturate(1.0) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(139, 69, 19, 0.4) !important; /* Marco más sutil */
+  border-radius: 1px !important;
+  transition: opacity 0.2s ease !important;
+}
+
+/* NUEVOS ESTILOS PARA SISTEMA ULTRA SIMPLE - TAMAÑO TRIPLE ESTABLE */
+#poster-overlay-container img.poster-close {
+  filter: brightness(1.0) contrast(1.1) saturate(1.1) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+  border: 3px solid rgba(139, 69, 19, 0.8) !important;
+  border-radius: 4px !important;
+  position: fixed !important; /* FIXED para máxima estabilidad */
+  transform: none !important; /* Sin transformaciones */
+  transition: none !important; /* Sin transiciones que causen baile */
+}
+
+#poster-overlay-container img.poster-distant {
+  filter: brightness(0.9) contrast(1.0) saturate(1.0) !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5) !important;
+  border: 2px solid rgba(139, 69, 19, 0.6) !important;
+  border-radius: 3px !important;
+  position: fixed !important; /* FIXED para máxima estabilidad */
+  transform: none !important; /* Sin transformaciones */
+  transition: none !important; /* Sin transiciones que causen baile */
+}
+
+/* Límites de tamaño para TAMAÑO TRIPLE - estabilidad garantizada */
+#poster-overlay-container img.gallery-close,
+#poster-overlay-container img.gallery-distant,
+#poster-overlay-container img.poster-close,
+#poster-overlay-container img.poster-distant {
+  /* TAMAÑOS TRIPLICADOS - controlados dinámicamente por JS */
+  max-width: 600px !important;  /* Máximo absoluto TRIPLICADO (era 200px) */
+  max-height: 450px !important; /* Máximo absoluto TRIPLICADO (era 150px) */
+  min-width: 60px !important;   /* Mínimo absoluto TRIPLICADO (era 20px) */
+  min-height: 45px !important;  /* Mínimo absoluto TRIPLICADO (era 15px) */
+  
+  /* MÁXIMA ESTABILIDAD VISUAL - SIN BAILE */
+  position: fixed !important;
+  transform: none !important;
+  transform-origin: center center !important;
+  backface-visibility: hidden !important;
+  will-change: auto !important; /* Desactivar optimizaciones que causen baile */
+  transition: none !important; /* CRUCIAL: Sin transiciones */
+  
+  /* Anti-aliasing mejorado para TAMAÑO TRIPLE */
+  image-rendering: high-quality !important;
+  image-rendering: -webkit-optimize-contrast !important;
+  -webkit-font-smoothing: antialiased !important;
 }

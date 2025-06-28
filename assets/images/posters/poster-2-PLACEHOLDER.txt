@@ -1,0 +1,15 @@
+POSTER PLACEHOLDER PARA PARED TIPO 2
+
+Esta imagen debe ser reemplazada por un archivo PNG real.
+
+Recomendaciones:
+- Tamaño: 512x512 píxeles o similar
+- Formato: PNG con transparencia opcional
+- Contenido sugerido: Cartel político o informativo de Noboa
+- Colores: Usar tonos que contrasten bien con el entorno del juego
+
+Para reemplazar este archivo:
+1. Crear o conseguir una imagen PNG
+2. Renombrar como "poster-2.png"
+3. Colocar en la carpeta assets/images/posters/
+4. El juego cargará automáticamente la nueva imagen
