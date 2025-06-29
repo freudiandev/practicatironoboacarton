@@ -20,7 +20,7 @@ const OPTIMIZATION_CONFIG = {
     skipFrames: false,
     
     // Distance culling
-    enemyRenderDistance: 300,
+    enemyRenderDistance: 1200,
     bulletRenderDistance: 400,
     effectRenderDistance: 200,
     
@@ -45,9 +45,9 @@ const OPTIMIZATION_CONFIG = {
 };
 
 // ============================================================================
-// VARIABLES DE RENDIMIENTO
+// VARIABLES DE RENDIMIENTO (optimización scope)
 // ============================================================================
-let lastFrameTime = 0;
+let optLastFrameTime = 0;
 let frameCount = 0;
 let averageFPS = 60;
 let renderTime = 0;
@@ -186,8 +186,8 @@ function optimizarCastRay() {
                 break;
             }
             else if (tile >= 2 && tile <= 7) {
-                // Poster detection optimizada
-                return { distance, type: 'poster', posterType: tile };
+                // Posters eliminados
+                return { distance, type: 'wall', wallType: tile };
             }
         }
         
@@ -360,8 +360,8 @@ function limpiezaMemoria() {
 function actualizarEstadisticasRendimiento() {
     const currentTime = performance.now();
     
-    if (lastFrameTime > 0) {
-        const deltaTime = currentTime - lastFrameTime;
+    if (optLastFrameTime > 0) {
+        const deltaTime = currentTime - optLastFrameTime;
         const currentFPS = 1000 / deltaTime;
         
         // Promedio móvil simple
@@ -375,7 +375,7 @@ function actualizarEstadisticasRendimiento() {
         }
     }
     
-    lastFrameTime = currentTime;
+    optLastFrameTime = currentTime;
 }
 
 // ============================================================================

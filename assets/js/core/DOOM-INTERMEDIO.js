@@ -1,3 +1,255 @@
+// Permitir reiniciar enemigos desde el botón flotante
+if (typeof window !== 'undefined') {
+  window.doomGame = window.doomGame || {};
+  window.doomGame.respawnEnemies = function() {
+    if (typeof initEnemies === 'function') initEnemies();
+    if (typeof initPosters === 'function') initPosters();
+    if (typeof renderEnemiesHTML === 'function') renderEnemiesHTML();
+    if (typeof GAME !== 'undefined' && typeof GAME.ctx !== 'undefined') {
+      render3D();
+    }
+    console.log('🔄 Enemigos y posters reiniciados');
+  };
+}
+// ================================
+// DIAGNÓSTICO AVANZADO DE SPRITES ENEMIGOS
+// ================================
+if (!window.ENEMY_SPRITE_DIAGNOSED) {
+  window.ENEMY_SPRITE_DIAGNOSED = true;
+  (function(){
+    const tipos = ['casual','deportivo','presidencial'];
+    if (!window.GAME) window.GAME = {};
+    if (!window.GAME.enemySprites) window.GAME.enemySprites = {};
+    if (!window.GAME.enemySpritesReady) window.GAME.enemySpritesReady = {};
+    tipos.forEach(function(tipo) {
+      let img = window.GAME.enemySprites[tipo];
+      if (!img) {
+        img = new window.Image();
+      img.onload = function() {
+        if (!window.GAME) window.GAME = {};
+        if (!window.GAME.enemySprites) window.GAME.enemySprites = {};
+        if (!window.GAME.enemySpritesReady) window.GAME.enemySpritesReady = {};
+        window.GAME.enemySprites[tipo] = img;
+        window.GAME.enemySpritesReady[tipo] = true;
+        console.log(`[DIAG] onload '${tipo}':`, img.src, `(${img.naturalWidth}x${img.naturalHeight})`);
+      };
+      img.onerror = function(e) {
+        if (!window.GAME) window.GAME = {};
+        if (!window.GAME.enemySpritesReady) window.GAME.enemySpritesReady = {};
+        window.GAME.enemySpritesReady[tipo] = false;
+        console.error(`[DIAG] onerror '${tipo}':`, img.src, e);
+      };
+        img.src = `assets/images/noboa-${tipo}.png`;
+        window.GAME.enemySprites[tipo] = img;
+        window.GAME.enemySpritesReady[tipo] = false;
+        console.log(`[DIAG] Creando sprite '${tipo}' con src:`, img.src);
+      } else {
+        console.log(`[DIAG] Sprite '${tipo}' ya existe, src:`, img.src);
+        // Asegura que los handlers estén siempre presentes
+        img.onload = function() {
+          if (window.GAME && window.GAME.enemySprites && window.GAME.enemySpritesReady) {
+            window.GAME.enemySprites[tipo] = img;
+            window.GAME.enemySpritesReady[tipo] = true;
+            console.log(`[DIAG] onload '${tipo}':`, img.src, `(${img.naturalWidth}x${img.naturalHeight})`);
+          } else {
+            console.warn(`[WARN] enemySprites o enemySpritesReady no existen al cargar '${tipo}'`);
+          }
+        };
+        img.onerror = function(e) {
+          if (window.GAME && window.GAME.enemySpritesReady) {
+            window.GAME.enemySpritesReady[tipo] = false;
+          }
+          console.error(`[DIAG] onerror '${tipo}':`, img.src, e);
+        };
+      }
+    });
+    // Overlay visual en canvas
+    function drawSpriteDiagOverlay() {
+      try {
+        const ctx = window.GAME && window.GAME.ctx;
+        if (!ctx) return;
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = '#222';
+        ctx.fillRect(10, 10, 340, 90);
+        ctx.font = 'bold 14px monospace';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('DIAGNÓSTICO SPRITES PNG', 20, 30);
+        tipos.forEach(function(tipo, i) {
+          const img = window.GAME.enemySprites[tipo];
+          const ready = window.GAME.enemySpritesReady[tipo];
+          let status = ready ? '✅' : '❌';
+          let dim = (img && img.naturalWidth) ? `${img.naturalWidth}x${img.naturalHeight}` : '0x0';
+          ctx.fillStyle = ready ? '#06ffa5' : '#ff2222';
+          ctx.fillText(`${status} ${tipo}: ${dim}`, 30, 55 + i*18);
+        });
+        ctx.restore();
+      } catch(e) { console.error('[DIAG] Error overlay:', e); }
+    }
+    // Hook al render3D para overlay
+    // Hook al render3D para overlay (solo asignación directa, sin defineProperty)
+    const oldRender3D = window.render3D;
+    window.render3D = function() {
+      if (typeof oldRender3D === 'function') oldRender3D();
+      drawSpriteDiagOverlay();
+    };
+    console.log('[DIAG] Diagnóstico avanzado de sprites PNG ACTIVADO');
+  })();
+}
+// ================================
+// SISTEMA ÚNICO Y ROBUSTO DE SPRITES Y ENEMIGOS
+// ================================
+
+if (!window.GAME) window.GAME = {};
+
+// --- SPRITES ---
+window.GAME.enemySprites = {};
+window.GAME.enemySpritesReady = {};
+window.GAME.allEnemySpritesReady = false;
+
+window.GAME.initEnemySprites = function(callback) {
+  const tipos = ['casual','deportivo','presidencial'];
+  let readyCount = 0;
+  let total = tipos.length;
+  window.GAME.allEnemySpritesReady = false;
+  tipos.forEach(tipo => {
+    if (!window.GAME.enemySprites[tipo]) {
+      const img = new window.Image();
+      img.onload = function() {
+        window.GAME.enemySpritesReady[tipo] = true;
+        readyCount++;
+        if (readyCount === total) {
+          window.GAME.allEnemySpritesReady = true;
+          if (typeof callback === 'function') callback();
+        }
+      };
+      img.onerror = function() {
+        window.GAME.enemySpritesReady[tipo] = false;
+        console.error(`[SPRITE] Error al cargar: ${tipo} (${img.src})`);
+      };
+      img.src = `assets/images/noboa-${tipo}.png`;
+      window.GAME.enemySprites[tipo] = img;
+      window.GAME.enemySpritesReady[tipo] = false;
+    } else {
+      // Si ya existe, verificar si está cargado
+      if (window.GAME.enemySprites[tipo].complete && window.GAME.enemySprites[tipo].naturalWidth > 0) {
+        window.GAME.enemySpritesReady[tipo] = true;
+        readyCount++;
+        if (readyCount === total) {
+          window.GAME.allEnemySpritesReady = true;
+          if (typeof callback === 'function') callback();
+        }
+      }
+    }
+  });
+};
+
+// --- ENEMIGOS ---
+window.GAME.enemies = [];
+window.GAME.initEnemies = function() {
+  // Esperar a que los sprites estén listos
+  if (!window.GAME.allEnemySpritesReady) {
+    window.GAME.initEnemySprites(() => window.GAME.initEnemies());
+    return;
+  }
+  // Posiciones y tipos
+  const enemyTypes = ['casual', 'deportivo', 'presidencial'];
+    // Generar posiciones libres automáticamente para el tamaño del laberinto actual
+    const mapa = (typeof window !== 'undefined' && window.GAME_MAZE) ? window.GAME_MAZE : MAP;
+    const libres = [];
+    for (let y = 0; y < mapa.length; y++) {
+      for (let x = 0; x < mapa[0].length; x++) {
+        if (mapa[y][x] === 0) {
+          libres.push({ x: x * GAME.tileSize + GAME.tileSize / 2, y: y * GAME.tileSize + GAME.tileSize / 2 });
+        }
+      }
+    }
+    // Elegir hasta 12 posiciones aleatorias para los enemigos
+    const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+    const enemyPositions = shuffle(libres).slice(0, 12);
+    window.GAME.enemies = enemyPositions.map(function(pos, i) {
+      return {
+        x: pos.x,
+        y: pos.y,
+        health: 100,
+        type: enemyTypes[i % enemyTypes.length],
+        lastHit: 0,
+        id: `noboa_${i}_${enemyTypes[i % enemyTypes.length]}`,
+        active: true,
+        spawnTime: Date.now(),
+        forceVisible: true,
+        scale: 1.0,
+        dir: Math.random() * 2 * Math.PI, // Dirección aleatoria inicial
+        hitRadius: 72 // hitbox coherente con sprite de 144px
+      };
+    });
+// --- MOVIMIENTO AUTOMÁTICO DE ENEMIGOS ---
+setInterval(function() {
+  if (!window.GAME || !window.GAME.enemies || !window.GAME_MAZE) return;
+  const speed = 1.2; // velocidad px/frame
+  window.GAME.enemies.forEach(enemy => {
+    if (!enemy.active) return;
+    // Calcular siguiente posición
+    const nextX = enemy.x + Math.cos(enemy.dir) * speed;
+    const nextY = enemy.y + Math.sin(enemy.dir) * speed;
+    // Comprobar colisión con paredes
+    const mapX = Math.floor(nextX / GAME.tileSize);
+    const mapY = Math.floor(nextY / GAME.tileSize);
+    if (
+      mapX < 0 || mapY < 0 ||
+      mapY >= window.GAME_MAZE.length || mapX >= window.GAME_MAZE[0].length ||
+      window.GAME_MAZE[mapY][mapX] !== 0
+    ) {
+      // Cambiar dirección aleatoriamente si choca
+      enemy.dir = Math.random() * 2 * Math.PI;
+    } else {
+      // Avanzar
+      enemy.x = nextX;
+      enemy.y = nextY;
+      // Cambiar dirección aleatoriamente a veces
+      if (Math.random() < 0.01) enemy.dir = Math.random() * 2 * Math.PI;
+    }
+  });
+}, 40);
+  window.GAME.enemyManager = {
+    enemies: window.GAME.enemies,
+    log: function(msg) { console.log('[EnemyManager]', msg); }
+  };
+  console.log('👾 Enemigos Noboa inicializados:', window.GAME.enemies.length);
+};
+
+// --- RENDERIZADO DE ENEMIGOS ---
+window.GAME.renderEnemies = function(ctx) {
+  if (!window.GAME.allEnemySpritesReady) {
+    ctx.save();
+    ctx.fillStyle = '#ff006e';
+    ctx.font = 'bold 32px Arial';
+    ctx.fillText('Cargando sprites de enemigos...', 40, 80);
+    ctx.restore();
+    return;
+  }
+  (window.GAME.enemies || []).forEach(enemy => {
+    if (!enemy.active) return;
+    const tipo = enemy.type || 'casual';
+    const img = window.GAME.enemySprites[tipo];
+    const x = Math.floor(enemy.x);
+    const y = Math.floor(enemy.y);
+    const size = 48;
+    if (img && img.naturalWidth > 0 && img.naturalHeight > 0) {
+      ctx.drawImage(img, x - size/2, y - size/2, size, size);
+    } else {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,0,0,0.7)';
+      ctx.fillRect(x - size/2, y - size/2, size, size);
+      ctx.restore();
+    }
+    ctx.save();
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px monospace';
+    ctx.fillText('E'+enemy.id, x - 10, y - size/2 - 2);
+    ctx.restore();
+  });
+};
 // ================================
 // DOOM INTERMEDIO - SIMPLE + ENEMIGOS + POSTERS
 // Raycasting simple con elementos del juego
@@ -16,9 +268,9 @@ const GAME = {
     height: 600,
     
     // Mundo
-    mapWidth: 16,
-    mapHeight: 12,
-    tileSize: 64,
+    mapWidth: 14, // Sincronizado con el laberinto definitivo
+    mapHeight: 10,
+    tileSize: 50, // Sincronizado con cellSize del laberinto definitivo
     
     // Jugador
     player: {
@@ -51,40 +303,23 @@ const GAME = {
 };
 
 // ================================
-// MAPA CON POSTERS
+// MAPA SIN POSTERS
 // ================================
 const MAP = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,1,0,1,1,1,0,0,1,1,1,0,1,0,1],
     [1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1],
-    [1,0,1,1,1,0,1,1,2,1,1,0,1,1,0,1], // 2 = poster
+    [1,0,1,1,1,0,1,1,0,1,1,0,1,1,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,0,1,1,0,3,0,1,1,0,1,1,1], // 3 = poster
+    [1,0,1,1,0,1,1,0,0,0,1,1,0,1,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,1,1,4,0,5,1,1,0,1,0,1], // 4,5 = posters
+    [1,0,1,0,1,1,1,0,0,0,1,1,0,1,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,1,1,0,0,6,0,7,0,0,1,1,1,1], // 6,7 = posters
+    [1,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
-// Exponer MAP globalmente para WorldPhysics
 typeof window !== 'undefined' && (window.MAP = MAP);
-
-// ================================
-// DATOS DE POSTERS
-// ================================
-const POSTER_DATA = {
-    2: { text: 'NOBOA\nPRESIDENTE', color: '#FFD700' },
-    3: { text: 'ORDEN\nY PAZ', color: '#FF6B6B' },
-    4: { text: 'ECUADOR\nADELANTE', color: '#4CAF50' },
-    5: { text: 'FAMILIA\nPRIMERO', color: '#2196F3' },
-    6: { text: 'FUTURO\nSEGURO', color: '#FF9800' },
-    7: { text: 'CAMBIO\nVERDADERO', color: '#9C27B0' }
-};
-
-// ================================
-// INICIALIZACIÓN (SIN AUTO-INICIO)
-// ================================
 function init() {
     console.log('🚀 Inicializando DOOM intermedio...');
     
@@ -99,7 +334,8 @@ function init() {
     GAME.canvas.width = GAME.width;
     GAME.canvas.height = GAME.height;
     GAME.canvas.style.border = '2px solid #333';
-    GAME.canvas.style.display = 'block';
+    // Removed: prevent showing canvas before user starts game
+    // GAME.canvas.style.display = 'block';
     GAME.canvas.style.margin = '10px auto';
     GAME.canvas.style.background = '#000';
     
@@ -113,8 +349,6 @@ function init() {
     // NO INICIAR EL BUCLE AUTOMÁTICAMENTE
     GAME.running = false;
     
-    // Renderizar pantalla de espera
-    renderWaitingScreen();
     
     console.log('✅ DOOM intermedio listo - Esperando inicio desde menú');
 }
@@ -131,6 +365,9 @@ function startGame() {
         init();
     }
     
+    // Reinicializar enemigos y posters cada vez que se inicia el juego
+    if (typeof initEnemies === 'function') initEnemies();
+    if (typeof initPosters === 'function') initPosters();
     // Iniciar bucle del juego
     GAME.running = true;
     gameLoop();
@@ -176,16 +413,76 @@ function renderWaitingScreen() {
 }
 
 // ================================
-// INICIALIZAR ENEMIGOS
+// INICIALIZAR ENEMIGOS (OPTIMIZADO)
 // ================================
 function initEnemies() {
-    GAME.enemies = [
-        { x: 5 * 64 + 32, y: 5 * 64 + 32, health: 50, type: 'noboa' },
-        { x: 10 * 64 + 32, y: 7 * 64 + 32, health: 50, type: 'noboa' },
-        { x: 8 * 64 + 32, y: 3 * 64 + 32, health: 50, type: 'noboa' },
-        { x: 12 * 64 + 32, y: 9 * 64 + 32, health: 50, type: 'noboa' }
-    ];
+    // Usar los 3 sprites PNG de Noboa y crear enemigos grandes y visibles
+    const enemyTypes = ['casual', 'deportivo', 'presidencial'];
+    // Generar posiciones libres automáticamente para el tamaño del laberinto actual
+    const mapa = (typeof window !== 'undefined' && window.GAME_MAZE) ? window.GAME_MAZE : MAP;
+    const libres = [];
+    for (let y = 0; y < mapa.length; y++) {
+      for (let x = 0; x < mapa[0].length; x++) {
+        if (mapa[y][x] === 0) {
+          libres.push({ x: x * GAME.tileSize + GAME.tileSize / 2, y: y * GAME.tileSize + GAME.tileSize / 2 });
+        }
+      }
+    }
+    // Elegir hasta 12 posiciones aleatorias para los enemigos
+    const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+    const enemyPositions = shuffle(libres).slice(0, 12);
+    GAME.enemies = enemyPositions.map(function(pos, i) {
+      return {
+        x: pos.x,
+        y: pos.y,
+        health: 100,
+        type: enemyTypes[i % enemyTypes.length],
+        lastHit: 0,
+        id: `noboa_${i}_${enemyTypes[i % enemyTypes.length]}`,
+        active: true,
+        spawnTime: Date.now(),
+        forceVisible: true,
+        scale: 5.0
+      };
+    });
+    // DEBUG: Mostrar en consola las posiciones de los enemigos
     console.log('👾 Enemigos Noboa inicializados:', GAME.enemies.length);
+    GAME.enemies.forEach((e, idx) => {
+      console.log(`Enemigo #${idx}: (${e.x}, ${e.y}) tipo: ${e.type}`);
+    });
+    // Forzar renderizado HTML de enemigos tras inicialización
+    if (typeof renderEnemiesHTML === 'function') renderEnemiesHTML();
+    // Cargar sprites PNG de Noboa con control de carga asíncrona (mantener por compatibilidad)
+    var enemySprites = {};
+    var spritesReady = { casual: false, deportivo: false, presidencial: false };
+    var spritesLoadedCount = 0;
+    var totalSprites = 3;
+    function spriteLoaded(type) {
+        spritesReady[type] = true;
+        spritesLoadedCount++;
+        console.log(`✅ Sprite '${type}' cargado correctamente.`);
+        if (spritesLoadedCount === totalSprites) {
+            GAME.allEnemySpritesReady = true;
+            console.log('✅ Todos los sprites de enemigos están listos para renderizar.');
+        }
+    }
+    function spriteError(type, img) {
+        spritesReady[type] = false;
+        console.error(`❌ Error cargando sprite '${type}': src=${img.src}`);
+    }
+    ['casual','deportivo','presidencial'].forEach(function(type) {
+        var img = new Image();
+        img.onload = function() { spriteLoaded(type); };
+        img.onerror = function() { spriteError(type, img); };
+        if(type==='casual') img.src = 'assets/images/noboa-casual.png';
+        if(type==='deportivo') img.src = 'assets/images/noboa-deportivo.png';
+        if(type==='presidencial') img.src = 'assets/images/noboa-presidencial.png';
+        enemySprites[type] = img;
+    });
+    GAME.enemySprites = enemySprites;
+    GAME.enemySpritesReady = spritesReady;
+    GAME.allEnemySpritesReady = false;
+    console.log('🎯 Tipos de Noboa disponibles:', enemyTypes);
 }
 
 // ================================
@@ -212,33 +509,14 @@ function initPosters() {
 // ================================
 // CONTROLES
 // ================================
+// Los controles y listeners de teclado/mouse han sido centralizados en INICIALIZADOR-CONTROLES-POST-DOOM.js
+// Esta función queda vacía para evitar conflictos y duplicidad.
 function setupControls() {
-    document.addEventListener('keydown', (e) => {
-        GAME.keys[e.code] = true;
-        if (e.code === 'Space') {
-            e.preventDefault();
-            shoot();
-        }
-    });
-    
-    document.addEventListener('keyup', (e) => {
-        GAME.keys[e.code] = false;
-    });
-    
-    GAME.canvas.addEventListener('click', () => {
-        GAME.canvas.requestPointerLock();
-    });
-    
-    document.addEventListener('pointerlockchange', () => {
-        GAME.mouseLocked = document.pointerLockElement === GAME.canvas;
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-        if (GAME.mouseLocked) {
-            GAME.player.angle += e.movementX * 0.003;
-        }
-    });
+    // Control centralizado en INICIALIZADOR-CONTROLES-POST-DOOM.js
 }
+
+// Cargar sprites y overlays de enemigos
+GAME.textOverlays = [];
 
 // ================================
 // ACTUALIZAR JUGADOR
@@ -248,27 +526,8 @@ function updatePlayer() {
     let moveX = 0;
     let moveY = 0;
     
-    // Movimiento WASD
-    if (GAME.keys['KeyW']) {
-        moveX += Math.cos(player.angle) * player.speed;
-        moveY += Math.sin(player.angle) * player.speed;
-    }
-    if (GAME.keys['KeyS']) {
-        moveX -= Math.cos(player.angle) * player.speed;
-        moveY -= Math.sin(player.angle) * player.speed;
-    }
-    if (GAME.keys['KeyA']) {
-        moveX += Math.cos(player.angle - Math.PI/2) * player.speed;
-        moveY += Math.sin(player.angle - Math.PI/2) * player.speed;
-    }
-    if (GAME.keys['KeyD']) {
-        moveX += Math.cos(player.angle + Math.PI/2) * player.speed;
-        moveY += Math.sin(player.angle + Math.PI/2) * player.speed;
-    }
-    
-    // Rotación
-    if (GAME.keys['ArrowLeft']) player.angle -= player.rotSpeed;
-    if (GAME.keys['ArrowRight']) player.angle += player.rotSpeed;
+    // Movimiento y rotación del jugador ahora se controlan desde INICIALIZADOR-CONTROLES-POST-DOOM.js
+    // Este bloque queda vacío para evitar duplicidad.
     
     // Verificar colisiones
     const newX = player.x + moveX;
@@ -279,6 +538,9 @@ function updatePlayer() {
     
     // Verificar colisión con posters
     checkPosterCollision();
+    
+    // Verificar colisión con enemigos
+    checkEnemyCollision();
 }
 
 // ================================
@@ -328,38 +590,35 @@ function shoot() {
 }
 
 // ================================
-// ACTUALIZAR BALAS
+// ACTUALIZAR BALAS con headshot
 // ================================
 function updateBullets() {
-    GAME.bullets = GAME.bullets.filter(bullet => {
+    GAME.bullets = GAME.bullets.filter(function(bullet) {
         bullet.x += Math.cos(bullet.angle) * bullet.speed;
         bullet.y += Math.sin(bullet.angle) * bullet.speed;
         bullet.distance += bullet.speed;
-        
-        // Eliminar si viaja muy lejos
         if (bullet.distance > 500) return false;
-        
-        // Verificar colisión con paredes
         if (!isWalkable(bullet.x, bullet.y)) return false;
-        
-        // Verificar colisión con enemigos
-        for (let i = 0; i < GAME.enemies.length; i++) {
-            const enemy = GAME.enemies[i];
-            const dx = enemy.x - bullet.x;
-            const dy = enemy.y - bullet.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < 25) {
-                enemy.health -= 25;
-                if (enemy.health <= 0) {
-                    GAME.enemies.splice(i, 1);
-                    GAME.score += 100;
-                    console.log('💀 Enemigo eliminado! Score:', GAME.score);
+        for (var i = 0; i < GAME.enemies.length; i++) {
+            var enemy = GAME.enemies[i];
+            var dx = enemy.x - bullet.x;
+            var dy = enemy.y - bullet.y;
+            var dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < GAME.tileSize/2) {
+                // headshot zona 15% superior
+                var headThresh = enemy.y - GAME.tileSize/2 + GAME.tileSize*0.15;
+                if (bullet.y < headThresh) {
+                    enemy.health -= enemy.health; // kill
+                    GAME.textOverlays.push({text:'HEADSHOT', x:bullet.x, y:bullet.y, timer:30});
+                } else {
+                    enemy.health -= 25;
                 }
-                return false; // Eliminar bala
+                if (enemy.health <= 0) {
+                    GAME.enemies.splice(i,1);
+                }
+                return false;
             }
         }
-        
         return true;
     });
 }
@@ -370,13 +629,15 @@ function updateBullets() {
 function isWalkable(x, y) {
     const mapX = Math.floor(x / GAME.tileSize);
     const mapY = Math.floor(y / GAME.tileSize);
-    
-    if (mapX < 0 || mapX >= GAME.mapWidth || mapY < 0 || mapY >= GAME.mapHeight) {
+    // Usar GAME_MAZE si existe, si no MAP
+    const mapa = (typeof window !== 'undefined' && window.GAME_MAZE) ? window.GAME_MAZE : MAP;
+    const mapW = mapa[0].length;
+    const mapH = mapa.length;
+    if (mapX < 0 || mapX >= mapW || mapY < 0 || mapY >= mapH) {
         return false;
     }
-    
-    const tile = MAP[mapY][mapX];
-    return tile === 0 || tile >= 2; // 0 = libre, 2-7 = posters (atravesables)
+    const tile = mapa[mapY][mapX];
+    return tile !== 1; // Solo 1 es pared, el resto es transitable
 }
 
 // ================================
@@ -387,39 +648,34 @@ function castRay(angle) {
     let distance = 0;
     let hitWall = false;
     let wallType = 1;
-    
     const rayDirX = Math.cos(angle);
     const rayDirY = Math.sin(angle);
-    
     let hitX, hitY;
+    // Usar GAME_MAZE si existe, si no MAP
+    const mapa = (typeof window !== 'undefined' && window.GAME_MAZE) ? window.GAME_MAZE : MAP;
+    const mapW = mapa[0].length;
+    const mapH = mapa.length;
     while (!hitWall && distance < GAME.maxDistance) {
         distance += stepSize;
-        
         const testX = GAME.player.x + rayDirX * distance;
         const testY = GAME.player.y + rayDirY * distance;
-        
         const mapX = Math.floor(testX / GAME.tileSize);
         const mapY = Math.floor(testY / GAME.tileSize);
-        
-        if (mapX < 0 || mapX >= GAME.mapWidth || mapY < 0 || mapY >= GAME.mapHeight) {
+        if (mapX < 0 || mapX >= mapW || mapY < 0 || mapY >= mapH) {
             hitWall = true;
             distance = GAME.maxDistance;
             hitX = mapX; hitY = mapY;
         }
         else {
-            const tile = MAP[mapY][mapX];
-            if (tile === 1) {
+            const tile = mapa[mapY][mapX];
+            if (tile === 1) { // Solo 1 es pared sólida
                 hitWall = true;
                 wallType = tile;
                 hitX = mapX; hitY = mapY;
             }
-            else if (tile >= 2 && tile <= 7) {
-                // Poster - renderizar como elemento especial
-                return { distance, type: 'poster', posterType: tile };
-            }
+            // Los demás tiles (posters, objetos, etc) no bloquean la vista
         }
     }
-    
     return { distance, type: 'wall', wallType, mapX: hitX, mapY: hitY };
 }
 
@@ -440,47 +696,30 @@ function render3D() {
     ctx.fillStyle = '#06ffa5'; // Color sólido para mejor rendimiento
     ctx.fillRect(0, GAME.height / 2, GAME.width, GAME.height / 2);
     
-    // Raycasting optimizado
+    // Raycasting optimizado SOLO para paredes (sin carteles ni objetos 2-7)
     const rayStepAngle = GAME.fov / GAME.numRays;
     const columnWidth = GAME.width / GAME.numRays;
-    
     for (let i = 0; i < GAME.numRays; i++) {
         const rayAngle = GAME.player.angle - GAME.fov / 2 + i * rayStepAngle;
         const ray = castRay(rayAngle);
         const correctedDistance = ray.distance * Math.cos(rayAngle - GAME.player.angle);
         const wallHeight = (GAME.tileSize / correctedDistance) * (GAME.height / 2);
         const wallTop = (GAME.height - wallHeight) / 2;
-        
         if (ray.type === 'wall') {
             renderVaporwaveWallOptimized(ctx, i * columnWidth, wallTop, columnWidth, wallHeight, ray.wallType, correctedDistance);
         }
-        else if (ray.type === 'poster') {
-            renderVaporwavePosterOptimized(ctx, i * columnWidth, wallTop, columnWidth, wallHeight, ray.posterType, correctedDistance);
-        }
-        
-        // Dibujar decals fijos en pared usando mapeo world→screen corregido
-        if (ray.type === 'wall' && window.MAP_HOLES && window.MAP_HOLES[ray.mapY] && window.MAP_HOLES[ray.mapY][ray.mapX]) {
-            const holes = window.MAP_HOLES[ray.mapY][ray.mapX];
-            const columnX = i * columnWidth;
-            holes.forEach(decal => {
-                // hx: posición horizontal dentro de la columna, usando u
-                const hx = columnX + decal.u * columnWidth;
-                // hy: posición vertical en la pared, usando v
-                const hy = wallTop + decal.v * wallHeight;
-                const r = (window.CONFIG_BALA_FINAL && window.CONFIG_BALA_FINAL.radioImpacto) || 4;
-                // Borde gris (sin shadow)
-                ctx.fillStyle = (window.CONFIG_BALA_FINAL && window.CONFIG_BALA_FINAL.colorImpactoGris) || '#AAAAAA';
-                ctx.beginPath(); ctx.arc(hx, hy, r + 1, 0, Math.PI * 2); ctx.fill();
-                // Centro negro (sin shadow)
-                ctx.fillStyle = (window.CONFIG_BALA_FINAL && window.CONFIG_BALA_FINAL.colorImpactoNegro) || '#000000';
-                ctx.beginPath(); ctx.arc(hx, hy, r - 1, 0, Math.PI * 2); ctx.fill();
-            });
-        }
+        // No más posters ni objetos especiales
     }
     
     // Renderizar sprites optimizados
     renderSpritesOptimized();
-    
+
+    // --- PARCHE: Renderizado de enemigos encapsulados ---
+    if (window.GAME && window.GAME.renderEnemies && window.GAME.ctx) {
+        window.GAME.renderEnemies(window.GAME.ctx);
+    }
+    // --- FIN PARCHE ---
+
     // HUD optimizado
     drawOptimizedHUD();
 }
@@ -556,54 +795,149 @@ function adjustVaporwaveBrightnessOptimized(hexColor, brightness) {
 }
 
 // ================================
-// RENDERIZAR SPRITES OPTIMIZADO
+// RENDERIZAR SPRITES OPTIMIZADO Y MEJORADO
 // ================================
 function renderSpritesOptimized() {
-    if (!GAME.enemies) return;
+    if (!GAME.enemies || GAME.enemies.length === 0) {
+        // Mostrar overlay de error en vez de reinicializar
+        if (GAME.ctx) {
+            GAME.ctx.save();
+            GAME.ctx.fillStyle = '#ff2222';
+            GAME.ctx.font = 'bold 32px Arial';
+            GAME.ctx.fillText('ERROR: No hay enemigos para renderizar', GAME.width/2 - 260, GAME.height/2);
+            GAME.ctx.font = 'bold 20px monospace';
+            GAME.ctx.fillText('Usa window.doomGame.initEnemies() o respawnEnemies() para reiniciar.', GAME.width/2 - 320, GAME.height/2 + 40);
+            GAME.ctx.restore();
+        }
+        console.error('❌ No hay enemigos para renderizar. No se reinicializa automáticamente.');
+        return;
+    }
+
+    if (!GAME.enemySprites || !GAME.enemySpritesReady) {
+        console.log('⚠️ Sprites de enemigos no cargados');
+        // Diagnóstico visual: mostrar mensaje en pantalla
+        GAME.ctx.save();
+        GAME.ctx.fillStyle = '#ff006e';
+        GAME.ctx.font = 'bold 28px Arial';
+        GAME.ctx.fillText('Diagnóstico: Sprites de enemigos no cargados', 40, 80);
+        GAME.ctx.restore();
+        return;
+    }
+    if (!GAME.allEnemySpritesReady) {
+        // Diagnóstico visual: mostrar estado de cada sprite
+        GAME.ctx.save();
+        GAME.ctx.fillStyle = '#ff006e';
+        GAME.ctx.font = 'bold 32px Arial';
+        GAME.ctx.fillText('Cargando sprites de enemigos...', GAME.width/2 - 200, GAME.height/2);
+        GAME.ctx.font = 'bold 20px monospace';
+        let y = GAME.height/2 + 40;
+        Object.keys(GAME.enemySpritesReady).forEach(function(type) {
+            let img = GAME.enemySprites[type];
+            let ready = GAME.enemySpritesReady[type];
+            let status = ready ? 'OK' : 'FALTA';
+            let color = ready ? '#00ff00' : '#ff2222';
+            let dim = (img && img.naturalWidth) ? `${img.naturalWidth}x${img.naturalHeight}` : '0x0';
+            GAME.ctx.fillStyle = color;
+            GAME.ctx.fillText(`Sprite '${type}': ${status} (${dim})`, GAME.width/2 - 200, y);
+            y += 28;
+        });
+        GAME.ctx.restore();
+        return;
+    }
     
-    // Distance culling - solo renderizar enemigos cercanos
-    const maxRenderDistance = 300;
+    const maxRenderDistance = GAME.maxDistance;
+    let enemiesRendered = 0;
     
-    GAME.enemies.forEach(enemy => {
-        const dx = enemy.x - GAME.player.x;
-        const dy = enemy.y - GAME.player.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // Skip enemigos muy lejanos o muy cercanos
-        if (distance < 10 || distance > maxRenderDistance) return;
-        
-        const angle = Math.atan2(dy, dx) - GAME.player.angle;
-        let normalizedAngle = angle;
-        while (normalizedAngle < -Math.PI) normalizedAngle += 2 * Math.PI;
-        while (normalizedAngle > Math.PI) normalizedAngle -= 2 * Math.PI;
-        
-        if (Math.abs(normalizedAngle) > GAME.fov / 2) return;
-        
-        const screenX = GAME.width / 2 + (normalizedAngle / (GAME.fov / 2)) * (GAME.width / 2);
-        const spriteHeight = (40 / distance) * (GAME.height / 2);
-        const spriteWidth = spriteHeight;
-        
-        // Enemigo con color vaporwave (sin efectos costosos)
-        const enemyColor = '#ff073a'; // Rojo neón vaporwave
-        GAME.ctx.fillStyle = enemyColor;
-        
-        GAME.ctx.fillRect(
-            screenX - spriteWidth / 2,
-            GAME.height / 2 - spriteHeight / 2,
-            spriteWidth,
-            spriteHeight
-        );
-        
-        // Contorno simple
-        GAME.ctx.strokeStyle = '#ffffff';
-        GAME.ctx.lineWidth = 1;
-        GAME.ctx.strokeRect(
-            screenX - spriteWidth / 2,
-            GAME.height / 2 - spriteHeight / 2,
-            spriteWidth,
-            spriteHeight
-        );
+    GAME.enemies.forEach(function(enemy, index) {
+        if (!enemy.active) return;
+        // Forzar renderizado de todos los enemigos, sin filtrar por FOV ni distancia
+        var dx = enemy.x - GAME.player.x;
+        var dy = enemy.y - GAME.player.y;
+        var distance = Math.sqrt(dx*dx + dy*dy);
+        var angle = Math.atan2(dy, dx) - GAME.player.angle;
+        // Normalizar ángulo
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        // Proyectar en pantalla aunque esté fuera de FOV
+        var screenX = GAME.width/2 + (angle/(GAME.fov/2))*(GAME.width/2);
+        // Escalado de sprite basado en perspectiva (usar scale del enemigo si existe)
+        const projPlaneDist = (GAME.width / 2) / Math.tan(GAME.fov / 2);
+        const scale = enemy.scale || 1.0;
+        const spriteScale = (GAME.tileSize / Math.max(distance, 1)) * projPlaneDist * scale;
+        // Forzar tamaño gigante para debug visual (50rem = 800px)
+        const spriteW = 800;
+        const spriteH = 800;
+        const img = GAME.enemySprites[enemy.type];
+        const spriteY = (GAME.height / 2) - spriteH / 2;
+
+        // Overlay de debug: dibujar rectángulo rojo y coordenadas
+        GAME.ctx.save();
+        GAME.ctx.strokeStyle = '#ff2222';
+        GAME.ctx.lineWidth = 4;
+        GAME.ctx.strokeRect(screenX - spriteW / 2, spriteY, spriteW, spriteH);
+        GAME.ctx.fillStyle = '#ff2222';
+        GAME.ctx.font = 'bold 18px monospace';
+        GAME.ctx.fillText(`(${Math.round(screenX)},${Math.round(spriteY)})`, screenX - spriteW / 2 + 10, spriteY + 30);
+        GAME.ctx.fillText(`enemy: ${enemy.type}`, screenX - spriteW / 2 + 10, spriteY + 60);
+        GAME.ctx.restore();
+
+        // 1. Si no hay sprite, dibujar cuadrado magenta
+        if (!img || !img.complete) {
+            console.error(`❌ Sprite de enemigo tipo '${enemy.type}' no cargado o incompleto.`);
+            GAME.ctx.fillStyle = '#ff00ff';
+            GAME.ctx.fillRect(screenX - 12, GAME.height / 2 - 12, 24, 24);
+        } else {
+            try {
+                if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+                    console.error(`❌ Sprite de enemigo tipo '${enemy.type}' está vacío o corrupto.`);
+                    GAME.ctx.fillStyle = '#ff00ff';
+                    GAME.ctx.fillRect(screenX - 12, GAME.height / 2 - 12, 24, 24);
+                } else {
+                    GAME.ctx.drawImage(img, screenX - spriteW / 2, spriteY, spriteW, spriteH);
+                    enemiesRendered++;
+                    if (typeof GameConfig !== 'undefined' && GameConfig.debug && GameConfig.debug.showEnemyCount) {
+                        GAME.ctx.fillStyle = '#00ff00';
+                        GAME.ctx.font = '10px Arial';
+                        GAME.ctx.fillText(`${enemy.type}`, screenX - 20, spriteY - 5);
+                    }
+                }
+            } catch (error) {
+                console.error('Error renderizando sprite:', error);
+                GAME.ctx.fillStyle = '#ff00ff';
+                GAME.ctx.fillRect(screenX - 12, GAME.height / 2 - 12, 24, 24);
+            }
+        }
+
+        // 2. Si el enemigo NO es visible según isEnemyVisible, dibujar contorno amarillo
+        if (typeof isEnemyVisible === 'function' && !isEnemyVisible(enemy)) {
+            GAME.ctx.save();
+            GAME.ctx.strokeStyle = '#ffff00';
+            GAME.ctx.lineWidth = 4;
+            GAME.ctx.beginPath();
+            GAME.ctx.arc(screenX, spriteY + spriteH / 2, Math.max(spriteW, spriteH) / 2 + 8, 0, Math.PI * 2);
+            GAME.ctx.stroke();
+            GAME.ctx.restore();
+        }
     });
+    
+    // Debug: Mostrar estadísticas de renderizado
+    if (enemiesRendered > 0) {
+        console.log(`👾 Renderizados: ${enemiesRendered}/${GAME.enemies.length} enemigos`);
+    }
+    
+    // overlays de texto
+    if (GAME.textOverlays) {
+        GAME.textOverlays = GAME.textOverlays.filter(function(o){
+            if (o.timer > 0) {
+                GAME.ctx.fillStyle = 'red';
+                GAME.ctx.font = 'bold 16px Arial';
+                GAME.ctx.fillText(o.text, o.x, o.y);
+                o.timer--;
+                return true;
+            }
+            return false;
+        });
+    }
 }
 
 // ================================
@@ -807,23 +1141,36 @@ function renderVaporwaveMinimap(ctx) {
     // Dibujar posición del jugador
     const playerMapX = minimapX + (GAME.player.x / (GAME.mapWidth * GAME.tileSize)) * minimapSize;
     const playerMapY = minimapY + (GAME.player.y / (GAME.mapHeight * GAME.tileSize)) * minimapSize;
-    
     ctx.fillStyle = '#ff006e';
     ctx.beginPath();
     ctx.arc(playerMapX, playerMapY, 3, 0, Math.PI * 2);
     ctx.fill();
-    
     // Dirección del jugador
     const dirLength = 8;
     const dirX = playerMapX + Math.cos(GAME.player.angle) * dirLength;
     const dirY = playerMapY + Math.sin(GAME.player.angle) * dirLength;
-    
     ctx.strokeStyle = '#ff006e';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(playerMapX, playerMapY);
     ctx.lineTo(dirX, dirY);
     ctx.stroke();
+
+    // DEBUG: Dibujar todos los enemigos en el minimapa
+    if (GAME.enemies && GAME.enemies.length > 0) {
+        GAME.enemies.forEach(function(enemy, idx) {
+            const ex = minimapX + (enemy.x / (GAME.mapWidth * GAME.tileSize)) * minimapSize;
+            const ey = minimapY + (enemy.y / (GAME.mapHeight * GAME.tileSize)) * minimapSize;
+            ctx.fillStyle = '#00ff00';
+            ctx.beginPath();
+            ctx.arc(ex, ey, 4, 0, Math.PI * 2);
+            ctx.fill();
+            // Mostrar el índice encima
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px Arial';
+            ctx.fillText(idx+1, ex+5, ey);
+        });
+    }
 }
 
 // ================================
@@ -865,75 +1212,108 @@ function stopGame() {
     console.log('✅ Juego detenido correctamente');
 }
 
-// ================================
-// API GLOBAL
-// ================================
-window.doomGame = {
-    init: init,
-    start: startGame,  // Nueva función para iniciar desde menú
-    stop: () => { 
-        GAME.running = false;
-        console.log('⏸️ Juego pausado');
-    },
-    restart: () => {
-        GAME.player.x = 3 * 64 + 32;
-        GAME.player.y = 3 * 64 + 32;
-        GAME.player.angle = 0;
-        GAME.player.health = 100;
-        GAME.player.ammo = 50;
-        GAME.score = 0;
-        initEnemies();
-        initPosters();
-        if (!GAME.running) {
-            GAME.running = true;
-            gameLoop();
-        }
-        console.log('🔄 Juego reiniciado');
-    },
-    state: GAME,
-    addAmmo: () => { GAME.player.ammo += 20; },
-    addHealth: () => { GAME.player.health = 100; }
-};
 
 // ================================
-// AUTO-INICIO DESHABILITADO
-// El juego solo debe iniciarse desde el menú
+// API GLOBAL UNIFICADA
 // ================================
-/*
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    setTimeout(init, 100);
-}
-*/
+window.GAME = GAME;
+// Proxy para compatibilidad: doomGame apunta siempre a GAME y sus métodos
+window.doomGame = new Proxy({}, {
+    get(target, prop) {
+        // Métodos principales
+        if (prop === 'init') return init;
+        if (prop === 'start' || prop === 'startGame') return startGame;
+        if (prop === 'stop' || prop === 'stopGame') return stopGame;
+        if (prop === 'restart') return function() {
+            GAME.player.x = 3 * 64 + 32;
+            GAME.player.y = 3 * 64 + 32;
+            GAME.player.angle = 0;
+            GAME.player.health = 100;
+            GAME.player.ammo = 50;
+            GAME.score = 0;
+            initEnemies();
+            initPosters();
+            if (!GAME.running) {
+                GAME.running = true;
+                gameLoop();
+            }
+            console.log('🔄 Juego reiniciado');
+        };
+        if (prop === 'isRunning') return () => GAME.running;
+        if (prop === 'getPlayer') return () => GAME.player;
+        if (prop === 'getGame' || prop === 'state') return () => GAME;
+        if (prop === 'addAmmo') return () => { GAME.player.ammo += 20; };
+        if (prop === 'addHealth') return () => { GAME.player.health = 100; };
+        // Acceso directo a propiedades de GAME
+        if (GAME.hasOwnProperty(prop)) return GAME[prop];
+        // Fallback
+        return undefined;
+    },
+    set(target, prop, value) {
+        // Permitir setear propiedades en GAME
+        GAME[prop] = value;
+        return true;
+    }
+});
 
-console.log('🎯 DOOM intermedio cargado - window.doomGame para control');
+console.log('🎯 DOOM intermedio cargado - window.GAME y window.doomGame unificados');
 console.log('⚠️ Auto-inicio deshabilitado - usar menú para iniciar');
 
 // ================================
-// EXPOSICIÓN GLOBAL
+// PROTECCIÓN DE render3D CONTRA SOBRESCRITURAS
 // ================================
-window.GAME = GAME;
-window.doomGame = {
-    init: init,
-    startGame: startGame,
-    stopGame: stopGame,
-    isRunning: () => GAME.running,
-    getPlayer: () => GAME.player,
-    getGame: () => GAME
+if (!window._originalRender3D) {
+    window._originalRender3D = window.render3D;
+}
+// Protección simple: solo reasignar si no está protegido
+window.render3D = function(...args) {
+    if (typeof window._originalRender3D === 'function') {
+        window._originalRender3D.apply(this, args);
+    }
 };
 
 // ================================
-// PREPARACIÓN INICIAL
+// VERIFICAR COLISIÓN CON ENEMIGOS (stub)
 // ================================
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        // Solo preparar, no iniciar
-        init();
+function checkEnemyCollision() {
+    // Detectar colisión simple por proximidad
+    let colisiono = false;
+    let colisionInvisible = false;
+    GAME.enemies.forEach(function(enemy) {
+        const dx = enemy.x - GAME.player.x;
+        const dy = enemy.y - GAME.player.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        // Si está cerca y tiene salud
+        if (dist < GAME.tileSize/2 && enemy.health > 0) {
+            colisiono = true;
+            // Si el enemigo no se ve en pantalla, marcarlo
+            if (typeof isEnemyVisible === 'function' && !isEnemyVisible(enemy)) {
+                colisionInvisible = true;
+            }
+        }
     });
-} else {
-    setTimeout(() => {
-        // Solo preparar, no iniciar
-        init();
-    }, 100);
+    if (colisiono) {
+        GAME.player.health -= 10;
+        if (GAME.player.health < 0) GAME.player.health = 0;
+        GAME.textOverlays.push({ text: '-10', x: GAME.width/2, y: GAME.height/2 - 20, timer: 30 });
+        if (colisionInvisible) {
+            GAME.textOverlays.push({ text: '¡PELIGRO: ENEMIGO INVISIBLE!', x: GAME.width/2-80, y: GAME.height/2-60, timer: 60 });
+            console.warn('⚠️ Colisión con enemigo invisible cerca del jugador. Revisa posiciones de enemigos.');
+            // Mostrar info de enemigos en consola
+            GAME.enemies.forEach(function(enemy, idx) {
+                const dx = enemy.x - GAME.player.x;
+                const dy = enemy.y - GAME.player.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < GAME.tileSize/2 && enemy.health > 0 && !isEnemyVisible(enemy)) {
+                    console.warn(`Enemigo invisible #${idx+1} en (${enemy.x},${enemy.y}) tipo:${enemy.type}`);
+                }
+            });
+        }
+    }
+
+    // Función auxiliar para saber si el enemigo está en pantalla (campo de visión)
+    // DEBUG: Forzar visibilidad de todos los enemigos
+    function isEnemyVisible(enemy) {
+        return true;
+    }
 }

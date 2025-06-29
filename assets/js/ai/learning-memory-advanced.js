@@ -1,13 +1,89 @@
+  /**
+   * Guardar el estado de aprendizaje en learning-memory-complete.json (simulado con localStorage por restricciones de navegador)
+   */
+  window.learningMemory.guardarEstado = function() {
+    try {
+      const estado = {
+        version: this.version,
+        timestamp: new Date().toISOString(),
+        eventos: this.eventos,
+        correcciones: this.correcciones
+      };
+      // Simulación de guardado en JSON usando localStorage
+      localStorage.setItem('learning-memory-complete', JSON.stringify(estado));
+      console.log('🧠 LM: Estado de aprendizaje guardado en localStorage (simulación de learning-memory-complete.json)');
+    } catch (e) {
+      console.error('🧠 LM: Error al guardar el estado de aprendizaje:', e);
+    }
+  };
+
+  /**
+   * Cargar el estado de aprendizaje desde learning-memory-complete.json (simulado con localStorage)
+   */
+  window.learningMemory.cargarEstado = async function() {
+    try {
+      // Intentar cargar desde localStorage primero
+      let memoria = null;
+      const local = localStorage.getItem('learning-memory-complete');
+      if (local) {
+        memoria = JSON.parse(local);
+        console.log('🧠 LM: Estado de aprendizaje cargado desde localStorage');
+      } else {
+        // Si no existe en localStorage, intentar fetch del archivo JSON
+        const resp = await fetch('learning-memory-complete.json');
+        if (resp.ok) {
+          memoria = await resp.json();
+          console.log('🧠 LM: Estado de aprendizaje cargado desde learning-memory-complete.json');
+        } else {
+          console.warn('🧠 LM: No se pudo cargar learning-memory-complete.json');
+        }
+      }
+      if (memoria) {
+        this.eventos = memoria.eventos || [];
+        this.correcciones = memoria.correcciones || [];
+        this.version = memoria.version || this.version;
+      }
+    } catch (e) {
+      console.error('🧠 LM: Error al cargar el estado de aprendizaje:', e);
+    }
+  };
+
+  /**
+   * Aprendizaje automático: analizar eventos y correcciones para detectar patrones y crear logs inteligentes
+   */
+  window.learningMemory.analizarPatrones = function() {
+    try {
+      if (!this.eventos || this.eventos.length === 0) {
+        console.log('🧠 LM: No hay eventos registrados para analizar.');
+        return;
+      }
+      // Ejemplo simple: contar eventos por tipo
+      const resumen = {};
+      this.eventos.forEach(ev => {
+        resumen[ev.evento] = (resumen[ev.evento] || 0) + 1;
+      });
+      console.log('🧠 LM: Resumen de eventos aprendidos:', resumen);
+      // Detectar si hay muchos errores de movimiento
+      if (resumen['MOVIMIENTO_WASD'] && resumen['MOVIMIENTO_WASD'] < 3) {
+        console.warn('🧠 LM: Pocos eventos de movimiento detectados. El sistema WASD podría estar roto.');
+      }
+      // Más patrones y reglas pueden agregarse aquí
+    } catch (e) {
+      console.error('🧠 LM: Error en análisis de patrones:', e);
+    }
+  };
+
 /**
  * LEARNING MEMORY ADVANCED - Sistema de autopoiesis, corrección y registro de eventos
  * Versión 5.0.0
  */
+
 (function(window) {
   window.learningMemory = window.learningMemory || {};
   window.learningMemory.version = "5.0.0";
   window.learningMemory.eventos = [];
   window.learningMemory.correcciones = [];
-  
+
   /**
    * Registrar un evento para aprendizaje y diagnóstico
    */
@@ -15,7 +91,7 @@
     this.eventos.push({ evento, datos, timestamp: new Date().toISOString() });
     console.log(`🧠 LM: Evento registrado -> ${evento}`);
   };
-  
+
   /**
    * Consultar la memoria para recomendaciones (placeholder)
    */
@@ -23,7 +99,7 @@
     console.log(`🧠 LM: Consultando memoria -> ${query}`);
     return [];
   };
-  
+
   /**
    * Aplicar corrección automática (placeholder)
    */
@@ -33,7 +109,83 @@
     this.correcciones.push(correccion);
     return correccion;
   };
-  
+
+  /**
+   * Autoanalizar el estado del juego y retroalimentar en consola
+   */
+  window.learningMemory.autoanalizarEstado = async function() {
+    try {
+      // Cargar el archivo learning-memory-complete.json
+      const resp = await fetch('learning-memory-complete.json');
+      if (!resp.ok) {
+        console.warn('🧠 LM: No se pudo cargar learning-memory-complete.json');
+        return;
+      }
+      const memoria = await resp.json();
+      // Analizar archivos principales y sistemas core
+      let errores = 0;
+      let restaurados = 0;
+      if (memoria.archivosPrincipales) {
+        Object.entries(memoria.archivosPrincipales).forEach(([nombre, info]) => {
+          if (info.proteger && info.estado && info.estado.startsWith('CRITICO')) {
+            // Verificar si el archivo está cargado en el DOM
+            const existe = Array.from(document.scripts).some(s => s.src && s.src.includes(nombre.replace('.js','')));
+            if (!existe) {
+              console.error(`🧠 LM: Archivo crítico perdido: ${nombre} (${info.funcion})`);
+              errores++;
+            } else {
+              restaurados++;
+            }
+          }
+        });
+      }
+      if (memoria.sistemasCore) {
+        Object.entries(memoria.sistemasCore).forEach(([nombre, info]) => {
+          if (info.proteger && info.estado && info.estado.startsWith('CRITICO')) {
+            // Verificar si el sistema está presente en window
+            const base = nombre.replace('.js','');
+            if (!window[base] && !window[base.toUpperCase()]) {
+              console.error(`🧠 LM: Sistema core crítico ausente: ${nombre} (${info.funcion})`);
+              errores++;
+            } else {
+              restaurados++;
+            }
+          }
+        });
+      }
+      if (errores === 0) {
+        console.log('🧠 LM: Todos los sistemas críticos y archivos protegidos están presentes.');
+      } else {
+        console.warn(`🧠 LM: ${errores} sistemas/archivos críticos faltantes o dañados.`);
+      }
+      // Diagnóstico de controles WASD
+      if (window.doomGame && window.doomGame.player) {
+        const px = window.doomGame.player.x, py = window.doomGame.player.y;
+        setTimeout(() => {
+          if (window.doomGame.player.x !== px || window.doomGame.player.y !== py) {
+            console.log('🧠 LM: Movimiento WASD funcional (player se mueve)');
+          } else {
+            console.error('🧠 LM: Movimiento WASD NO FUNCIONA (player no se mueve)');
+          }
+        }, 500);
+      }
+    } catch (e) {
+      console.error('🧠 LM: Error en autoanálisis:', e);
+    }
+  };
+
+
+  // Al cargar, intentar restaurar el estado y analizar patrones
+  (async () => {
+    if (window.learningMemory && typeof window.learningMemory.cargarEstado === 'function') {
+      await window.learningMemory.cargarEstado();
+      window.learningMemory.analizarPatrones();
+      if (typeof window.learningMemory.autoanalizarEstado === 'function') {
+        window.learningMemory.autoanalizarEstado();
+      }
+    }
+  })();
+
   console.log('🧠 Learning Memory Advanced cargado v' + window.learningMemory.version);
 })(window);
 /**

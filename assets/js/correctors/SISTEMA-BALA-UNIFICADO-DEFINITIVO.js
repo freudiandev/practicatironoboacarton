@@ -253,12 +253,21 @@ function actualizarBalasUnificadas() {
                 const ex = enemy.x || 0;
                 const ey = enemy.y || 0;
                 const distE = Math.hypot(bala.x - ex, bala.y - ey);
-                const hitRadius = enemy.hitRadius || 16;
+                const hitRadius = enemy.hitRadius || 72;
                 if (distE < hitRadius) {
                     crearImpactoUnificado(bala.x, bala.y);
                     balasUnificadas.splice(i, 1);
-                    window.GAME.enemies.splice(j, 1);
-                    console.log(`💥 BALA ${bala.id} impactó enemigo en (${bala.x.toFixed(1)}, ${bala.y.toFixed(1)})`);
+                    // Bajar vida en vez de eliminar de inmediato
+                    enemy.health -= 50; // Daño por bala
+                    enemy.lastHit = Date.now();
+                    if (enemy.health <= 0) {
+                        window.GAME.enemies.splice(j, 1);
+                        if (typeof window.renderEnemiesHTML === 'function') window.renderEnemiesHTML();
+                        console.log(`💥 ENEMIGO ELIMINADO por bala ${bala.id} en (${bala.x.toFixed(1)}, ${bala.y.toFixed(1)})`);
+                    } else {
+                        if (typeof window.renderEnemiesHTML === 'function') window.renderEnemiesHTML();
+                        console.log(`💢 ENEMIGO DAÑADO por bala ${bala.id} en (${bala.x.toFixed(1)}, ${bala.y.toFixed(1)}), vida restante: ${enemy.health}`);
+                    }
                     hitEnemy = true;
                     break;
                 }
@@ -530,7 +539,7 @@ function configurarControlesUnificados() {
     document.removeEventListener('keydown', manejarTeclado);
     
     // Agregar manejador único
-    document.addEventListener('keydown', manejarTeclado);
+    // Listener de teclado eliminado para evitar duplicidad. Control centralizado en INICIALIZADOR-CONTROLES-POST-DOOM.js
     
     console.log('✅ Controles unificados configurados correctamente');
 }
@@ -684,7 +693,7 @@ function intentarInicializacion() {
         }, 500);
         
     } else {
-        console.log('⏳ Motor DOOM no listo, reintentando en 500ms...');
+        // Eliminado mensaje de reintento spam
         setTimeout(intentarInicializacion, 500);
     }
 }

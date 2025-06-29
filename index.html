@@ -16,13 +16,8 @@
   
   <!-- Estilos CSS -->
   <link rel="stylesheet" href="assets/css/game-main.css">
+  <link rel="stylesheet" href="assets/css/ui-panels.css">
 
-  <!-- 🤖 SISTEMAS DE IA Y MACHINE LEARNING (OPTIMIZADOS PARA RENDIMIENTO) -->
-  <!-- DESHABILITADOS TEMPORALMENTE PARA MEJOR RENDIMIENTO -->
-  <!-- <script src="assets/js/correctors/CORRECTOR-CRITICO-LEARNING-MEMORY.js"></script> -->
-  <!-- <script src="assets/js/ai/learning-memory-advanced.js"></script> -->
-  <!-- <script src="assets/js/ai/learning-machine-advanced.js"></script> -->
-  <!-- <script src="assets/js/ai/CLASIFICADOR-INTELIGENTE-JS.js"></script> -->
   
 </head>
 
@@ -57,6 +52,39 @@
             <span class="btn-icon">👥</span>
             <span class="btn-text">CRÉDITOS</span>
           </button>
+
+          <!-- Botón para mostrar enemigos -->
+          <button class="menu-btn" id="showEnemiesBtn">
+            <span class="btn-icon">👾</span>
+            <span class="btn-text">MOSTRAR ENEMIGOS</span>
+          </button>
+
+  <!-- Botón flotante para reiniciar enemigos -->
+  <button id="respawnEnemiesBtnFloating" style="position:fixed;top:50%;right:32px;z-index:1000;transform:translateY(-50%);background:linear-gradient(135deg,#1e293b 60%,#0ea5e9 100%);color:#fff;border:none;border-radius:16px;padding:18px 28px;box-shadow:0 4px 24px #0ea5e955,0 1.5px 8px #0008;cursor:pointer;font-size:1.18em;display:none;transition:background 0.2s,box-shadow 0.2s;letter-spacing:0.5px;font-family:'Segoe UI',Arial,sans-serif;font-weight:600;outline:none;">
+    <span style="font-size:1.5em;vertical-align:middle;">👾</span> <span style="vertical-align:middle;">REINICIAR ENEMIGOS</span>
+  </button>
+  <style>
+    #respawnEnemiesBtnFloating:hover {
+      background: linear-gradient(135deg,#0ea5e9 60%,#1e293b 100%);
+      box-shadow: 0 6px 32px #0ea5e9cc,0 2px 12px #000a;
+      color: #fff;
+      transform: translateY(-50%) scale(1.04);
+    }
+    #respawnEnemiesBtnFloating:active {
+      background: linear-gradient(135deg,#1e293b 80%,#0ea5e9 100%);
+      box-shadow: 0 2px 8px #0ea5e955,0 1.5px 8px #0008;
+      color: #bae6fd;
+      transform: translateY(-50%) scale(0.98);
+    }
+    @media (max-width: 700px) {
+      #respawnEnemiesBtnFloating {
+        right: 8px;
+        padding: 12px 10px;
+        font-size: 0.98em;
+        border-radius: 10px;
+      }
+    }
+  </style>
         </div>
         
         <div class="menu-footer">
@@ -110,20 +138,38 @@
         </div>
         
         <div class="control-section">
-          <h3>🔧 Debugging</h3>
+          <h3>🔧 Debugging Optimizado</h3>
           <div class="control-item">
             <span class="key">F1</span>
-            <span class="desc">window.BalasUnificadas.estado()</span>
+            <span class="desc">Estado completo del sistema</span>
           </div>
           <div class="control-item">
             <span class="key">F2</span>
-            <span class="desc">Sistema de emergencia (respaldo)</span>
+            <span class="desc">Sistema de emergencia</span>
           </div>
           <div class="control-item">
             <span class="key">F3</span>
-            <span class="desc">window.BalasUnificadas.test()</span>
+            <span class="desc">Test completo del motor</span>
           </div>
         </div>
+
+        <div class="control-section">
+          <h3>🎯 DOOM Intermedio</h3>
+          <div class="control-item">
+            <span class="key">window.GAME</span>
+            <span class="desc">Motor principal del juego</span>
+          </div>
+          <div class="control-item">
+            <span class="key">enemies()</span>
+            <span class="desc">Ver enemigos Noboa activos</span>
+          </div>
+          <div class="control-item">
+            <span class="key">diag()</span>
+            <span class="desc">Diagnóstico rápido</span>
+          </div>
+        </div>
+        
+
       </div>
     </div>
   </div>
@@ -172,283 +218,351 @@
   </div>
 
   <!-- Canvas del Juego -->
-  <canvas id="gameCanvas" style="display: none;"></canvas>
+  <canvas id="gameCanvas"></canvas>
+  <!-- Capa HTML para enemigos Noboa -->
+  <div id="enemyLayer"></div>
+
 
   <!-- ========================================= -->
-  <!-- SCRIPTS ESENCIALES ÚNICAMENTE -->
-  <!-- CORRECTOR DE BUCLES SPAM IMPLEMENTADO -->
-  <!-- CORRECTOR CÁMARA VERTICAL IMPLEMENTADO -->
+  <!-- ESTRUCTURA MODULAR DE SCRIPTS ESENCIALES  -->
   <!-- ========================================= -->
-  
-  <!-- 1. MOTOR PRINCIPAL DEL JUEGO -->
+  <!-- 1. Núcleo del motor DOOM y física -->
   <script src="assets/js/core/DOOM-INTERMEDIO.js"></script>
   <script src="assets/js/physics/WorldPhysics.js"></script>
-  
-  <!-- ⚡ SISTEMA DE OPTIMIZACIÓN DE RENDIMIENTO (CRÍTICO) -->
+
+  <!-- 2. Optimización de rendimiento -->
   <script src="assets/js/optimization/SISTEMA-OPTIMIZACION-RENDIMIENTO.js"></script>
-  
-  <script>
-    if (window.learningMemory && window.learningMemory.registrarEvento) {
-      window.learningMemory.registrarEvento('LOAD_WORLD_PHYSICS', { timestamp: Date.now() });
-    }
-  </script>
-  
-  <!-- 2. CORRECTOR MAESTRO UNIFICADO (CONTROLES PRINCIPALES) -->
+
+  <!-- 3. Correctores esenciales (solo los necesarios) -->
   <script src="assets/js/correctors/CORRECTOR-MAESTRO-UNIFICADO.js"></script>
-  
-  <!-- 2.1. CORRECTOR DE BUCLES SPAM (ANTI-BUCLES INFINITOS) -->
   <script src="assets/js/correctors/CORRECTOR-BUCLES-SPAM.js"></script>
-  
-  <!-- 2.2. CORRECTOR CÁMARA VERTICAL AVANZADO (RAYCASTING COMPLETO) -->
   <script src="assets/js/correctors/CORRECTOR-CAMARA-VERTICAL-AVANZADO.js"></script>
-  <script>
-    if (window.learningMemory && window.learningMemory.registrarEvento) {
-      window.learningMemory.registrarEvento('REACTIVACION_CAMARA_VERTICAL', { timestamp: Date.now() });
-    }
-  </script>
-  
-  <!-- 2.3. INICIALIZADOR DE CONTROLES POST-DOOM (CRÍTICO) -->
   <script src="assets/js/correctors/INICIALIZADOR-CONTROLES-POST-DOOM.js"></script>
-  
-   
-  <!-- ⚠️ SISTEMA ÚNICO FINAL - REEMPLAZA TODOS LOS ANTERIORES ⚠️ -->
+
+  <!-- 4. Sistemas de disparo unificados -->
   <script src="assets/js/correctors/SISTEMA-BALA-UNIFICADO-DEFINITIVO.js"></script>
-  
-  <!-- 🚨 SISTEMA DE EMERGENCIA TEMPORAL (RESPALDO) -->
   <script src="assets/js/correctors/SISTEMA-EMERGENCIA-DISPARO.js"></script>
-  
-  <!-- 3. SISTEMA DE COLORES VAPORWAVE (DESHABILITADO PARA RENDIMIENTO) -->
-  <!-- <script src="assets/js/systems/SISTEMA-COLORES-VAPORWAVE.js"></script> -->
-  
-  <!-- 4. SISTEMA DE GRILLA FIJA VAPORWAVE (DESHABILITADO PARA RENDIMIENTO) -->
-  <!-- <script src="assets/js/systems/SISTEMA-GRILLA-FIJA-VAPORWAVE.js"></script> -->
-  
-  <!-- 4.1. SISTEMA DE CÁMARA VERTICAL (DESHABILITADO PARA RENDIMIENTO) -->
-  <!-- <script src="assets/js/systems/SISTEMA-CAMARA-VERTICAL.js"></script> -->
-  
-  <!-- 5. SISTEMA DE CONSTRUCCIÓN DE LABERINTO -->
+
+  <!-- 5. Sistemas de juego y validación -->
   <script src="assets/js/systems/CONSTRUCCION-DEFINITIVA-LABERINTO.js"></script>
-  
-  <!-- 6. SISTEMA DE MENÚ -->
+  <script src="assets/js/systems/VALIDADOR-ARCHIVOS.js"></script>
+  <script src="assets/js/systems/SISTEMA-CARTESIANO-ENEMIGOS.js"></script>
+
+  <!-- 6. Interfaz y audio -->
   <script src="assets/js/menu-system.js"></script>
-  
-  <!-- 7. SISTEMA DE AUDIO -->
   <script src="assets/js/audio.js"></script>
-  
-  
-  <!-- 9. LEARNING MEMORY E IA (OPCIONAL) -->
-  <!-- <script src="assets/js/ai/learning-memory-advanced.js"></script> -->
-  
-  <!-- 10. VALIDADOR FINAL -->
-  <script src="assets/js/systems/VALIDADOR-ARCHIVOS.js"></script>
-  
-  <!-- 11. DIAGNÓSTICO RÁPIDO DE CONTROLES -->
-  <script src="assets/js/systems/DIAGNOSTICO-RAPIDO-CONTROLES.js"></script>
 
-  <!-- ========================================= -->
-  <!-- SCRIPT DE INICIALIZACIÓN SIMPLIFICADO -->
-  <!-- ========================================= -->
-  <script>
-    console.log('🎮 Inicializando DOOM: Noboa de Cartón - Versión Limpia');
-    
-    // Configuración de errores mínima
-    window.addEventListener('error', (e) => {
-      if (!e.filename.includes('404') && !e.message.includes('Failed to load')) {
-        console.log('⚠️ Error controlado:', e.message);
+  <!-- 7. Inicialización unificada (siempre al final) -->
+  <script src="assets/js/core/game-initialization.js"></script>
+
+  <!-- 8. Renderizado de enemigos (UI) -->
+  <script src="assets/js/ui/enemy-html-render.js"></script>
+
+
+<script>
+// Inicialización centralizada de scripts interactivos
+document.addEventListener('DOMContentLoaded', function() {
+  // --- Botón flotante para reiniciar enemigos ---
+  var btnRespawn = document.getElementById('respawnEnemiesBtnFloating');
+  var canvas = document.getElementById('gameCanvas');
+  function toggleRespawnBtnFloating() {
+    if (!btnRespawn || !canvas) return;
+    var menu = document.getElementById('mainMenu');
+    if (canvas.style.display !== 'none' && (!menu || menu.style.display === 'none')) {
+      btnRespawn.style.display = 'block';
+    } else {
+      btnRespawn.style.display = 'none';
+    }
+  }
+  if (btnRespawn) {
+    btnRespawn.addEventListener('click', function() {
+      if (window.doomGame && typeof window.doomGame.respawnEnemies === 'function') {
+        try {
+          window.doomGame.respawnEnemies();
+          btnRespawn.innerHTML = '<span style="font-size:1.3em;">✅</span> ENEMIGOS REINICIADOS';
+          setTimeout(function(){
+            btnRespawn.innerHTML = '<span style="font-size:1.3em;">👾</span> REINICIAR ENEMIGOS';
+          }, 1200);
+        } catch(e) { /* Silenciar error */ }
       }
     });
-    
-    // Handler para debugging F1, F2, F3
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'F1') {
-        e.preventDefault();
-        if (window.BalasUnificadas) {
-          console.log('🔧 DEBUGGING - Estado del sistema unificado:');
-          console.log(window.BalasUnificadas.estado());
-        } else {
-          console.log('⚠️ Sistema unificado no disponible aún');
+    var intervalId = setInterval(toggleRespawnBtnFloating, 500);
+    window.addEventListener('beforeunload', function() { clearInterval(intervalId); });
+  }
+
+  // --- Disparo sincronizado con la proyección 2.5D y la cruz ---
+  function detectarImpactoEnemigoConCruz() {
+    if (!window.GAME || !window.GAME.enemies || !canvas) return null;
+    var FOV = Math.PI / 3;
+    var HALF_FOV = FOV / 2;
+    var player = window.GAME.player || { x: 0, y: 0, angle: 0 };
+    var screenW = canvas.width;
+    var screenH = canvas.height;
+    var baseSize = 144;
+    var mejorEnemigo = null;
+    var mejorDistancia = 99999;
+    window.GAME.enemies.forEach(function(enemy) {
+      if (enemy.active === false) return;
+      var tipo = enemy.type || 'casual';
+      var dx = enemy.x - player.x;
+      var dy = enemy.y - player.y;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 40 || dist > 1200) return;
+      var angleToEnemy = Math.atan2(dy, dx);
+      var relAngle = angleToEnemy - player.angle;
+      while (relAngle < -Math.PI) relAngle += 2*Math.PI;
+      while (relAngle > Math.PI) relAngle -= 2*Math.PI;
+      // Solo permite disparar si el ángulo relativo es cercano a 0 (apuntando directo)
+      if (Math.abs(relAngle) < 0.15) { // 0.15 radianes ~8.6 grados
+        if (dist < mejorDistancia) {
+          mejorDistancia = dist;
+          mejorEnemigo = enemy;
         }
       }
-      
-      if (e.key === 'F3') {
-        e.preventDefault();
-        if (window.BalasUnificadas && window.BalasUnificadas.test) {
-          console.log('🧪 TESTING COMPLETO DEL SISTEMA:');
-          const resultado = window.BalasUnificadas.test();
-          console.log('📊 Resultado del test:', resultado);
-        } else {
-          console.log('⚠️ Sistema de testing no disponible');
+    });
+    return mejorEnemigo;
+  }
+
+  function dispararConCruz() {
+    var enemigo = detectarImpactoEnemigoConCruz();
+    if (enemigo) {
+      // Marca como inactivo o aplica daño
+      enemigo.active = false;
+      // Efecto visual opcional: destello o animación
+      // Puedes agregar aquí lógica de puntaje, sonido, etc.
+      // Parpadeo rápido del sprite (si quieres)
+      var layer = document.getElementById('enemyLayer');
+      if (layer) {
+        var imgs = layer.getElementsByTagName('img');
+        for (var i = 0; i < imgs.length; i++) {
+          if (imgs[i].alt === (enemigo.type || 'casual')) {
+            imgs[i].style.filter = 'brightness(2) drop-shadow(0 0 8px #ff0)';
+            (function(img){ setTimeout(function(){ img.style.filter = ''; }, 120); })(imgs[i]);
+          }
         }
       }
-    });
-    
-    // Configuración simplificada del menú
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('📱 DOM cargado - Configurando interfaz...');
-      
-      // Configurar botón de inicio
-      const startButton = document.getElementById('startGame');
-      if (startButton) {
-        startButton.addEventListener('click', iniciarJuego);
+    }
+  }
+
+  // Disparo con ESPACIO o CLIC (solo si el menú está oculto)
+  function disparoHandler(e) {
+    var mainMenu = document.getElementById('mainMenu');
+    var menuVisible = mainMenu && mainMenu.style.display !== 'none' && mainMenu.style.display !== '';
+    if (!menuVisible) {
+      dispararConCruz();
+    }
+  }
+  window.addEventListener('keydown', function(e) {
+    if (e.code === 'Space') {
+      disparoHandler(e);
+    }
+  });
+  window.addEventListener('mousedown', function(e) {
+    // Solo botón izquierdo
+    if (e.button === 0) {
+      disparoHandler(e);
+    }
+  });
+
+
+  // --- Algoritmo robusto para forzar la aparición de sprites de enemigos Noboa en el DOM ---
+  function forceNoboaSpritesInDOM() {
+    // 1. Si no hay enemigos activos, crear algunos de prueba
+    if (!window.GAME) window.GAME = {};
+    var canvas = document.getElementById('gameCanvas');
+    // Asegura tamaño mínimo del canvas
+    if (canvas) {
+      if (!canvas.width || canvas.width < 100) canvas.width = 800;
+      if (!canvas.height || canvas.height < 100) canvas.height = 600;
+      canvas.style.width = canvas.width + 'px';
+      canvas.style.height = canvas.height + 'px';
+      canvas.style.display = 'block';
+    }
+    if (!window.GAME.enemies || !Array.isArray(window.GAME.enemies) || window.GAME.enemies.length === 0) {
+      var w = (canvas && canvas.width) ? canvas.width : 800;
+      var h = (canvas && canvas.height) ? canvas.height : 600;
+      window.GAME.enemies = [
+        { x: w/2 - 120, y: h/2 + 60, z: 0, type: 'casual', active: true },
+        { x: w/2,       y: h/2 + 60, z: 0, type: 'deportivo', active: true },
+        { x: w/2 + 120, y: h/2 + 60, z: 0, type: 'presidencial', active: true }
+      ];
+      if (!window.GAME.player) {
+        window.GAME.player = { x: w/2, y: h/2, angle: 0 };
       }
-      
-      // Configurar paneles informativos
-      configurarPaneles();
-      
-      console.log('✅ Interfaz configurada correctamente');
+      if (!window.GAME.enemySprites) {
+        window.GAME.enemySprites = {};
+        ['casual','deportivo','presidencial'].forEach(function(tipo) {
+          var img = new window.Image();
+          img.src = 'assets/images/noboa-' + tipo + '.png';
+          window.GAME.enemySprites[tipo] = img;
+        });
+      }
+    }
+    // 2. Renderizado HTML manual de los sprites en enemyLayer SOLO si el menú está oculto
+    var layer = document.getElementById('enemyLayer');
+    var mainMenu = document.getElementById('mainMenu');
+    if (!layer || !canvas) return;
+    // Solo renderiza si el menú está oculto (juego activo)
+    var menuVisible = mainMenu && mainMenu.style.display !== 'none' && mainMenu.style.display !== '';
+    if (menuVisible) {
+      layer.innerHTML = '';
+      layer.style.display = 'none';
+      return;
+    }
+    layer.innerHTML = '';
+    layer.style.display = 'block';
+    layer.style.pointerEvents = 'none';
+    layer.style.position = 'absolute';
+    layer.style.visibility = 'visible';
+    layer.style.opacity = '1';
+    layer.style.zIndex = '9999';
+    layer.classList.remove('hidden');
+    var rect = canvas.getBoundingClientRect();
+    layer.style.left = rect.left + window.scrollX + 'px';
+    layer.style.top = rect.top + window.scrollY + 'px';
+    layer.style.width = canvas.width + 'px';
+    layer.style.height = canvas.height + 'px';
+    layer.style.background = 'transparent';
+    // 3. Renderiza los enemigos con proyección 2.5D básica
+    var FOV = Math.PI / 3; // 60 grados
+    var HALF_FOV = FOV / 2;
+    var player = window.GAME.player || { x: 0, y: 0, angle: 0 };
+    var screenW = canvas.width;
+    var screenH = canvas.height;
+    var baseSize = 144; // Tamaño fijo para todos los enemigos
+    // --- Función de raycast simple para detectar si hay muro entre jugador y enemigo ---
+    function hayMuroEntreJugadorYEnemigo(x0, y0, x1, y1) {
+      if (!window.GAME || !window.GAME.mapaColisiones) return false;
+      var mapa = window.GAME.mapaColisiones;
+      var pasos = 48; // Más pasos = más precisión
+      var ancho = mapa[0] ? mapa[0].length : 0;
+      var alto = mapa.length;
+      for (var i = 1; i < pasos; i++) {
+        var t = i / pasos;
+        var x = x0 + (x1 - x0) * t;
+        var y = y0 + (y1 - y0) * t;
+        var celdaX = Math.floor(x / 32); // Ajusta según tamaño de celda
+        var celdaY = Math.floor(y / 32);
+        if (celdaX < 0 || celdaY < 0 || celdaX >= ancho || celdaY >= alto) continue;
+        if (mapa[celdaY][celdaX] === 1) {
+          return true; // Hay muro
+        }
+      }
+      return false;
+    }
+
+    // Si el jugador tiene pitch, lo ignoramos para la proyección de enemigos (DOOM clásico)
+    window.GAME.enemies.forEach(function(enemy, idx) {
+      if (enemy.active === false) return;
+      var tipo = enemy.type || 'casual';
+      var imgObj = window.GAME.enemySprites && window.GAME.enemySprites[tipo];
+      if (!imgObj || !imgObj.src) return;
+      // Vector del enemigo respecto al jugador
+      var dx = enemy.x - player.x;
+      var dy = enemy.y - player.y;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      // No renderizar si está demasiado lejos o cerca
+      if (dist < 40 || dist > 1200) return;
+      // --- NO renderizar si hay muro entre jugador y enemigo ---
+      if (window.GAME.mapaColisiones && hayMuroEntreJugadorYEnemigo(player.x, player.y, enemy.x, enemy.y)) return;
+      // Ángulo relativo al jugador (solo yaw)
+      // El sprite solo depende de la posición del jugador, no del ángulo de la cámara vertical (pitch)
+      var angleToEnemy = Math.atan2(dy, dx);
+      var relAngle = angleToEnemy - player.angle;
+      // Normaliza ángulo entre -PI y PI
+      while (relAngle < -Math.PI) relAngle += 2*Math.PI;
+      while (relAngle > Math.PI) relAngle -= 2*Math.PI;
+      // Proyección horizontal: centro pantalla + desplazamiento proporcional al ángulo
+      var screenX = (screenW/2) + Math.tan(relAngle) * (screenW/2) / Math.tan(HALF_FOV);
+      // Proyección vertical: SIEMPRE pegado al piso, no sigue el pitch
+      var size = baseSize; // Tamaño fijo
+      var screenY = screenH - size - 24; // Siempre en el suelo, 24px de margen inferior
+      // Nueva lógica: renderiza si cualquier parte del sprite está visible en pantalla
+      var leftEdge = screenX - size/2;
+      var rightEdge = screenX + size/2;
+      if (rightEdge < 0 || leftEdge > screenW) return;
+      var img = document.createElement('img');
+      img.src = imgObj.src;
+      img.alt = tipo;
+      img.style.position = 'absolute';
+      img.style.left = leftEdge + 'px';
+      img.style.top = screenY + 'px';
+      img.style.width = size + 'px';
+      img.style.height = size + 'px';
+      img.style.objectFit = 'contain';
+      img.style.pointerEvents = 'none';
+      img.style.zIndex = Math.floor(10000 - dist); // Más cerca, más arriba
+      img.style.userSelect = 'none';
+      layer.appendChild(img);
     });
-    
-    // Función para iniciar el juego
-    function iniciarJuego() {
-      console.log('🚀 Iniciando juego...');
-      
+  }
+
+
+  // Llama siempre al cargar y en cada resize
+  forceNoboaSpritesInDOM();
+  window.addEventListener('resize', forceNoboaSpritesInDOM);
+  // También cada vez que se muestra el menú principal
+  var mainMenu = document.getElementById('mainMenu');
+  if (mainMenu) {
+    var observer = new MutationObserver(function() {
+      forceNoboaSpritesInDOM();
+    });
+    observer.observe(mainMenu, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  // --- Loop para mantener los sprites de Noboa SIEMPRE visibles y sincronizados ---
+  function loopForceNoboaSprites() {
+    forceNoboaSpritesInDOM();
+    window.requestAnimationFrame(loopForceNoboaSprites);
+  }
+  window.requestAnimationFrame(loopForceNoboaSprites);
+
+  // --- Botón para mostrar enemigos desde el menú principal ---
+  var btnShowEnemies = document.getElementById('showEnemiesBtn');
+  if (btnShowEnemies) {
+    btnShowEnemies.addEventListener('click', function() {
+      if (typeof window.respawnEnemies === 'function') {
+        window.respawnEnemies();
+      } else if (window.doomGame && typeof window.doomGame.respawnEnemies === 'function') {
+        window.doomGame.respawnEnemies();
+      }
+      if (typeof window.enemies === 'function') {
+        window.enemies();
+      }
+      btnShowEnemies.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">ENEMIGOS VISIBLES</span>';
+      setTimeout(function() {
+        btnShowEnemies.innerHTML = '<span class="btn-icon">👾</span><span class="btn-text">MOSTRAR ENEMIGOS</span>';
+      }, 1200);
+    });
+    // Ocultar el botón cuando el juego está corriendo
+    var mainMenu = document.getElementById('mainMenu');
+    var observer = new MutationObserver(function() {
+      if (mainMenu && mainMenu.style.display === 'none') {
+        btnShowEnemies.style.display = 'none';
+      } else {
+        btnShowEnemies.style.display = '';
+      }
+    });
+    observer.observe(mainMenu, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  // --- Botón para guardar el estado de aprendizaje de Learning Memory ---
+  var btnSaveLM = document.getElementById('saveLearningMemoryBtn');
+  if (btnSaveLM && window.learningMemory && typeof window.learningMemory.guardarEstado === 'function') {
+    btnSaveLM.addEventListener('click', function() {
       try {
-        // Ocultar menú
-        const menu = document.getElementById('mainMenu');
-        if (menu) menu.style.display = 'none';
-        
-        // Mostrar canvas
-        const canvas = document.getElementById('gameCanvas');
-        if (canvas) {
-          canvas.style.display = 'block';
-          canvas.style.cursor = 'crosshair';
-        }
-        
-        // Inicializar motor DOOM
-        if (typeof init === 'function') {
-          init();
-          console.log('✅ Motor del juego inicializado');
-        }
-        
-        // Iniciar el juego
-        if (typeof startGame === 'function') {
-          startGame();
-          console.log('✅ Juego iniciado');
-        }
-        
-        // Inicializar sistemas avanzados
-        setTimeout(() => {
-          // Sistema de disparo
-          if (window.SistemaDisparo) {
-            window.SistemaDisparo.inicializar();
-            console.log('✅ Sistema de disparo inicializado');
-          }
-          
-          // Efectos visuales
-          if (window.EfectosBala) {
-            window.EfectosBala.inicializar();
-            console.log('✅ Efectos visuales inicializados');
-          }
-          
-          // Audio 8-bits
-          if (window.Audio8Bits) {
-            window.Audio8Bits.inicializar();
-            console.log('✅ Audio 8-bits inicializado');
-          }
-          
-          // El corrector maestro se encarga de todo lo demás
-          console.log('🎮 JUEGO LISTO - El Corrector Maestro maneja todos los controles');
-          console.log('🖱️ Haz clic en la pantalla para capturar el mouse');
-          console.log('⌨️ Usa WASD para moverte, clic para disparar, ESC para liberar mouse');
-          
-        }, 500);
-        
-      } catch (error) {
-        console.error('❌ Error al iniciar juego:', error);
-        alert('Error al iniciar el juego. Revisa la consola para más detalles.');
-      }
-    }
-    
-    // Configurar paneles informativos
-    function configurarPaneles() {
-      // Panel de controles
-      const showControls = document.getElementById('showControls');
-      const controlsPanel = document.getElementById('controlsPanel');
-      const closeControls = document.getElementById('closeControls');
-      
-      if (showControls && controlsPanel && closeControls) {
-        showControls.addEventListener('click', () => {
-          controlsPanel.style.display = 'flex';
-        });
-        
-        closeControls.addEventListener('click', () => {
-          controlsPanel.style.display = 'none';
-        });
-      }
-      
-      // Panel de donaciones
-      const showDonations = document.getElementById('showDonations');
-      const donationsPanel = document.getElementById('donationsPanel');
-      const closeDonations = document.getElementById('closeDonations');
-      
-      if (showDonations && donationsPanel && closeDonations) {
-        showDonations.addEventListener('click', () => {
-          donationsPanel.style.display = 'flex';
-        });
-        
-        closeDonations.addEventListener('click', () => {
-          donationsPanel.style.display = 'none';
-        });
-      }
-      
-      // Panel de créditos
-      const showCredits = document.getElementById('showCredits');
-      const creditsPanel = document.getElementById('creditsPanel');
-      const closeCredits = document.getElementById('closeCredits');
-      
-      if (showCredits && creditsPanel && closeCredits) {
-        showCredits.addEventListener('click', () => {
-          creditsPanel.style.display = 'flex';
-        });
-        
-        closeCredits.addEventListener('click', () => {
-          creditsPanel.style.display = 'none';
-        });
-      }
-      
-      // Cerrar paneles con clic fuera
-      document.addEventListener('click', (e) => {
-        const panels = [controlsPanel, donationsPanel, creditsPanel];
-        panels.forEach(panel => {
-          if (panel && panel.style.display === 'flex' && 
-              !panel.contains(e.target) && 
-              !e.target.closest('.menu-btn')) {
-            panel.style.display = 'none';
-          }
-        });
-      });
-    }
-    
-    console.log('✅ Script de inicialización cargado correctamente');
-  </script>
+        window.learningMemory.guardarEstado();
+        btnSaveLM.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">GUARDADO</span>';
+        setTimeout(function() {
+          btnSaveLM.innerHTML = '<span class="btn-icon">🧠</span><span class="btn-text">GUARDAR LEARNING MEMORY</span>';
+        }, 1500);
+      } catch(e) { /* Silenciar error */ }
+    });
+  }
+});
+</script>
 
-  <!-- Registro en Learning Memory de desactivación de grilla/vaporwave -->
-  <script>
-    if (window.learningMemory && window.learningMemory.registrarEvento) {
-      window.learningMemory.registrarEvento('DESACTIVACION_SISTEMAS_VAPORWAVE', {
-        sistemasDesactivados: [
-          'SISTEMA-COLORES-VAPORWAVE.js',
-          'SISTEMA-GRILLA-FIJA-VAPORWAVE.js',
-          'SISTEMA-CAMARA-VERTICAL.js',
-          'CORRECTOR-CAMARA-VERTICAL-AVANZADO.js'
-        ],
-        descripcion: 'Se eliminaron grillas y líneas dinámicas del piso y cámara para corregir error de líneas verticales persistentes en pantalla.'
-      });
-    }
-  </script>
-  <!-- FIN registro Learning Memory -->
+<!-- Fin de scripts interactivos y modularización -->
 
-  <!-- VALIDADOR DE ARCHIVOS POST-REORGANIZACIÓN -->
-  <script src="assets/js/systems/VALIDADOR-ARCHIVOS.js"></script>
-
-  <!-- ========================================= -->
-  <!-- VALIDADOR POST-CORRECCIÓN (FINAL) -->
-  <!-- ========================================= -->
-  <script src="assets/js/debug/VALIDADOR-POST-CORRECCION.js"></script>
-
-  <!-- ========================================= -->
-  <!-- FIN DE CARGA DE SCRIPTS -->
-  <!-- SISTEMA OPTIMIZADO Y VALIDADO -->
-  <!-- ========================================= -->
 </body>
 </html>

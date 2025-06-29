@@ -45,27 +45,23 @@ class CorrectorMaestroUnificado {
     // Detener monitores que causan spam
     if (window.monitorEstadoTiempoReal) {
       window.monitorEstadoTiempoReal.detener?.();
-    }
-    
-    if (window.correctorEmergenciaWASD) {
-      window.correctorEmergenciaWASD.detener?.();
-    }
-    
-    if (window.correctorControlesWASD) {
-      window.correctorControlesWASD.detener?.();
-    }
-    
-    // Limpiar intervalos problemáticos
-    const maxIntervalId = setTimeout(() => {}, 0);
-    for (let i = 1; i < maxIntervalId; i++) {
+  }
+  
+  this.limpiarIntervalos();
+  
+  console.log('✅ Sistemas conflictivos detenidos');
+}
+
+limpiarIntervalos() {
+  // Limpiar intervalos problemáticos
+  var maxIntervalId = setTimeout(() => {}, 0);
+  for (let i = 1; i < maxIntervalId; i++) {
       clearInterval(i);
     }
-    
-    console.log('✅ Sistemas conflictivos detenidos');
   }
-
-  async esperarMotorDoom() {
-    return new Promise((resolve) => {
+  
+    esperarMotorDoom() {
+      return new Promise((resolve) => {
       const verificar = () => {
         if (window.doomGame && window.doomGame.player && window.doomGame.keys) {
           console.log('✅ Motor DOOM detectado y listo');
@@ -79,135 +75,13 @@ class CorrectorMaestroUnificado {
   }
 
   configurarSistemaUnificado() {
-    console.log('🔧 Configurando sistema unificado...');
-    
-    // Limpiar todos los listeners existentes
-    this.limpiarListenersExistentes();
-    
-    // Configurar listeners maestros
-    this.configurarListenersMaestros();
-    
-    // Configurar bucle de movimiento directo
-    this.configurarBucleMovimiento();
-    
-    // Configurar sistema de mouse y disparo
-    this.configurarMouseYDisparo();
-    
-    console.log('✅ Sistema unificado configurado');
-  }
-
-  limpiarListenersExistentes() {
-    // Clonar el documento para eliminar todos los listeners
-    const nuevoElemento = document.cloneNode(true);
-    document.parentNode.replaceChild(nuevoElemento, document);
-    
-    // Recrear el canvas si es necesario
-    const canvas = document.getElementById('gameCanvas');
-    if (canvas) {
-      const nuevoCanvas = canvas.cloneNode(true);
-      canvas.parentNode.replaceChild(nuevoCanvas, canvas);
-      
-      // Reconfigurar el contexto del juego
-      if (window.doomGame) {
-        window.doomGame.canvas = nuevoCanvas;
-        window.doomGame.ctx = nuevoCanvas.getContext('2d');
-      }
-    }
-  }
-
-  configurarListenersMaestros() {
-    console.log('⌨️ Configurando listeners maestros...');
-    
-    // Listener unificado de teclado
-    document.addEventListener('keydown', (e) => {
-      this.manejarTeclaPresionada(e);
-    }, { passive: false });
-    
-    document.addEventListener('keyup', (e) => {
-      this.manejarTeclaLiberada(e);
-    }, { passive: false });
-    
-    // Prevenir comportamientos por defecto
-    document.addEventListener('keydown', (e) => {
-      if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'].includes(e.code)) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }, { capture: true, passive: false });
-  }
-
-  manejarTeclaPresionada(e) {
-    const codigo = e.code || e.key;
-    
-    // Mapear teclas WASD
-    switch(codigo) {
-      case 'KeyW':
-      case 'w':
-      case 'W':
-        this.teclasPulsadas.W = true;
-        this.aplicarMovimientoInmediato('W');
-        break;
-      case 'KeyA':
-      case 'a':
-      case 'A':
-        this.teclasPulsadas.A = true;
-        this.aplicarMovimientoInmediato('A');
-        break;
-      case 'KeyS':
-      case 's':
-      case 'S':
-        this.teclasPulsadas.S = true;
-        this.aplicarMovimientoInmediato('S');
-        break;
-      case 'KeyD':
-      case 'd':
-      case 'D':
-        this.teclasPulsadas.D = true;
-        this.aplicarMovimientoInmediato('D');
-        break;
-      case 'Space':
-        this.ejecutarDisparo();
-        break;
-    }
-    
-    // Actualizar sistema DOOM también
-    if (window.doomGame && window.doomGame.keys) {
-      const keyIndex = e.keyCode || this.obtenerKeyCode(codigo);
-      window.doomGame.keys[keyIndex] = true;
-    }
-  }
-
-  manejarTeclaLiberada(e) {
-    const codigo = e.code || e.key;
-    
-    switch(codigo) {
-      case 'KeyW':
-      case 'w':
-      case 'W':
-        this.teclasPulsadas.W = false;
-        break;
-      case 'KeyA':
-      case 'a':
-      case 'A':
-        this.teclasPulsadas.A = false;
-        break;
-      case 'KeyS':
-      case 's':
-      case 'S':
-        this.teclasPulsadas.S = false;
-        break;
-      case 'KeyD':
-      case 'd':
-      case 'D':
-        this.teclasPulsadas.D = false;
-        break;
-    }
-    
-    // Actualizar sistema DOOM
-    if (window.doomGame && window.doomGame.keys) {
-      const keyIndex = e.keyCode || this.obtenerKeyCode(codigo);
-      window.doomGame.keys[keyIndex] = false;
-    }
+  // Listeners y lógica de movimiento eliminados para evitar duplicidad. Control centralizado en INICIALIZADOR-CONTROLES-POST-DOOM.js
+    // FIX: No usar variable 'e' no definida
+    // Esta función queda vacía para evitar ReferenceError
+    // Si necesitas lógica aquí, pásale el evento correctamente como argumento
+    // window.doomGame.keys[...] = ...
+    // Por ahora, no hace nada
+    return;
   }
 
   aplicarMovimientoInmediato(tecla) {

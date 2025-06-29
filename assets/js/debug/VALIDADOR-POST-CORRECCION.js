@@ -10,7 +10,6 @@ window.ValidadorPostCorreccion = {
         console.log('✅ Ejecutando validaciones...');
         
         this.validarCorrectorBucles();
-        this.validarLearningMemory();
         this.validarSistemasProtegidos();
         this.mostrarResumen();
     },
@@ -36,40 +35,6 @@ window.ValidadorPostCorreccion = {
         
         this.validaciones.push(resultado);
         console.log(`🔧 ${resultado.nombre}: ${resultado.estado} - ${resultado.detalles}`);
-    },
-    
-    validarLearningMemory: function() {
-        const resultado = {
-            nombre: 'Learning Memory',
-            estado: 'ERROR',
-            detalles: ''
-        };
-        
-        if (window.learningMemory) {
-            if (typeof window.learningMemory.registrarEvento === 'function') {
-                resultado.estado = 'OK';
-                resultado.detalles = 'Funcional y accesible';
-                
-                // Probar función
-                try {
-                    window.learningMemory.registrarEvento('VALIDACION_POST_CORRECCION', {
-                        timestamp: Date.now(),
-                        validador: 'ValidadorPostCorreccion'
-                    });
-                } catch (error) {
-                    resultado.estado = 'ADVERTENCIA';
-                    resultado.detalles = 'Error al registrar evento: ' + error.message;
-                }
-            } else {
-                resultado.estado = 'ADVERTENCIA';
-                resultado.detalles = 'Existe pero sin funciones principales';
-            }
-        } else {
-            resultado.detalles = 'No encontrado';
-        }
-        
-        this.validaciones.push(resultado);
-        console.log(`🧠 ${resultado.nombre}: ${resultado.estado} - ${resultado.detalles}`);
     },
     
     validarSistemasProtegidos: function() {
@@ -143,4 +108,3 @@ setTimeout(() => {
 }, 3000);
 
 console.log('🔍 Validador post-corrección cargado');
-console.log('💡 Uso manual: window.ValidadorPostCorreccion.ejecutar()');

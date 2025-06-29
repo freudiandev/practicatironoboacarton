@@ -23,7 +23,7 @@
     // Variables globales para pitch
     let pitchActual = 0;
     const maxPitch = Math.PI / 4; // 45 grados
-    const sensibilidadPitch = 0.002;
+    const sensibilidadPitch = 0.003;
     
     // Función principal de corrección
     async function aplicarCorrecionCamaraVertical() {
@@ -70,12 +70,10 @@
             if (window.GAME && window.GAME.mouseLocked) {
                 // Movimiento horizontal (existente)
                 window.GAME.player.angle += e.movementX * 0.003;
-                
-                // NUEVO: Movimiento vertical (pitch)
-                pitchActual -= e.movementY * sensibilidadPitch;
+                // Movimiento vertical (pitch) con la misma sensibilidad
+                pitchActual -= e.movementY * 0.003;
                 pitchActual = Math.max(-maxPitch, Math.min(maxPitch, pitchActual));
                 window.GAME.player.pitch = pitchActual;
-                
                 // Debug visual
                 if (Math.abs(e.movementY) > 0) {
                     console.log(`📹 Pitch: ${(pitchActual * 180 / Math.PI).toFixed(1)}°`);

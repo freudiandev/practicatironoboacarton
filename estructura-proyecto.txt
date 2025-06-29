@@ -1,0 +1,57 @@
+📁 /
+├── 📄 index.html
+├── 📄 learning-memory-complete.json
+├── 📄 robots.txt
+├── 📄 sitemap.xml
+├── 📁 assets/
+│   ├── 📁 css/
+│   │   ├── 📄 game-main.css
+│   │   └── 📄 ui-panels.css
+│   ├── 📁 images/
+│   │   ├── 📄 apple-touch-icon.png
+│   │   ├── 📄 favicon.ico
+│   │   ├── 📄 noboa_d34d.png
+│   │   ├── 📄 noboa-casual.png
+│   │   ├── 📄 noboa-deportivo.png
+│   │   ├── 📄 noboa-presidencial.png
+│   │   ├── 📄 qrPichincha.jpg
+│   │   ├── 📄 thumbnail.jpeg
+│   │   └── 📁 decorative/
+│   │       ├── 📄 a.jpeg
+│   │       ├── 📄 b.jpeg
+│   │       ├── 📄 c.jpeg
+│   │       ├── 📄 d.jpeg
+│   │       ├── 📄 e.jpg
+│   │       └── 📄 f.avif
+│   └── 📁 js/
+│       ├── 📄 audio.js
+│       ├── 📄 menu-system.js
+│       ├── 📁 ai/
+│       │   ├── 📄 CLASIFICADOR-INTELIGENTE-JS.js
+│       │   ├── 📄 learning-machine-advanced.js
+│       │   └── 📄 learning-memory-advanced.js
+│       ├── 📁 core/
+│       │   ├── 📄 DOOM-INTERMEDIO.js
+│       │   ├── 📄 game-initialization.js
+│       │   └── 📄 SISTEMA-DOOM-UNIFICADO.js
+│       ├── 📁 correctors/
+│       │   ├── 📄 CORRECTOR-BUCLES-SPAM.js
+│       │   ├── 📄 CORRECTOR-CAMARA-VERTICAL-AVANZADO.js
+│       │   ├── 📄 CORRECTOR-CRITICO-LEARNING-MEMORY.js
+│       │   ├── 📄 CORRECTOR-MAESTRO-UNIFICADO.js
+│       │   ├── 📄 INICIALIZADOR-CONTROLES-POST-DOOM.js
+│       │   ├── 📄 SISTEMA-BALA-UNIFICADO-DEFINITIVO.js
+│       │   └── 📄 SISTEMA-EMERGENCIA-DISPARO.js
+│       ├── 📁 debug/
+│       │   ├── 📄 debug-system.js
+│       │   └── 📄 VALIDADOR-POST-CORRECCION.js
+│       ├── 📁 optimization/
+│       │   └── 📄 SISTEMA-OPTIMIZACION-RENDIMIENTO.js
+│       ├── 📁 physics/
+│       │   └── 📄 WorldPhysics.js
+│       ├── 📁 systems/
+│       │   ├── 📄 CONSTRUCCION-DEFINITIVA-LABERINTO.js
+│       │   ├── 📄 DIAGNOSTICO-RAPIDO-CONTROLES.js
+│       │   └── 📄 VALIDADOR-ARCHIVOS.js
+│       └── 📁 ui/
+│           └── 📄 panel-manager.js

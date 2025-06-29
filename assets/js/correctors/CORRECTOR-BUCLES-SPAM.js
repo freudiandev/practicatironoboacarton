@@ -1,7 +1,7 @@
 // CORRECTOR DE BUCLES SPAM - SOLUCIÓN DEFINITIVA
 // Detiene bucles infinitos que generan spam en consola
 
-console.log('🛑 Inicializando Corrector de Bucles Spam...');
+
 
 window.CorrectorBuclesSpam = {
     activo: false,
@@ -18,8 +18,7 @@ window.CorrectorBuclesSpam = {
         this.detenerBuclesProblematicos();
         this.optimizarEsperas();
         
-        console.log('✅ Corrector de bucles spam activado');
-        console.log('🎯 Bucles problemáticos detenidos, spam eliminado');
+
     },
     
     interceptarConsoleLogs: function() {
@@ -44,8 +43,7 @@ window.CorrectorBuclesSpam = {
                 self.contadores.set(mensaje, contador + 1);
                 
                 if (contador === self.limiteSpam - 1) {
-                    originalLog.call(console, '🛑 SPAM DETECTADO: Suprimiendo mensajes repetitivos:', mensaje);
-                    originalLog.call(console, '💡 Activando modo silencioso para este mensaje');
+                        // Silenciar mensajes spam
                     return;
                 }
             }
@@ -89,44 +87,14 @@ window.CorrectorBuclesSpam = {
             };
         }
         
-        console.log('🛑 Bucles problemáticos reemplazados con versiones optimizadas');
+
     },
     
     optimizarEsperas: function() {
-        // Optimizar esperas en menu-system
-        if (window.gameMenuSystem && window.gameMenuSystem.initializeGameEngine) {
-            const original = window.gameMenuSystem.initializeGameEngine;
-            
-            window.gameMenuSystem.initializeGameEngine = function() {
-                let intentos = 0;
-                const maxIntentos = 10;
-                
-                const tryInitialize = () => {
-                    if (window.doomGame && typeof window.doomGame.start === 'function') {
-                        try {
-                            console.log('🎯 Iniciando DOOM Intermedio...');
-                            window.doomGame.start();
-                            console.log('✅ DOOM Intermedio iniciado exitosamente');
-                            return;
-                        } catch (error) {
-                            console.error('❌ Error al iniciar DOOM Intermedio:', error);
-                        }
-                    }
-                    
-                    intentos++;
-                    if (intentos < maxIntentos) {
-                        setTimeout(tryInitialize, 800); // Espera más larga
-                    } else {
-                        console.log('⚠️ Motor del juego no se pudo inicializar después de', maxIntentos, 'intentos');
-                        console.log('🎮 Continuando con funcionalidad básica...');
-                    }
-                };
-                
-                tryInitialize();
-            };
-        }
-        
-        console.log('🚀 Esperas optimizadas con límites inteligentes');
+        // Ya no se reintenta iniciar el motor DOOM automáticamente.
+        // El sistema esperará a que el usuario haga clic en 'INICIAR JUEGO'.
+        // Si es necesario, puedes agregar aquí lógica para mostrar un mensaje o preparar el sistema, pero sin spam ni reintentos automáticos.
+
     },
     
     limpiarBucles: function() {
@@ -137,7 +105,7 @@ window.CorrectorBuclesSpam = {
         this.timeoutsActivos.clear();
         this.intervalosActivos.clear();
         
-        console.log('🧹 Bucles limpiados');
+
     },
     
     obtenerEstado: function() {
@@ -152,7 +120,7 @@ window.CorrectorBuclesSpam = {
         this.limpiarBucles();
         this.contadores.clear();
         this.activo = false;
-        console.log('🔄 Corrector de bucles spam reseteado');
+
     }
 };
 
@@ -173,7 +141,3 @@ if (window.learningMemory) {
 }
 
 console.log('✅ Corrector de bucles spam cargado');
-console.log('💡 Comandos disponibles:');
-console.log('   window.CorrectorBuclesSpam.obtenerEstado()');
-console.log('   window.CorrectorBuclesSpam.limpiarBucles()');
-console.log('   window.CorrectorBuclesSpam.resetear()');

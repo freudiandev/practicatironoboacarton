@@ -22,24 +22,20 @@ if (window.learningMemory && window.learningMemory.logEvent) {
 const LABERINTO_DEFINITIVO = {
     // Configuración del mundo más compacta
     WORLD_CONFIG: {
-        gridRows: 10,         // Reducido de 13 a 10 filas
-        gridCols: 14,         // Reducido de 20 a 14 columnas
-        cellSize: 40,         // Compacto: 40px por celda
-        wallHeight: 35,       // Altura proporcional
+        gridRows: 10,         // 10 filas (5m)
+        gridCols: 14,         // 14 columnas (7m)
+        cellSize: 50,         // 50px por celda
+        wallHeight: 45,       // Altura proporcional
         fov: Math.PI / 2.5,   // 72° campo de visión amplio
-        maxRenderDistance: 300 // Distancia optimizada
+        maxRenderDistance: 400
     },
-    
-    // Configuración del jugador ajustada
     PLAYER_CONFIG: {
-        startX: 2.5 * 40,     // Posición inicial ajustada
-        startY: 25,           
-        startZ: 2.5 * 40,     
-        speed: 100,           // Velocidad proporcional
-        cameraHeight: 25      // Altura de cámara ajustada
+        startX: 2.5 * 50,     // Posición inicial ajustada
+        startY: 25,
+        startZ: 2.5 * 50,
+        speed: 100,
+        cameraHeight: 25
     },
-    
-    // Sensibilidades de control optimizadas
     CONTROLS_CONFIG: {
         mouseRotationSensitivity: 0.002,
         mousePitchSensitivity: 0.0012,
@@ -49,17 +45,19 @@ const LABERINTO_DEFINITIVO = {
 };
 
 // 3. MAPA COMPACTO CON CARTELES BIEN DISTRIBUIDOS
+// Laberinto tipo castillo con habitaciones y pasillos
+// 0 = libre, 1 = pared
 const MAPA_COMPACTO_DEFINITIVO = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,2,0,0,3,0,0,0,0,1],
-    [1,0,1,0,1,1,0,1,1,0,1,0,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,4,1,0,1,0,1,0,1,0,1,0,5,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,1,0,1,1,0,1,0,1,1],
-    [1,0,0,0,0,6,0,0,7,0,0,0,0,1],
-    [1,0,1,0,1,0,1,0,1,0,1,0,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+  [1,0,1,0,1,0,1,0,1,0,1,0,1,1],
+  [1,0,1,0,0,0,1,0,0,0,1,0,0,1],
+  [1,0,1,1,1,0,1,1,1,0,1,1,0,1],
+  [1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+  [1,1,1,0,1,1,1,0,1,1,1,0,1,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,1,1,1,1,0,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
 // 4. FUNCIÓN PARA APLICAR LA CONFIGURACIÓN DEFINITIVA
@@ -134,38 +132,6 @@ function aplicarLaberintoDefinitivo() {
     }
 }
 
-// 5. VERIFICAR DISTRIBUCIÓN DE CARTELES
-function verificarCartelesEnMapaCompacto() {
-    console.log('🖼️ Verificando distribución de carteles en mapa compacto...');
-    
-    const carteles = new Map();
-    let totalCarteles = 0;
-    
-    MAPA_COMPACTO_DEFINITIVO.forEach((fila, y) => {
-        fila.forEach((celda, x) => {
-            if (celda >= 2 && celda <= 7) {
-                if (!carteles.has(celda)) {
-                    carteles.set(celda, []);
-                }
-                carteles.get(celda).push([x, y]);
-                totalCarteles++;
-            }
-        });
-    });
-    
-    console.log('📍 Distribución de carteles:');
-    for (let i = 2; i <= 7; i++) {
-        if (carteles.has(i)) {
-            const posiciones = carteles.get(i);
-            console.log(`   Cartel ${i}: ${posiciones.length} instancia(s) en posiciones ${JSON.stringify(posiciones)}`);
-        } else {
-            console.log(`   Cartel ${i}: No encontrado`);
-        }
-    }
-    
-    console.log(`📊 Total de carteles: ${totalCarteles}`);
-    return carteles;
-}
 
 // 6. REINICIALIZAR EL JUEGO CON NUEVA CONFIGURACIÓN
 function reinicializarJuegoConLaberintoCompacto() {
@@ -244,7 +210,7 @@ window.aplicarLaberintoCompacto = function() {
     console.log('🏗️ Aplicando laberinto compacto manualmente...');
     const resultado = aplicarLaberintoDefinitivo();
     if (resultado) {
-        verificarCartelesEnMapaCompacto();
+
         reinicializarJuegoConLaberintoCompacto();
     }
     return resultado;
@@ -276,8 +242,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const resultado = aplicarLaberintoDefinitivo();
         
         if (resultado) {
-            verificarCartelesEnMapaCompacto();
-            
             setTimeout(() => {
                 reinicializarJuegoConLaberintoCompacto();
             }, 1000);
@@ -291,7 +255,6 @@ if (document.readyState !== 'loading') {
     setTimeout(() => {
         const resultado = aplicarLaberintoDefinitivo();
         if (resultado) {
-            verificarCartelesEnMapaCompacto();
             setTimeout(() => {
                 reinicializarJuegoConLaberintoCompacto();
             }, 800);
@@ -302,16 +265,13 @@ if (document.readyState !== 'loading') {
 // 10. LOGGING FINAL
 console.log('✅ CONSTRUCCIÓN DEFINITIVA DEL LABERINTO CARGADA');
 console.log('💡 Funciones disponibles:');
-console.log('   - aplicarLaberintoCompacto() - Aplicar manualmente');
-console.log('   - mostrarMapaCompacto() - Ver el mapa y carteles');
-console.log('   - rollbackLaberinto() - Restaurar configuración anterior');
+
 
 // Registro en Learning Memory
 if (window.learningMemory && window.learningMemory.logEvent) {
     window.learningMemory.logEvent('LABERINTO_DEFINITIVO_LOADED', {
         tamaño: '10x14',
         cellSize: 40,
-        carteles: '6 tipos distribuidos',
-        funciones: ['aplicarLaberintoCompacto', 'mostrarMapaCompacto', 'rollbackLaberinto']
+        funciones: ['aplicarLaberintoCompacto', 'rollbackLaberinto']
     });
 }

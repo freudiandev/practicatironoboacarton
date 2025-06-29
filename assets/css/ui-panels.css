@@ -1,0 +1,253 @@
+/**
+ * ========================================
+ * ESTILOS ADICIONALES PARA EL JUEGO
+ * Complemento a game-main.css
+ * ========================================
+ */
+
+/* ========================================
+   CANVAS DEL JUEGO
+   ======================================== */
+#gameCanvas {
+  display: none;
+  cursor: crosshair;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  background: #000;
+}
+
+/* Cuando el canvas está activo */
+#gameCanvas.active {
+  display: block !important;
+}
+
+/* ========================================
+   PANELES DE INFORMACIÓN
+   ======================================== */
+.info-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.panel-content {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: white;
+  padding: 2rem;
+  border-radius: 15px;
+  max-width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
+  border: 2px solid #00ff88;
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+  position: relative;
+}
+
+/* ========================================
+   CONTROLES GRID
+   ======================================== */
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.control-section {
+  background: rgba(0, 255, 136, 0.1);
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.control-section h3 {
+  color: #00ff88;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.control-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.control-item:last-child {
+  border-bottom: none;
+}
+
+.control-item .key {
+  font-family: 'Courier New', monospace;
+  background: rgba(0, 255, 136, 0.2);
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  font-weight: bold;
+  color: #00ff88;
+  min-width: 100px;
+  text-align: center;
+}
+
+.control-item .desc {
+  flex: 1;
+  margin-left: 1rem;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+/* ========================================
+   BOTÓN DE CERRAR
+   ======================================== */
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #ff4757;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+  z-index: 1001;
+}
+
+.close-btn:hover {
+  background: #ff3838;
+  transform: scale(1.1);
+}
+
+/* ========================================
+   DONACIONES Y CRÉDITOS
+   ======================================== */
+.donation-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.donation-btn {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(45deg, #00ff88, #00d4aa);
+  color: #1a1a2e;
+  text-decoration: none;
+  border-radius: 25px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.donation-btn:hover {
+  background: linear-gradient(45deg, #00d4aa, #00ff88);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+}
+
+.credits-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border-left: 4px solid #00ff88;
+}
+
+.credits-section h3 {
+  color: #00ff88;
+  margin-bottom: 0.5rem;
+}
+
+.credits-section p {
+  margin: 0.3rem 0;
+  color: #ccc;
+}
+
+/* ========================================
+   RESPONSIVIDAD
+   ======================================== */
+@media (max-width: 768px) {
+  .controls-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .panel-content {
+    padding: 1rem;
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
+    max-height: calc(100% - 2rem);
+  }
+  
+  .control-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .control-item .desc {
+    margin-left: 0;
+  }
+  
+  .donation-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* ========================================
+   ANIMACIONES
+   ======================================== */
+@keyframes fadeInPanel {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.info-panel.active .panel-content {
+  animation: fadeInPanel 0.3s ease-out;
+}
+
+/* ========================================
+   UTILIDADES
+   ======================================== */
+.text-center {
+  text-align: center;
+}
+
+.mt-1 {
+  margin-top: 1rem;
+}
+
+.mb-1 {
+  margin-bottom: 1rem;
+}
+
+.debug-highlight {
+  background: rgba(255, 255, 0, 0.1);
+  border: 1px solid rgba(255, 255, 0, 0.3);
+  border-radius: 5px;
+  padding: 0.2rem 0.5rem;
+}

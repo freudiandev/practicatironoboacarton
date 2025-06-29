@@ -5,18 +5,26 @@ console.log('🎮 Inicializando controles post-DOOM...');
 
 function inicializarControlesDefinitivos() {
     console.log('🔧 Configurando controles definitivos...');
-    
+    // Consultar learningMemory antes de modificar controles
+    if (window.learningMemory && typeof window.learningMemory.consultarMemoria === 'function') {
+        const recomendaciones = window.learningMemory.consultarMemoria('controles_WASD');
+        if (Array.isArray(recomendaciones) && recomendaciones.length > 0) {
+            console.log('🧠 LM: Recomendaciones para controles:', recomendaciones);
+        }
+        window.learningMemory.registrarEvento('INICIALIZAR_CONTROLES', { origen: 'INICIALIZADOR-CONTROLES-POST-DOOM.js' });
+    }
     // Esperar a que el motor DOOM esté completamente listo
     function esperarDoomYConfigurar() {
         if (window.doomGame && window.doomGame.player && window.doomGame.keys) {
             console.log('✅ Motor DOOM detectado, configurando controles...');
+            if (window.learningMemory && typeof window.learningMemory.registrarEvento === 'function') {
+                window.learningMemory.registrarEvento('CONTROLES_LISTOS', { estado: 'ok' });
+            }
             configurarControlesManuales();
         } else {
-            console.log('⏳ Esperando motor DOOM...');
             setTimeout(esperarDoomYConfigurar, 500);
         }
     }
-    
     setTimeout(esperarDoomYConfigurar, 1000);
 }
 
@@ -104,12 +112,21 @@ function configurarControlesManuales() {
 
 function aplicarMovimientoDirecto(keyCode) {
     if (!window.doomGame || !window.doomGame.player) return;
-    
+    // Consultar learningMemory antes de modificar movimiento
+    if (window.learningMemory && typeof window.learningMemory.consultarMemoria === 'function') {
+        const movOk = window.learningMemory.consultarMemoria('movimiento_WASD_OK');
+        if (Array.isArray(movOk) && movOk.length > 0) {
+            // Si la memoria indica que el movimiento está protegido, no modificar
+            if (movOk[0] === 'protegido') {
+                window.learningMemory.registrarEvento('MOVIMIENTO_PROTEGIDO', { keyCode });
+                return;
+            }
+        }
+    }
     const player = window.doomGame.player;
     const velocidad = 2;
     let nuevaX = player.x;
     let nuevaY = player.y;
-    
     switch(keyCode) {
         case 87: // W - adelante
             nuevaX += Math.cos(player.angle) * velocidad;
@@ -128,11 +145,13 @@ function aplicarMovimientoDirecto(keyCode) {
             nuevaY += Math.sin(player.angle + Math.PI/2) * velocidad;
             break;
     }
-    
     // Verificar límites básicos
     if (nuevaX > 20 && nuevaX < 380 && nuevaY > 20 && nuevaY < 380) {
         player.x = nuevaX;
         player.y = nuevaY;
+        if (window.learningMemory && typeof window.learningMemory.registrarEvento === 'function') {
+            window.learningMemory.registrarEvento('MOVIMIENTO_WASD', { keyCode, x: player.x, y: player.y });
+        }
     }
 }
 
@@ -145,12 +164,14 @@ function configurarMouseDirecto() {
     // Captura de pointer lock
     canvas.addEventListener('click', () => {
         canvas.requestPointerLock();
+        if (window.GAME) window.GAME.mouseLocked = true;
         console.log('🔒 Solicitando captura de mouse...');
     });
     
     // Movimiento de mouse (horizontal + vertical)
     document.addEventListener('mousemove', (e) => {
         if (document.pointerLockElement === canvas) {
+            if (window.GAME) window.GAME.mouseLocked = true;
             // Rotación horizontal (existente)
             if (window.doomGame && window.doomGame.player) {
                 const sensibilidad = 0.003;
@@ -160,9 +181,10 @@ function configurarMouseDirecto() {
                 const sensibilidad = 0.003;
                 window.GAME.player.angle += e.movementX * sensibilidad;
             }
-            
             // Movimiento vertical (delegado al sistema de cámara vertical)
             // El sistema CamaraVertical maneja automáticamente el movementY
+        } else {
+            if (window.GAME) window.GAME.mouseLocked = false;
         }
     });
     
@@ -177,6 +199,7 @@ function configurarMouseDirecto() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.exitPointerLock();
+            if (window.GAME) window.GAME.mouseLocked = false;
             console.log('🔓 Mouse liberado');
         }
     });
