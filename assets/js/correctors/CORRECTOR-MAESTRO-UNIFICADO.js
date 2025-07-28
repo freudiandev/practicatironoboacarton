@@ -119,6 +119,11 @@ limpiarIntervalos() {
   }
 
   moverJugadorSeguro(player, deltaX, deltaY) {
+    // SISTEMA DE MOVIMIENTO DESHABILITADO
+    // El movimiento se maneja exclusivamente por index.html con WorldPhysics
+    // para garantizar colisión robusta y evitar atravesar paredes
+    
+    /*
     const nuevaX = player.x + deltaX;
     const nuevaY = player.y + deltaY;
     
@@ -128,6 +133,7 @@ limpiarIntervalos() {
       player.y = nuevaY;
       this.jugadorMoviendose = true;
     }
+    */
   }
 
   esMovimientoValido(x, y) {

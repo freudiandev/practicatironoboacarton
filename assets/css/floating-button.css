@@ -1,0 +1,50 @@
+/**
+ * ESTILOS PARA BOTÓN FLOTANTE
+ * Estilos del botón de reiniciar enemigos movidos desde el HTML
+ */
+
+/* Botón flotante para reiniciar enemigos */
+#respawnEnemiesBtnFloating {
+  position: fixed;
+  top: 50%;
+  right: 32px;
+  z-index: 1000;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, #1e293b 60%, #0ea5e9 100%);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 18px 28px;
+  box-shadow: 0 4px 24px #0ea5e955, 0 1.5px 8px #0008;
+  cursor: pointer;
+  font-size: 1.18em;
+  display: none;
+  transition: background 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.5px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-weight: 600;
+  outline: none;
+}
+
+#respawnEnemiesBtnFloating:hover {
+  background: linear-gradient(135deg, #0ea5e9 60%, #1e293b 100%);
+  box-shadow: 0 6px 32px #0ea5e9cc, 0 2px 12px #000a;
+  color: #fff;
+  transform: translateY(-50%) scale(1.04);
+}
+
+#respawnEnemiesBtnFloating:active {
+  background: linear-gradient(135deg, #1e293b 80%, #0ea5e9 100%);
+  box-shadow: 0 2px 8px #0ea5e955, 0 1.5px 8px #0008;
+  color: #bae6fd;
+  transform: translateY(-50%) scale(0.98);
+}
+
+@media (max-width: 700px) {
+  #respawnEnemiesBtnFloating {
+    right: 8px;
+    padding: 12px 10px;
+    font-size: 0.98em;
+    border-radius: 10px;
+  }
+}

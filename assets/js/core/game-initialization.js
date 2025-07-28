@@ -187,6 +187,20 @@ function iniciarJuego() {
     if (typeof init === 'function') {
       init();
       console.log('✅ Motor del juego inicializado');
+      // Override spawn inmediato usando MAP global
+      if (window.MAP && Array.isArray(MAP)) {
+        var freeM = [];
+        for (var yy = 0; yy < MAP.length; yy++) {
+          for (var xx = 0; xx < MAP[yy].length; xx++) {
+            if (MAP[yy][xx] === 0) freeM.push({ x: xx * 32 + 16, y: yy * 32 + 16 });
+          }
+        }
+        if (freeM.length) {
+          var sp = freeM[Math.floor(Math.random() * freeM.length)];
+          window.GAME.player = { x: sp.x, y: sp.y, angle: 0 };
+          console.log('🚩 Spawn override post-init usando MAP:', sp);
+        }
+      }
     }
     
 
@@ -195,6 +209,55 @@ function iniciarJuego() {
     if (typeof startGame === 'function') {
       startGame();
       console.log('✅ Juego iniciado');
+      // Posicionar jugador en una celda vacía aleatoria al iniciar
+      // Intenta spawn tras carga de mapa de colisiones
+      (function waitMapaSpawn(attempts) {
+        if (window.GAME && window.GAME.mapaColisiones) {
+          var mapa = window.GAME.mapaColisiones;
+          var freeCells = [];
+          for (var y = 0; y < mapa.length; y++) {
+            for (var x = 0; x < mapa[y].length; x++) {
+              if (mapa[y][x] === 0) {
+                freeCells.push({ x: x * 32 + 16, y: y * 32 + 16 });
+              }
+            }
+          }
+          if (freeCells.length > 0) {
+            var idx = Math.floor(Math.random() * freeCells.length);
+            var spawn = freeCells[idx];
+            window.GAME.player = window.GAME.player || { x: spawn.x, y: spawn.y, angle: 0 };
+            window.GAME.player.x = spawn.x;
+            window.GAME.player.y = spawn.y;
+            console.log('🎲 Spawn aleatorio en celda vacía:', spawn);
+          }
+        } else if (attempts < 10) {
+          setTimeout(function() { waitMapaSpawn(attempts + 1); }, 100);
+        } else {
+          console.warn('⚠️ Mapa no cargado tras varios intentos, spawn de emergencia');
+          window.GAME.player = window.GAME.player || { x: 128, y: 128, angle: 0 };
+        }
+      })(0);
+      // Forzar reposicionamiento tras inicio para asegurar spawn en celda libre
+      setTimeout(function() {
+        if (window.GAME && window.GAME.mapaColisiones) {
+          // Spawn aleatorio basado en mapa de colisiones
+          var mapa = window.GAME.mapaColisiones;
+          var freeCells = [];
+          for (var yy = 0; yy < mapa.length; yy++) {
+            for (var xx = 0; xx < mapa[yy].length; xx++) {
+              if (mapa[yy][xx] === 0) freeCells.push({ x: xx*32+16, y: yy*32+16 });
+            }
+          }
+          if (freeCells.length > 0) {
+            var idx2 = Math.floor(Math.random() * freeCells.length);
+            var spawn2 = freeCells[idx2];
+            window.GAME.player = window.GAME.player || { x: spawn2.x, y: spawn2.y, angle: 0 };
+            window.GAME.player.x = spawn2.x;
+            window.GAME.player.y = spawn2.y;
+            console.log('🔄 Spawn aleatorio forzado post-inicio en celda libre:', spawn2);
+          }
+        }
+      }, 300);
     }
     
     // Sistemas adicionales con delay reducido

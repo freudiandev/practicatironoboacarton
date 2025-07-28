@@ -42,21 +42,38 @@ function configurarControlesManuales() {
     // Listener de teclas presionadas
     document.addEventListener('keydown', (e) => {
         const codigo = e.keyCode || e.which;
-        
-        // WASD para movimiento
-        if ([87, 65, 83, 68].includes(codigo)) {
-            e.preventDefault();
+
+        // CORREGIDO: Ya no ignoramos las teclas WASD, ahora las manejamos directamente
+        if ([87, 65, 83, 68].includes(e.keyCode || e.which)) {
             teclas[codigo] = true;
             
-            // Aplicar al motor DOOM directamente
+            // Compatibilidad con ambos sistemas
             if (window.doomGame && window.doomGame.keys) {
                 window.doomGame.keys[codigo] = true;
             }
+            if (window.GAME && window.GAME.keysPressed) {
+                window.GAME.keysPressed[codigo] = true;
+            }
             
-            // Aplicar movimiento inmediato
-            aplicarMovimientoDirecto(codigo);
+            // También registrar por código de tecla
+            const keyCodeMap = {
+                87: 'KeyW',
+                65: 'KeyA',
+                83: 'KeyS',
+                68: 'KeyD'
+            };
+            
+            if (window.GAME && window.GAME.keysPressed && keyCodeMap[codigo]) {
+                window.GAME.keysPressed[keyCodeMap[codigo]] = true;
+            }
+            
+            // Registrar tecla presionada en logs para diagnóstico
+            console.log(`🎮 Tecla WASD presionada: ${String.fromCharCode(codigo)} (KeyCode: ${codigo})`);
+            return; // Manejada específicamente
         }
-        
+
+        // Otras teclas
+
         // Flechas para rotación y cámara vertical
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
             e.preventDefault();
@@ -89,9 +106,28 @@ function configurarControlesManuales() {
         if ([87, 65, 83, 68].includes(codigo)) {
             teclas[codigo] = false;
             
+            // Compatibilidad con todos los sistemas
             if (window.doomGame && window.doomGame.keys) {
                 window.doomGame.keys[codigo] = false;
             }
+            
+            if (window.GAME && window.GAME.keysPressed) {
+                window.GAME.keysPressed[codigo] = false;
+                
+                // También limpiar por código de tecla
+                const keyCodeMap = {
+                    87: 'KeyW',
+                    65: 'KeyA',
+                    83: 'KeyS',
+                    68: 'KeyD'
+                };
+                
+                if (keyCodeMap[codigo]) {
+                    window.GAME.keysPressed[keyCodeMap[codigo]] = false;
+                }
+            }
+            
+            console.log(`🎮 Tecla WASD liberada: ${String.fromCharCode(codigo)} (KeyCode: ${codigo})`);
         }
     });
     
@@ -111,47 +147,98 @@ function configurarControlesManuales() {
 }
 
 function aplicarMovimientoDirecto(keyCode) {
-    if (!window.doomGame || !window.doomGame.player) return;
-    // Consultar learningMemory antes de modificar movimiento
-    if (window.learningMemory && typeof window.learningMemory.consultarMemoria === 'function') {
-        const movOk = window.learningMemory.consultarMemoria('movimiento_WASD_OK');
-        if (Array.isArray(movOk) && movOk.length > 0) {
-            // Si la memoria indica que el movimiento está protegido, no modificar
-            if (movOk[0] === 'protegido') {
-                window.learningMemory.registrarEvento('MOVIMIENTO_PROTEGIDO', { keyCode });
-                return;
-            }
-        }
+    // SISTEMA DE MOVIMIENTO REACTIVADO
+    // Implementación corregida: Ahora funciona con ambos sistemas
+    
+    // Verificar sistema de LearningMemory
+    if (window.learningMemory && typeof window.learningMemory.registrarEvento === 'function') {
+        window.learningMemory.registrarEvento('MOVIMIENTO_REACTIVADO', { 
+            keyCode, 
+            fecha: new Date().toISOString(),
+            sistema: 'INICIALIZADOR-CONTROLES-POST-DOOM'
+        });
     }
-    const player = window.doomGame.player;
-    const velocidad = 2;
-    let nuevaX = player.x;
-    let nuevaY = player.y;
-    switch(keyCode) {
-        case 87: // W - adelante
-            nuevaX += Math.cos(player.angle) * velocidad;
-            nuevaY += Math.sin(player.angle) * velocidad;
-            break;
-        case 83: // S - atrás
-            nuevaX -= Math.cos(player.angle) * velocidad;
-            nuevaY -= Math.sin(player.angle) * velocidad;
-            break;
-        case 65: // A - izquierda (strafe)
-            nuevaX += Math.cos(player.angle - Math.PI/2) * velocidad;
-            nuevaY += Math.sin(player.angle - Math.PI/2) * velocidad;
-            break;
-        case 68: // D - derecha (strafe)
-            nuevaX += Math.cos(player.angle + Math.PI/2) * velocidad;
-            nuevaY += Math.sin(player.angle + Math.PI/2) * velocidad;
-            break;
+    
+    // Verificar sistemas de juego disponibles
+    if (!window.GAME && !window.doomGame) {
+        console.warn('⚠️ No se encontró ningún sistema de juego activo para aplicar movimiento');
+        return;
     }
-    // Verificar límites básicos
-    if (nuevaX > 20 && nuevaX < 380 && nuevaY > 20 && nuevaY < 380) {
-        player.x = nuevaX;
-        player.y = nuevaY;
-        if (window.learningMemory && typeof window.learningMemory.registrarEvento === 'function') {
-            window.learningMemory.registrarEvento('MOVIMIENTO_WASD', { keyCode, x: player.x, y: player.y });
+    
+    // Buscar objeto player en cualquier sistema disponible
+    const player = (window.GAME && window.GAME.player) || 
+                   (window.doomGame && window.doomGame.player);
+    
+    if (!player) {
+        console.warn('❌ No se encontró objeto player en ningún sistema de juego');
+        return;
+    }
+    
+    // MOVIMIENTO WASD COMPATIBLE CON MULTIPLE SISTEMAS
+    const vel = 1.0; // Velocidad reducida para movimiento controlable
+    let nx = player.x, ny = player.y;
+    
+    switch (keyCode) {
+        case 87: // W - Avanzar en la dirección de la mirada
+            nx += Math.cos(player.angle || 0) * vel;
+            ny += Math.sin(player.angle || 0) * vel;
+            break;
+        case 83: // S - Retroceder (dirección opuesta)
+            nx -= Math.cos(player.angle || 0) * vel;
+            ny -= Math.sin(player.angle || 0) * vel;
+            break;
+        case 65: // A - Izquierda (perpendicular a la mirada)
+            nx -= Math.sin(player.angle || 0) * vel;
+            ny += Math.cos(player.angle || 0) * vel;
+            break;
+        case 68: // D - Derecha (perpendicular a la mirada)
+            nx += Math.sin(player.angle || 0) * vel;
+            ny -= Math.cos(player.angle || 0) * vel;
+            break;
+        default:
+            return; // Si no es WASD, salir
+    }
+    
+    // Verificación de colisiones con WorldPhysics si está disponible
+    const worldPhysics = window.WorldPhysics || 
+                         (window.GAME && window.GAME.WorldPhysics);
+    
+    let movimientoRealizado = false;
+    
+    if (worldPhysics && typeof worldPhysics.checkCollision === 'function') {
+        // Mover en X si no colisiona
+        if (!worldPhysics.checkCollision(nx, player.y)) {
+            player.x = nx;
+            movimientoRealizado = true;
         }
+        
+        // Mover en Y si no colisiona
+        if (!worldPhysics.checkCollision(player.x, ny)) {
+            player.y = ny;
+            movimientoRealizado = true;
+        }
+    } else {
+        // Sin sistema de colisiones, mover directamente
+        player.x = nx;
+        player.y = ny;
+        movimientoRealizado = true;
+        console.log('⚠️ Movimiento sin verificación de colisiones (WorldPhysics no disponible)');
+    }
+    
+    // Registrar movimiento en learningMemory si está disponible
+    if (movimientoRealizado && window.learningMemory && typeof window.learningMemory.registrarEvento === 'function') {
+        window.learningMemory.registrarEvento('MOVIMIENTO_WASD', { 
+            tecla: String.fromCharCode(keyCode),
+            keyCode, 
+            nuevaPos: { x: player.x, y: player.y }
+        });
+    }
+    
+    // Registrar en consola para diagnóstico
+    if (movimientoRealizado) {
+        console.log(`🚶 ${String.fromCharCode(keyCode)}: Movimiento aplicado -> (${player.x.toFixed(2)}, ${player.y.toFixed(2)})`);
+    } else {
+        console.log(`⛔ ${String.fromCharCode(keyCode)}: Movimiento bloqueado por colisión`);
     }
 }
 
@@ -280,13 +367,84 @@ if (document.readyState === 'loading') {
 }
 
 // Exportar funciones para uso manual
+// Función de diagnóstico de controles WASD
+function diagnosticarControlesWASD() {
+    console.log('🔎 Iniciando diagnóstico de controles WASD...');
+    
+    // Verificar sistemas disponibles
+    console.log('📊 Sistemas detectados:');
+    console.log('   - window.GAME:', window.GAME ? '✅ Disponible' : '❌ No disponible');
+    console.log('   - window.doomGame:', window.doomGame ? '✅ Disponible' : '❌ No disponible');
+    console.log('   - window.WorldPhysics:', window.WorldPhysics ? '✅ Disponible' : '❌ No disponible');
+    console.log('   - window.SistemaControlesUnificado:', window.SistemaControlesUnificado ? '✅ Disponible' : '❌ No disponible');
+    
+    // Verificar variables de control de teclas
+    if (window.GAME) {
+        console.log('   - window.GAME.keysPressed:', window.GAME.keysPressed ? '✅ Disponible' : '❌ No disponible');
+    }
+    
+    if (window.doomGame) {
+        console.log('   - window.doomGame.keys:', window.doomGame.keys ? '✅ Disponible' : '❌ No disponible');
+    }
+    
+    console.log('✅ Diagnóstico completado. Verifica en la consola cualquier error.');
+    
+    return {
+        mensaje: 'Diagnóstico de controles WASD completado',
+        fecha: new Date().toISOString(),
+        recomendacion: 'Revisa los mensajes en consola para ver el estado de los sistemas'
+    };
+}
+
+// Exponer funciones públicas
 window.controlesDefinitivos = {
     inicializar: inicializarControlesDefinitivos,
     testear: testearControles,
-    configurarMouse: configurarMouseDirecto
+    configurarMouse: configurarMouseDirecto,
+    diagnosticar: diagnosticarControlesWASD
+};
+
+// Función para reparar controles WASD
+window.repararControlesWASD = function() {
+    console.log('🔧 Reparando controles WASD...');
+    
+    // Reactivar funciones principales
+    inicializarControlesDefinitivos();
+    
+    // Reiniciar variables de control
+    if (window.GAME) {
+        window.GAME.keysPressed = window.GAME.keysPressed || {};
+    }
+    
+    if (window.doomGame) {
+        window.doomGame.keys = window.doomGame.keys || {};
+    }
+    
+    // Mensaje para el usuario
+    if (typeof mostrarMensaje === 'function') {
+        mostrarMensaje('Controles WASD reparados. Presiona W,A,S,D para probar', 'success');
+    }
+    
+    console.log('✅ Reparación de controles completada');
+    
+    // Ejecutar diagnóstico
+    diagnosticarControlesWASD();
+    
+    return {
+        mensaje: 'Reparación de controles WASD completada',
+        fecha: new Date().toISOString()
+    };
 };
 
 console.log('✅ Inicializador de controles post-DOOM cargado');
 console.log('💡 Comandos disponibles:');
 console.log('   window.controlesDefinitivos.testear()');
 console.log('   window.controlesDefinitivos.inicializar()');
+console.log('   window.controlesDefinitivos.diagnosticar()');
+console.log('   window.repararControlesWASD()');
+
+// Ejecutar diagnóstico al cargar
+setTimeout(function() {
+    console.log('🚀 Ejecutando diagnóstico automático de controles WASD...');
+    diagnosticarControlesWASD();
+}, 2000);

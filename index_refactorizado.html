@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOOM: Versión Presidencial - Noboa de Cartón</title>
+  
+  <!-- Meta tags para SEO y redes sociales -->
+  <meta name="description" content="Juego de tiro en primera persona estilo DOOM con Noboa de cartón como protagonista">
+  <meta name="keywords" content="juego, doom, fps, tiro, noboa, javascript">
+  <meta name="author" content="Samy y Álex">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+  
+  <!-- Estilos CSS -->
+  <link rel="stylesheet" href="assets/css/game-main.css">
+  <link rel="stylesheet" href="assets/css/ui-panels.css">
+  
+  <!-- Scripts principales en orden de dependencias -->
+  <!-- 1. Core Systems -->
+  <script src="assets/js/core/ModuleManager.js"></script>
+  <script src="assets/js/core/MapCartographer.js"></script>
+  <script src="assets/js/physics/WorldPhysics.js"></script>
+  
+  <!-- 2. Game Systems -->
+  <script src="assets/js/systems/SpawnManager.js"></script>
+  <script src="assets/js/menu-system.js"></script>
+  <script src="assets/js/audio.js"></script>
+  
+  <!-- 3. AI and Learning -->
+  <script src="assets/js/ai/learning-memory-advanced.js"></script>
+  
+  <!-- 4. Motor principal (NUNCA MODIFICAR) -->
+  <script src="assets/js/core/DOOM-INTERMEDIO.js"></script>
+</head>
+
+<body>
+  <!-- Menú Principal del Juego -->
+  <div class="main-menu" id="mainMenu">
+    <div class="menu-background">
+      <div class="menu-container">
+        <div class="game-title">
+          <h1>🎯 TIRO CON NOBOA</h1>
+          <h2>DE CARTÓN</h2>
+          <p class="subtitle">Edición DOOM Presidencial - REFACTORIZADA 2.0</p>
+        </div>
+        
+        <div class="menu-buttons">
+          <button class="menu-btn primary" id="startGame">
+            <span class="btn-icon">🚀</span>
+            <span class="btn-text">INICIAR JUEGO</span>
+          </button>
+          
+          <button class="menu-btn" id="showControls">
+            <span class="btn-icon">🎮</span>
+            <span class="btn-text">CONTROLES</span>
+          </button>
+          
+          <button class="menu-btn" id="showDonations">
+            <span class="btn-icon">💖</span>
+            <span class="btn-text">DONACIONES</span>
+          </button>
+        </div>
+        
+        <div class="menu-footer">
+          <p>Desarrollado con ❤️ por <a href="https://www.instagram.com/freudiandev/" target="_blank">freudianDev</a> by <a href="https://cpunkec.6te.net" target="_blank"> CiberPunk EC </a></p>
+          <p class="version">Versión Refactorizada 2.0 - Sistema Modular</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de Controles -->
+  <div class="info-panel" id="controlsPanel">
+    <div class="panel-content">
+      <button class="close-btn" id="closeControls">✕</button>
+      <h2>🎮 CONTROLES DEL JUEGO</h2>
+      <div class="controls-grid">
+        <div class="control-section">
+          <h3>🚶 Movimiento</h3>
+          <div class="control-item">
+            <span class="key">W A S D</span>
+            <span class="desc">Caminar (adelante, izquierda, atrás, derecha)</span>
+          </div>
+        </div>
+        
+        <div class="control-section">
+          <h3>🔫 Combate</h3>
+          <div class="control-item">
+            <span class="key">CLIC</span>
+            <span class="desc">Disparar</span>
+          </div>
+          <div class="control-item">
+            <span class="key">ESPACIO</span>
+            <span class="desc">Disparar alternativo</span>
+          </div>
+        </div>
+        
+        <div class="control-section">
+          <h3>🎛️ Sistema</h3>
+          <div class="control-item">
+            <span class="key">ESC</span>
+            <span class="desc">Liberar mouse / Volver al menú</span>
+          </div>
+          <div class="control-item">
+            <span class="key">Ctrl+S</span>
+            <span class="desc">Reposicionar jugador (emergencia)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de Donaciones -->
+  <div class="info-panel" id="donationsPanel">
+    <div class="panel-content">
+      <button class="close-btn" id="closeDonations">✕</button>
+      <h2>💖 APOYA EL PROYECTO</h2>
+      <div class="donation-content">
+        <p>Si te gusta este juego, puedes apoyar el desarrollo:</p>
+        <div class="qr-code-container">
+          <img src="assets/images/qrPichincha.jpg" alt="QR Donaciones" class="qr-code">
+          <p class="bank-info">Banco Pichincha - Cuenta de Ahorros</p>
+        </div>
+        <p class="thanks">¡Gracias por tu apoyo! 🙏</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas principal del juego -->
+  <canvas id="gameCanvas" width="800" height="600" style="display: none; background: #000; cursor: none;"></canvas>
+
+  <!-- Botón flotante para reiniciar enemigos -->
+  <button id="respawnEnemiesBtnFloating" style="position:fixed;top:50%;right:32px;z-index:1000;transform:translateY(-50%);background:linear-gradient(135deg,#1e293b 60%,#0ea5e9 100%);color:#fff;border:none;border-radius:16px;padding:18px 28px;box-shadow:0 4px 24px #0ea5e955,0 1.5px 8px #0008;cursor:pointer;font-size:1.18em;display:none;transition:background 0.2s,box-shadow 0.2s;letter-spacing:0.5px;font-family:'Segoe UI',Arial,sans-serif;font-weight:600;outline:none;">
+    <span style="font-size:1.5em;vertical-align:middle;">👾</span> <span style="vertical-align:middle;">REINICIAR ENEMIGOS</span>
+  </button>
+
+  <style>
+    #respawnEnemiesBtnFloating:hover {
+      background: linear-gradient(135deg,#0ea5e9 60%,#1e293b 100%);
+      box-shadow: 0 6px 32px #0ea5e9cc,0 2px 12px #000a;
+      color: #fff;
+      transform: translateY(-50%) scale(1.04);
+    }
+    #respawnEnemiesBtnFloating:active {
+      background: linear-gradient(135deg,#1e293b 80%,#0ea5e9 100%);
+      box-shadow: 0 2px 8px #0ea5e955,0 1.5px 8px #0008;
+      color: #bae6fd;
+      transform: translateY(-50%) scale(0.98);
+    }
+    @media (max-width: 700px) {
+      #respawnEnemiesBtnFloating {
+        right: 8px;
+        padding: 12px 10px;
+        font-size: 0.98em;
+        border-radius: 10px;
+      }
+    }
+  </style>
+
+<script>
+// =============================================================================
+// SISTEMA PRINCIPAL DE JUEGO REFACTORIZADO 2.0
+// =============================================================================
+
+console.log('🚀 === INICIANDO SISTEMA REFACTORIZADO 2.0 ===');
+
+// Variables globales del juego
+window.GAME = null;
+var teclas = {};
+var player = null;
+
+// =============================================================================
+// SISTEMA DE INICIALIZACIÓN MODULAR
+// =============================================================================
+
+/**
+ * Inicializar todos los sistemas del juego
+ */
+function inicializarSistemas() {
+  console.log('🔧 Inicializando sistemas modulares...');
+  
+  // 1. Inicializar gestor de módulos
+  if (window.ModuleManager) {
+    window.ModuleManager.initializeAll();
+  }
+  
+  // 2. Inicializar mapa de colisiones básico
+  inicializarMapaColisiones();
+  
+  // 3. Inicializar WorldPhysics con cartografía
+  if (window.WorldPhysics) {
+    window.WorldPhysics.init();
+  }
+  
+  // 4. Verificar sistemas críticos
+  verificarSistemasCriticos();
+  
+  console.log('✅ Sistemas modulares inicializados');
+}
+
+/**
+ * Inicializar mapa de colisiones básico para testing
+ */
+function inicializarMapaColisiones() {
+  if (!window.GAME) {
+    window.GAME = {};
+  }
+  
+  // Mapa básico 32x24 para pruebas
+  const mapWidth = 32;
+  const mapHeight = 24;
+  const mapa = [];
+  
+  for (let y = 0; y < mapHeight; y++) {
+    const fila = [];
+    for (let x = 0; x < mapWidth; x++) {
+      // Bordes del mapa son paredes
+      if (x === 0 || y === 0 || x === mapWidth - 1 || y === mapHeight - 1) {
+        fila.push(1);
+      }
+      // Algunas paredes internas para crear laberinto
+      else if ((x % 4 === 0 && y % 4 === 0) || (x % 7 === 0 && y % 7 === 0)) {
+        fila.push(Math.random() > 0.6 ? 1 : 0);
+      }
+      // Resto son espacios libres
+      else {
+        fila.push(0);
+      }
+    }
+    mapa.push(fila);
+  }
+  
+  window.GAME.mapaColisiones = mapa;
+  console.log(`🗺️ Mapa de colisiones generado: ${mapWidth}x${mapHeight}`);
+}
+
+/**
+ * Verificar que sistemas críticos estén funcionando
+ */
+function verificarSistemasCriticos() {
+  const verificaciones = {
+    mapa: !!window.GAME?.mapaColisiones,
+    worldPhysics: !!window.WorldPhysics?.checkCollision,
+    spawnManager: !!window.SpawnManager?.buscarCeldaVacia,
+    cartographer: !!window.MapCartographer?.getBestSpawnPosition
+  };
+  
+  console.log('🔍 Verificación de sistemas:', verificaciones);
+  
+  if (!verificaciones.mapa) {
+    console.error('❌ CRÍTICO: Mapa de colisiones no disponible');
+  }
+  
+  return verificaciones;
+}
+
+// =============================================================================
+// SISTEMA DE SPAWN INTELIGENTE INTEGRADO
+// =============================================================================
+
+/**
+ * Buscar posición segura para spawn usando sistema modular
+ */
+function buscarCeldaVacia() {
+  console.log('🎯 === BÚSQUEDA DE SPAWN MODULAR ===');
+  
+  // 1. Intentar con SpawnManager
+  if (window.SpawnManager && typeof window.SpawnManager.buscarCeldaVacia === 'function') {
+    const spawnPos = window.SpawnManager.buscarCeldaVacia();
+    if (spawnPos) {
+      console.log('✅ Spawn encontrado por SpawnManager:', spawnPos);
+      return spawnPos;
+    }
+  }
+  
+  // 2. Intentar con WorldPhysics
+  if (window.WorldPhysics && typeof window.WorldPhysics.getSafeSpawnPosition === 'function') {
+    const physicsPos = window.WorldPhysics.getSafeSpawnPosition();
+    if (physicsPos) {
+      console.log('✅ Spawn encontrado por WorldPhysics:', physicsPos);
+      return physicsPos;
+    }
+  }
+  
+  // 3. Fallback básico
+  const fallbackPos = {x: 128, y: 128};
+  console.warn('⚠️ Usando posición de fallback:', fallbackPos);
+  return fallbackPos;
+}
+
+// =============================================================================
+// SISTEMA DE CONTROLES OPTIMIZADO
+// =============================================================================
+
+/**
+ * Configurar controles del juego
+ */
+function configurarControles() {
+  // Controles de teclado
+  document.addEventListener('keydown', (e) => {
+    teclas[e.code] = true;
+    
+    // Comando de emergencia para reposicionar
+    if (e.code === 'KeyS' && e.ctrlKey) {
+      e.preventDefault();
+      reposicionarJugadorEmergencia();
+    }
+  });
+  
+  document.addEventListener('keyup', (e) => {
+    teclas[e.code] = false;
+  });
+}
+
+/**
+ * Verificar si el jugador puede moverse a una posición
+ */
+function puedeMoverJugador(x, y) {
+  if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
+    return !window.WorldPhysics.checkCollision(x, y);
+  }
+  
+  // Fallback básico si WorldPhysics no está disponible
+  if (!window.GAME?.mapaColisiones) return true;
+  
+  const mapa = window.GAME.mapaColisiones;
+  const cx = Math.floor(x / 32);
+  const cy = Math.floor(y / 32);
+  
+  if (cx < 0 || cy < 0 || cx >= mapa[0].length || cy >= mapa.length) return false;
+  return mapa[cy][cx] === 0;
+}
+
+/**
+ * Reposicionar jugador en emergencia
+ */
+function reposicionarJugadorEmergencia() {
+  console.log('🆘 Reposicionamiento de emergencia activado');
+  
+  if (window.GAME?.player) {
+    const nuevaPos = buscarCeldaVacia();
+    window.GAME.player.x = nuevaPos.x;
+    window.GAME.player.y = nuevaPos.y;
+    console.log('✅ Jugador reposicionado a:', nuevaPos);
+  }
+}
+
+// =============================================================================
+// SISTEMA DE MOVIMIENTO DEL JUGADOR
+// =============================================================================
+
+/**
+ * Loop principal de movimiento del jugador
+ */
+function loopMovimientoJugador() {
+  if (window.GAME?.player) {
+    const p = window.GAME.player;
+    const vel = 3.2;
+    const ang = p.angle || 0;
+    let dx = 0, dy = 0;
+    
+    // Calcular movimiento basado en teclas presionadas
+    if (teclas['KeyW'] || teclas['ArrowUp']) {
+      dx += Math.cos(ang) * vel;
+      dy += Math.sin(ang) * vel;
+    }
+    if (teclas['KeyS'] || teclas['ArrowDown']) {
+      dx -= Math.cos(ang) * vel;
+      dy -= Math.sin(ang) * vel;
+    }
+    if (teclas['KeyA'] || teclas['ArrowLeft']) {
+      dx += Math.sin(ang) * vel;
+      dy -= Math.cos(ang) * vel;
+    }
+    if (teclas['KeyD'] || teclas['ArrowRight']) {
+      dx -= Math.sin(ang) * vel;
+      dy += Math.cos(ang) * vel;
+    }
+    
+    // Aplicar movimiento si hay input
+    if (dx !== 0 || dy !== 0) {
+      // Movimiento por eje para evitar quedarse atascado
+      const nuevoX = p.x + dx;
+      if (puedeMoverJugador(nuevoX, p.y)) {
+        p.x = nuevoX;
+      }
+      
+      const nuevoY = p.y + dy;
+      if (puedeMoverJugador(p.x, nuevoY)) {
+        p.y = nuevoY;
+      }
+    }
+  }
+  
+  requestAnimationFrame(loopMovimientoJugador);
+}
+
+// =============================================================================
+// INICIALIZACIÓN DEL JUEGO
+// =============================================================================
+
+/**
+ * Inicializar el juego principal
+ */
+function iniciarJuego() {
+  console.log('🎮 === INICIANDO JUEGO REFACTORIZADO ===');
+  
+  // 1. Inicializar sistemas modulares
+  inicializarSistemas();
+  
+  // 2. Configurar controles
+  configurarControles();
+  
+  // 3. Crear jugador en posición segura
+  const posicionSegura = buscarCeldaVacia();
+  window.GAME.player = {
+    x: posicionSegura.x,
+    y: posicionSegura.y,
+    angle: 0
+  };
+  
+  console.log('👤 Jugador creado en:', posicionSegura);
+  
+  // 4. Iniciar loop de movimiento
+  loopMovimientoJugador();
+  
+  // 5. Mostrar canvas y ocultar menú
+  document.getElementById('mainMenu').style.display = 'none';
+  document.getElementById('gameCanvas').style.display = 'block';
+  document.getElementById('respawnEnemiesBtnFloating').style.display = 'block';
+  
+  // 6. Capturar mouse después de un momento
+  setTimeout(() => {
+    const canvas = document.getElementById('gameCanvas');
+    canvas.requestPointerLock?.();
+  }, 500);
+  
+  console.log('✅ Juego iniciado correctamente');
+}
+
+// =============================================================================
+// EVENTOS DEL MENÚ
+// =============================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('📄 DOM cargado, configurando eventos del menú...');
+  
+  // Botón iniciar juego
+  document.getElementById('startGame')?.addEventListener('click', iniciarJuego);
+  
+  // Botón controles
+  document.getElementById('showControls')?.addEventListener('click', () => {
+    document.getElementById('controlsPanel').style.display = 'flex';
+  });
+  
+  document.getElementById('closeControls')?.addEventListener('click', () => {
+    document.getElementById('controlsPanel').style.display = 'none';
+  });
+  
+  // Botón donaciones
+  document.getElementById('showDonations')?.addEventListener('click', () => {
+    document.getElementById('donationsPanel').style.display = 'flex';
+  });
+  
+  document.getElementById('closeDonations')?.addEventListener('click', () => {
+    document.getElementById('donationsPanel').style.display = 'none';
+  });
+  
+  // Botón reiniciar enemigos (placeholder)
+  document.getElementById('respawnEnemiesBtnFloating')?.addEventListener('click', () => {
+    console.log('🔄 Reiniciar enemigos solicitado');
+    // TODO: Implementar lógica de enemigos
+  });
+  
+  console.log('✅ Eventos del menú configurados');
+});
+
+// =============================================================================
+// COMANDOS DE DIAGNÓSTICO
+// =============================================================================
+
+/**
+ * Diagnóstico completo del sistema
+ */
+function diagnosticoCompleto() {
+  console.log('🩺 === DIAGNÓSTICO COMPLETO DEL SISTEMA ===');
+  
+  const diagnostico = {
+    timestamp: new Date().toISOString(),
+    game: !!window.GAME,
+    mapa: !!window.GAME?.mapaColisiones,
+    player: !!window.GAME?.player,
+    worldPhysics: !!window.WorldPhysics,
+    mapCartographer: !!window.MapCartographer,
+    spawnManager: !!window.SpawnManager,
+    moduleManager: !!window.ModuleManager
+  };
+  
+  console.table(diagnostico);
+  
+  // Diagnóstico específico de módulos
+  if (window.ModuleManager) {
+    console.log('📦 Reporte de ModuleManager:');
+    const report = window.ModuleManager.generateReport();
+    console.log(report);
+  }
+  
+  // Probar spawn
+  console.log('🎯 Prueba de spawn:');
+  const testSpawn = buscarCeldaVacia();
+  console.log('Resultado:', testSpawn);
+  
+  return diagnostico;
+}
+
+// Exponer funciones de diagnóstico globalmente
+window.diagnosticoCompleto = diagnosticoCompleto;
+window.buscarCeldaVacia = buscarCeldaVacia;
+
+console.log('🎉 Sistema refactorizado 2.0 cargado correctamente');
+console.log('💡 Usa diagnosticoCompleto() para verificar el estado del sistema');
+
+</script>
+
+</body>
+</html>

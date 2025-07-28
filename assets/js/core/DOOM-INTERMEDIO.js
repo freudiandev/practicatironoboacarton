@@ -267,9 +267,9 @@ const GAME = {
     width: 800,
     height: 600,
     
-    // Mundo
-    mapWidth: 14, // Sincronizado con el laberinto definitivo
-    mapHeight: 10,
+    // Mundo - Dimensiones corregidas y sincronizadas con el mapa real
+    mapWidth: 14,  // 14 columnas (ancho)
+    mapHeight: 10, // 10 filas (altura)
     tileSize: 50, // Sincronizado con cellSize del laberinto definitivo
     
     // Jugador
@@ -371,7 +371,22 @@ function startGame() {
     // Iniciar bucle del juego
     GAME.running = true;
     gameLoop();
-    
+    // Spawn aleatorio usando mapa global MAP
+    if (window.MAP && Array.isArray(MAP) && GAME.tileSize) {
+      var free = [];
+      for (var yy = 0; yy < MAP.length; yy++) {
+        for (var xx = 0; xx < MAP[yy].length; xx++) {
+          if (MAP[yy][xx] === 0) {
+            free.push({ x: xx * GAME.tileSize + GAME.tileSize / 2, y: yy * GAME.tileSize + GAME.tileSize / 2 });
+          }
+        }
+      }
+      if (free.length > 0) {
+        var pick = free[Math.floor(Math.random() * free.length)];
+        GAME.player = { x: pick.x, y: pick.y, angle: 0 };
+        console.log('🚀 Spawn DOOM-INTERMEDIO desde MAP:', pick);
+      }
+    }
     console.log('✅ Juego iniciado correctamente');
 }
 
@@ -527,14 +542,14 @@ function updatePlayer() {
     let moveY = 0;
     
     // Movimiento y rotación del jugador ahora se controlan desde INICIALIZADOR-CONTROLES-POST-DOOM.js
-    // Este bloque queda vacío para evitar duplicidad.
+    // Sistema de movimiento DESHABILITADO - Se usa el de index.html con WorldPhysics
+    // para evitar conflictos y garantizar colisión robusta
     
-    // Verificar colisiones
-    const newX = player.x + moveX;
-    const newY = player.y + moveY;
-    
-    if (isWalkable(newX, player.y)) player.x = newX;
-    if (isWalkable(player.x, newY)) player.y = newY;
+    // Movimiento deshabilitado: el sistema robusto de index.html maneja todo
+    // const newX = player.x + moveX;
+    // const newY = player.y + moveY;
+    // if (isWalkable(newX, player.y)) player.x = newX;
+    // if (isWalkable(player.x, newY)) player.y = newY;
     
     // Verificar colisión con posters
     checkPosterCollision();
@@ -627,9 +642,13 @@ function updateBullets() {
 // VERIFICAR SI ES CAMINABLE
 // ================================
 function isWalkable(x, y) {
+    // Unificar con la lógica robusta de colisión global
+    if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
+        return window.WorldPhysics.checkCollision(x, y);
+    }
+    // Fallback legacy (por si no está cargado WorldPhysics)
     const mapX = Math.floor(x / GAME.tileSize);
     const mapY = Math.floor(y / GAME.tileSize);
-    // Usar GAME_MAZE si existe, si no MAP
     const mapa = (typeof window !== 'undefined' && window.GAME_MAZE) ? window.GAME_MAZE : MAP;
     const mapW = mapa[0].length;
     const mapH = mapa.length;
@@ -637,7 +656,7 @@ function isWalkable(x, y) {
         return false;
     }
     const tile = mapa[mapY][mapX];
-    return tile !== 1; // Solo 1 es pared, el resto es transitable
+    return tile !== 1;
 }
 
 // ================================
@@ -661,19 +680,25 @@ function castRay(angle) {
         const testY = GAME.player.y + rayDirY * distance;
         const mapX = Math.floor(testX / GAME.tileSize);
         const mapY = Math.floor(testY / GAME.tileSize);
-        if (mapX < 0 || mapX >= mapW || mapY < 0 || mapY >= mapH) {
-            hitWall = true;
-            distance = GAME.maxDistance;
-            hitX = mapX; hitY = mapY;
-        }
-        else {
-            const tile = mapa[mapY][mapX];
-            if (tile === 1) { // Solo 1 es pared sólida
+        // Mejorar: usar la colisión robusta de WorldPhysics si está disponible
+        if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
+            if (!window.WorldPhysics.checkCollision(testX, testY)) {
                 hitWall = true;
-                wallType = tile;
                 hitX = mapX; hitY = mapY;
             }
-            // Los demás tiles (posters, objetos, etc) no bloquean la vista
+        } else {
+            if (mapX < 0 || mapX >= mapW || mapY < 0 || mapY >= mapH) {
+                hitWall = true;
+                distance = GAME.maxDistance;
+                hitX = mapX; hitY = mapY;
+            } else {
+                const tile = mapa[mapY][mapX];
+                if (tile === 1) { // Solo 1 es pared sólida
+                    hitWall = true;
+                    wallType = tile;
+                    hitX = mapX; hitY = mapY;
+                }
+            }
         }
     }
     return { distance, type: 'wall', wallType, mapX: hitX, mapY: hitY };
@@ -1122,12 +1147,29 @@ function renderVaporwaveIndicators(ctx) {
 }
 
 // ================================
-// MINIMAPA VAPORWAVE
+// MINIMAPA VAPORWAVE - VERSIÓN SINCRONIZADA
 // ================================
 function renderVaporwaveMinimap(ctx) {
     const minimapSize = 80;
     const minimapX = GAME.width - minimapSize - 10;
     const minimapY = 10;
+    
+    // SINCRONIZACIÓN DINÁMICA: Obtener dimensiones reales del mapa
+    let mapWidth = GAME.mapWidth;
+    let mapHeight = GAME.mapHeight;
+    
+    // Si existe mapaColisiones, usar sus dimensiones reales
+    if (GAME.mapaColisiones && Array.isArray(GAME.mapaColisiones) && GAME.mapaColisiones.length > 0) {
+        mapHeight = GAME.mapaColisiones.length;        // Número de filas
+        mapWidth = GAME.mapaColisiones[0].length;      // Número de columnas
+        
+        // Actualizar GAME para futuras referencias
+        if (GAME.mapWidth !== mapWidth || GAME.mapHeight !== mapHeight) {
+            console.log(`🗺️ [MINIMAPA] Sincronizando dimensiones: ${GAME.mapWidth}x${GAME.mapHeight} → ${mapWidth}x${mapHeight}`);
+            GAME.mapWidth = mapWidth;
+            GAME.mapHeight = mapHeight;
+        }
+    }
     
     // Fondo del minimapa
     ctx.fillStyle = 'rgba(15, 15, 35, 0.8)';
@@ -1138,13 +1180,35 @@ function renderVaporwaveMinimap(ctx) {
     ctx.lineWidth = 2;
     ctx.strokeRect(minimapX, minimapY, minimapSize, minimapSize);
     
+    // RENDERIZAR MAPA DE COLISIONES (opcional para debug)
+    if (GAME.mapaColisiones && Array.isArray(GAME.mapaColisiones)) {
+        const cellWidth = minimapSize / mapWidth;
+        const cellHeight = minimapSize / mapHeight;
+        
+        for (let row = 0; row < mapHeight; row++) {
+            for (let col = 0; col < mapWidth; col++) {
+                if (GAME.mapaColisiones[row] && GAME.mapaColisiones[row][col] === 1) {
+                    // Dibujar paredes
+                    ctx.fillStyle = 'rgba(100, 100, 100, 0.6)';
+                    ctx.fillRect(
+                        minimapX + col * cellWidth,
+                        minimapY + row * cellHeight,
+                        cellWidth,
+                        cellHeight
+                    );
+                }
+            }
+        }
+    }
+    
     // Dibujar posición del jugador
-    const playerMapX = minimapX + (GAME.player.x / (GAME.mapWidth * GAME.tileSize)) * minimapSize;
-    const playerMapY = minimapY + (GAME.player.y / (GAME.mapHeight * GAME.tileSize)) * minimapSize;
+    const playerMapX = minimapX + (GAME.player.x / (mapWidth * GAME.tileSize)) * minimapSize;
+    const playerMapY = minimapY + (GAME.player.y / (mapHeight * GAME.tileSize)) * minimapSize;
     ctx.fillStyle = '#ff006e';
     ctx.beginPath();
     ctx.arc(playerMapX, playerMapY, 3, 0, Math.PI * 2);
     ctx.fill();
+    
     // Dirección del jugador
     const dirLength = 8;
     const dirX = playerMapX + Math.cos(GAME.player.angle) * dirLength;
@@ -1159,8 +1223,9 @@ function renderVaporwaveMinimap(ctx) {
     // DEBUG: Dibujar todos los enemigos en el minimapa
     if (GAME.enemies && GAME.enemies.length > 0) {
         GAME.enemies.forEach(function(enemy, idx) {
-            const ex = minimapX + (enemy.x / (GAME.mapWidth * GAME.tileSize)) * minimapSize;
-            const ey = minimapY + (enemy.y / (GAME.mapHeight * GAME.tileSize)) * minimapSize;
+            if (!enemy.active) return; // Solo enemigos activos
+            const ex = minimapX + (enemy.x / (mapWidth * GAME.tileSize)) * minimapSize;
+            const ey = minimapY + (enemy.y / (mapHeight * GAME.tileSize)) * minimapSize;
             ctx.fillStyle = '#00ff00';
             ctx.beginPath();
             ctx.arc(ex, ey, 4, 0, Math.PI * 2);
@@ -1171,6 +1236,11 @@ function renderVaporwaveMinimap(ctx) {
             ctx.fillText(idx+1, ex+5, ey);
         });
     }
+    
+    // Información de debug en el minimapa
+    ctx.fillStyle = '#00f5ff';
+    ctx.font = '8px Arial';
+    ctx.fillText(`${mapWidth}x${mapHeight}`, minimapX + 2, minimapY + minimapSize - 2);
 }
 
 // ================================
