@@ -39,35 +39,31 @@
         /**
          * Verificación de colisión mejorada con 16 puntos + centro
          */
-        checkCollision(x, y, radio = 18) {
-            if (!window.GAME || !window.GAME.mapaColisiones) return true;
-            var mapa = window.GAME.mapaColisiones;
-            var ancho = mapa[0] ? mapa[0].length : 0;
-            var alto = mapa.length;
+        checkCollision(x, y, radio = 0.2) {
+            // Obtener el mapa del juego (usar GAME_MAZE para consistencia)
+            const mapa = window.GAME_MAZE || (window.GAME ? window.GAME.mapaColisiones : null);
+            if (!mapa) return true; // Si no hay mapa, asumir colisión
             
-            // Verificar 16 puntos alrededor del círculo + centro
-            var puntos = [
-                {dx: 0, dy: 0}, // Centro
-                // Puntos cardinales
-                {dx: 0, dy: -radio}, {dx: radio, dy: 0}, {dx: 0, dy: radio}, {dx: -radio, dy: 0},
-                // Puntos diagonales principales
-                {dx: radio*0.707, dy: -radio*0.707}, {dx: radio*0.707, dy: radio*0.707},
-                {dx: -radio*0.707, dy: radio*0.707}, {dx: -radio*0.707, dy: -radio*0.707},
-                // Puntos intermedios
-                {dx: radio*0.383, dy: -radio*0.924}, {dx: radio*0.924, dy: -radio*0.383},
-                {dx: radio*0.924, dy: radio*0.383}, {dx: radio*0.383, dy: radio*0.924},
-                {dx: -radio*0.383, dy: radio*0.924}, {dx: -radio*0.924, dy: radio*0.383},
-                {dx: -radio*0.924, dy: -radio*0.383}, {dx: -radio*0.383, dy: -radio*0.924}
+            const ancho = mapa[0] ? mapa[0].length : 0;
+            const alto = mapa.length;
+            
+            // Verificación simplificada - 5 puntos para máximo rendimiento
+            const puntos = [
+                {dx: 0, dy: 0},     // Centro
+                {dx: radio, dy: 0},  // Derecha
+                {dx: -radio, dy: 0}, // Izquierda
+                {dx: 0, dy: radio},  // Abajo
+                {dx: 0, dy: -radio}  // Arriba
             ];
             
-            for (var i = 0; i < puntos.length; i++) {
-                var checkX = x + puntos[i].dx;
-                var checkY = y + puntos[i].dy;
-                var centerX = Math.floor(checkX / 32);
-                var centerY = Math.floor(checkY / 32);
+            for (let i = 0; i < puntos.length; i++) {
+                const checkX = x + puntos[i].dx;
+                const checkY = y + puntos[i].dy;
+                const mapX = Math.floor(checkX);
+                const mapY = Math.floor(checkY);
                 
-                if (centerX < 0 || centerY < 0 || centerX >= ancho || centerY >= alto) return true;
-                if (mapa[centerY][centerX] === 1) return true;
+                if (mapX < 0 || mapY < 0 || mapX >= ancho || mapY >= alto) return true;
+                if (mapa[mapY][mapX] === 1) return true;
             }
             return false;
         },
@@ -81,43 +77,25 @@
             var ancho = mapa[0] ? mapa[0].length : 0;
             var alto = mapa.length;
             
-            // Calcular distancia y usar más pasos para mayor precisión
+            // Calcular distancia y usar menos pasos para mayor rendimiento
             var dx = x1 - x0;
             var dy = y1 - y0;
             var distancia = Math.sqrt(dx*dx + dy*dy);
-            var pasos = Math.ceil(distancia / 3); // Un paso cada 3 píxeles para máxima suavidad
+            var pasos = Math.ceil(distancia / 16); // Un paso cada 16 píxeles para máximo rendimiento
             
-            // Interpolación suave con subpíxel
+            // Interpolación simple con menos verificaciones
             for (var i = 1; i <= pasos; i++) {
                 var t = i / pasos;
                 var x = x0 + dx * t;
                 var y = y0 + dy * t;
                 
-                // Verificar múltiples puntos alrededor para suavizado
-                var puntosVerificacion = [
-                    [x, y],
-                    [x - 1.5, y], [x + 1.5, y],
-                    [x, y - 1.5], [x, y + 1.5],
-                    [x - 1, y - 1], [x + 1, y + 1],
-                    [x - 1, y + 1], [x + 1, y - 1]
-                ];
+                // Verificar solo el punto central para máxima eficiencia
+                var cx = Math.floor(x / 32);
+                var cy = Math.floor(y / 32);
                 
-                var colisiones = 0;
-                for (var p = 0; p < puntosVerificacion.length; p++) {
-                    var px = puntosVerificacion[p][0];
-                    var py = puntosVerificacion[p][1];
-                    var cx = Math.floor(px / 32);
-                    var cy = Math.floor(py / 32);
-                    
-                    if (cx < 0 || cy < 0 || cx >= ancho || cy >= alto) {
-                        colisiones++;
-                    } else if (mapa[cy][cx] === 1) {
-                        colisiones++;
-                    }
-                }
-                
-                // Si más del 60% de puntos tienen colisión, considerar bloqueado
-                if (colisiones > puntosVerificacion.length * 0.6) {
+                if (cx < 0 || cy < 0 || cx >= ancho || cy >= alto) {
+                    return true;
+                } else if (mapa[cy][cx] === 1) {
                     return true;
                 }
             }

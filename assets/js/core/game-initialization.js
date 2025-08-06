@@ -13,21 +13,12 @@ console.log('🎮 Inicializando DOOM: Noboa de Cartón - Sistema Unificado');
 const GameConfig = {
   // Configuración de enemigos mejorada
   enemies: {
-    spawnCount: 12, // Aumentado de 4 a 12 enemigos
-    types: ['casual', 'deportivo', 'presidencial', 'casual', 'deportivo', 'presidencial'],
+    spawnCount: 3, // Reducido drásticamente de 12 a 3 enemigos
+    types: ['casual', 'deportivo', 'presidencial'],
     spawnPositions: [
       { x: 5 * 64 + 32, y: 5 * 64 + 32 },
       { x: 10 * 64 + 32, y: 7 * 64 + 32 },
-      { x: 8 * 64 + 32, y: 3 * 64 + 32 },
-      { x: 12 * 64 + 32, y: 9 * 64 + 32 },
-      { x: 6 * 64 + 32, y: 2 * 64 + 32 },
-      { x: 14 * 64 + 32, y: 4 * 64 + 32 },
-      { x: 3 * 64 + 32, y: 8 * 64 + 32 },
-      { x: 11 * 64 + 32, y: 6 * 64 + 32 },
-      { x: 7 * 64 + 32, y: 10 * 64 + 32 },
-      { x: 9 * 64 + 32, y: 2 * 64 + 32 },
-      { x: 4 * 64 + 32, y: 7 * 64 + 32 },
-      { x: 13 * 64 + 32, y: 8 * 64 + 32 }
+      { x: 8 * 64 + 32, y: 3 * 64 + 32 }
     ]
   },
   debug: {

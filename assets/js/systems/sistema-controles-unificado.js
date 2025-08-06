@@ -177,9 +177,32 @@ window.SistemaControlesUnificado = {
    * Verificar si el jugador puede moverse a una posición
    */
   puedeMoverJugador(nuevoX, nuevoY) {
+    // Usar la función isWalkable del sistema DOOM para consistencia
+    if (typeof isWalkable === 'function') {
+      return isWalkable(nuevoX, nuevoY);
+    }
+    
+    // Fallback: usar WorldPhysics si está disponible
     if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
       return !window.WorldPhysics.checkCollision(nuevoX, nuevoY);
     }
+    
+    // Fallback manual: verificar colisión contra mapa
+    if (window.GAME_MAZE) {
+      const mapa = window.GAME_MAZE;
+      const tileSize = window.GAME.tileSize || 50;
+      const mapX = Math.floor(nuevoX / tileSize);
+      const mapY = Math.floor(nuevoY / tileSize);
+      
+      // Verificar límites del mapa
+      if (mapX < 0 || mapY < 0 || mapY >= mapa.length || mapX >= mapa[0].length) {
+        return false;
+      }
+      
+      // Verificar si es una pared (valor 1)
+      return mapa[mapY][mapX] !== 1;
+    }
+    
     return true;
   },
 
@@ -187,9 +210,32 @@ window.SistemaControlesUnificado = {
    * Verificar si un enemigo puede moverse a una posición
    */
   puedeMoverEnemigo(nuevoX, nuevoY) {
+    // Usar la función isWalkable del sistema DOOM para consistencia
+    if (typeof isWalkable === 'function') {
+      return isWalkable(nuevoX, nuevoY);
+    }
+    
+    // Fallback: usar WorldPhysics si está disponible
     if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
       return !window.WorldPhysics.checkCollision(nuevoX, nuevoY);
     }
+    
+    // Fallback manual: verificar colisión contra mapa
+    if (window.GAME_MAZE) {
+      const mapa = window.GAME_MAZE;
+      const tileSize = window.GAME.tileSize || 50;
+      const mapX = Math.floor(nuevoX / tileSize);
+      const mapY = Math.floor(nuevoY / tileSize);
+      
+      // Verificar límites del mapa
+      if (mapX < 0 || mapY < 0 || mapY >= mapa.length || mapX >= mapa[0].length) {
+        return false;
+      }
+      
+      // Verificar si es una pared (valor 1)
+      return mapa[mapY][mapX] !== 1;
+    }
+    
     return true;
   },
 
@@ -210,27 +256,55 @@ window.SistemaControlesUnificado = {
         // Mantener enemigos en el suelo
         enemy.z = 0;
         
-        const dx = p.x - enemy.x;
-        const dy = p.y - enemy.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        // Calcular dirección hacia el jugador ocasionalmente
+        if (Math.random() < 0.01) {
+          const dx = p.x - enemy.x;
+          const dy = p.y - enemy.y;
+          enemy.dir = Math.atan2(dy, dx);
+          
+          // Añadir un poco de aleatoriedad para que no sea totalmente predecible
+          enemy.dir += (Math.random() - 0.5) * Math.PI / 4;
+        }
+
+        const dist = Math.sqrt((p.x - enemy.x) * (p.x - enemy.x) + (p.y - enemy.y) * (p.y - enemy.y));
         
         if (dist > 24 && dist < 800) {
           const vel = this.config.velocidadEnemigo;
-          const movX = (dx / dist) * vel;
-          const movY = (dy / dist) * vel;
           
-          // Movimiento por eje con colisión
-          const nuevoX = enemy.x + movX;
-          if (this.puedeMoverEnemigo(nuevoX, enemy.y)) {
-            enemy.x = nuevoX;
+          // Calcular siguiente posición usando la dirección del enemigo
+          const nextX = enemy.x + Math.cos(enemy.dir) * vel;
+          const nextY = enemy.y + Math.sin(enemy.dir) * vel;
+          
+          // Comprobar colisión con paredes - verificar cada componente de movimiento por separado
+          // Verificar movimiento en X
+          if (this.puedeMoverEnemigo(nextX, enemy.y)) {
+            enemy.x = nextX;
+          } else {
+            // Cambiar dirección si choca en X
+            enemy.dir = Math.random() * 2 * Math.PI;
           }
           
-          const nuevoY = enemy.y + movY;
-          if (this.puedeMoverEnemigo(enemy.x, nuevoY)) {
-            enemy.y = nuevoY;
+          // Verificar movimiento en Y
+          if (this.puedeMoverEnemigo(enemy.x, nextY)) {
+            enemy.y = nextY;
+          } else {
+            // Cambiar dirección si choca en Y
+            enemy.dir = Math.random() * 2 * Math.PI;
+          }
+          
+          // Cambiar dirección aleatoriamente a veces
+          if (Math.random() < 0.005) {
+            enemy.dir = Math.random() * 2 * Math.PI;
           }
         }
       });
+      
+      window.requestAnimationFrame(moveEnemies);
+    };
+
+    window.requestAnimationFrame(moveEnemies);
+    console.log('👾 Movimiento de enemigos inicializado');
+  },
       
       window.requestAnimationFrame(moveEnemies);
     };

@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DOOM: Versión Presidencial - Noboa de Cartón</title>
+  <title>DOOM: Versión Presidencial HD - Noboa de Cartón</title>
   
   <!-- Meta tags para SEO y redes sociales -->
-  <meta name="description" content="Juego de tiro en primera persona estilo DOOM con Noboa de cartón como protagonista">
-  <meta name="keywords" content="juego, doom, fps, tiro, noboa, javascript">
+  <meta name="description" content="Juego de tiro en primera persona estilo DOOM HD con Noboa de cartón como protagonista">
+  <meta name="keywords" content="juego, doom, fps, tiro, noboa, javascript, hd">
   <meta name="author" content="Samy y Álex">
   
   <!-- Favicon -->
@@ -18,6 +18,54 @@
   <link rel="stylesheet" href="assets/css/game-main.css">
   <link rel="stylesheet" href="assets/css/ui-panels.css">
   <link rel="stylesheet" href="assets/css/floating-button.css">
+  
+  <!-- Estilos adicionales para navegación correcta -->
+  <style>
+    /* Asegurar que solo un elemento sea visible a la vez */
+    .main-menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 100;
+    }
+    
+    .control-panel, .donation-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .control-panel.active, .donation-panel.active {
+      display: flex !important;
+    }
+    
+    .game-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 50;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+    }
+    
+    .game-container canvas {
+      max-width: 100%;
+      max-height: 100%;
+    }
+  </style>
 </head>
 
 <body>
@@ -28,13 +76,13 @@
         <div class="game-title">
           <h1>🎯 TIRO CON NOBOA</h1>
           <h2>DE CARTÓN</h2>
-          <p class="subtitle">Edición DOOM Presidencial - VERSIÓN MODULAR UNIFICADA</p>
+          <p class="subtitle">Edición DOOM HD - VERSIÓN OPTIMIZADA</p>
         </div>
         
         <div class="menu-buttons">
           <button class="menu-btn primary" id="startGame">
             <span class="btn-icon">🚀</span>
-            <span class="btn-text">INICIAR JUEGO</span>
+            <span class="btn-text">INICIAR JUEGO HD</span>
           </button>
           
           <button class="menu-btn" id="showControls">
@@ -48,2165 +96,258 @@
           </button>
         </div>
         
-        <div class="menu-footer">
-          <p>Desarrollado con ❤️ por <a href="https://www.instagram.com/freudiandev/" target="_blank">freudianDev</a> by <a href="https://cpunkec.6te.net" target="_blank"> CiberPunk EC </a></p>
-          <p class="version">Versión Modular Unificada 1.0.0 - Sistema Learning Memory</p>
+        <div class="version-info">
+          <p>🎮 Versión HD Optimizada - 1280x800</p>
+          <p>⚡ Solo 6 archivos JS esenciales</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Botón flotante para reiniciar enemigos -->
-  <button id="respawnEnemiesBtnFloating">
-    <span style="font-size:1.5em;vertical-align:middle;">👾</span> 
-    <span style="vertical-align:middle;">REINICIAR ENEMIGOS</span>
-  </button>
-
   <!-- Panel de Controles -->
-  <div class="info-panel" id="controlsPanel">
+  <div class="control-panel" id="controlPanel" style="display: none;">
     <div class="panel-content">
-      <button class="close-btn" id="closeControls">✕</button>
+      <button class="close-panel" id="closeControls">&times;</button>
       <h2>🎮 CONTROLES DEL JUEGO</h2>
+      
       <div class="controls-grid">
-        <div class="control-section">
-          <h3>🚶 Movimiento</h3>
+        <div class="control-group">
+          <h3>🏃‍♂️ MOVIMIENTO</h3>
           <div class="control-item">
-            <span class="key">W A S D</span>
-            <span class="desc">Caminar (adelante, izquierda, atrás, derecha)</span>
+            <kbd>W</kbd>
+            <span>Avanzar</span>
+          </div>
+          <div class="control-item">
+            <kbd>S</kbd>
+            <span>Retroceder</span>
+          </div>
+          <div class="control-item">
+            <kbd>A</kbd>
+            <span>Izquierda</span>
+          </div>
+          <div class="control-item">
+            <kbd>D</kbd>
+            <span>Derecha</span>
           </div>
         </div>
         
-        <div class="control-section">
-          <h3>👁️ Cámara</h3>
+        <div class="control-group">
+          <h3>🎯 COMBATE</h3>
           <div class="control-item">
-            <span class="key">🖱️ Mouse</span>
-            <span class="desc">Mirar alrededor (requiere clic para bloquear)</span>
+            <kbd>CLICK</kbd>
+            <span>Disparar</span>
           </div>
           <div class="control-item">
-            <span class="key">↑ ↓</span>
-            <span class="desc">Mirar arriba/abajo (flechas como alternativa)</span>
-          </div>
-        </div>
-        
-        <div class="control-section">
-          <h3>🔫 Combate Unificado</h3>
-          <div class="control-item">
-            <span class="key">ESPACIO</span>
-            <span class="desc">Disparar (sistema unificado + emergencia)</span>
-          </div>
-          <div class="control-item">
-            <span class="key">🖱️ CLIC</span>
-            <span class="desc">Disparar (alternativo con mouse bloqueado)</span>
-          </div>
-          <div class="control-item">
-            <span class="key">ESC</span>
-            <span class="desc">Liberar mouse / Menú</span>
+            <kbd>MOUSE</kbd>
+            <span>Mirar</span>
           </div>
         </div>
-        
-        <div class="control-section">
-          <h3>🔧 Debugging Optimizado</h3>
-          <div class="control-item">
-            <span class="key">F1</span>
-            <span class="desc">Estado completo del sistema</span>
-          </div>
-          <div class="control-item">
-            <span class="key">F2</span>
-            <span class="desc">Sistema de emergencia</span>
-          </div>
-          <div class="control-item">
-            <span class="key">F3</span>
-            <span class="desc">Test completo del motor</span>
-          </div>
-        </div>
-
-        <div class="control-section">
-          <h3>🎯 DOOM Intermedio</h3>
-          <div class="control-item">
-            <span class="key">window.GAME</span>
-            <span class="desc">Motor principal del juego</span>
-          </div>
-          <div class="control-item">
-            <span class="key">enemies()</span>
-            <span class="desc">Ver enemigos Noboa activos</span>
-          </div>
-          <div class="control-item">
-            <span class="key">diag()</span>
-            <span class="desc">Diagnóstico rápido</span>
-          </div>
-        </div>
-        
-
       </div>
     </div>
   </div>
 
   <!-- Panel de Donaciones -->
-  <div class="info-panel" id="donationsPanel">
+  <div class="donation-panel" id="donationPanel" style="display: none;">
     <div class="panel-content">
-      <button class="close-btn" id="closeDonations">✕</button>
-      <h2>💖 APOYA EL PROYECTO</h2>
-      <p>Si te gusta este juego, considera hacer una donación para apoyar el desarrollo.</p>
-      <div class="donation-buttons">
-        <a href="https://paypal.me/yourpaypal" target="_blank" class="donation-btn">
-          💳 PayPal
-        </a>
-        <a href="https://ko-fi.com/yourkofi" target="_blank" class="donation-btn">
-          ☕ Ko-fi
-        </a>
+      <button class="close-panel" id="closeDonations">&times;</button>
+      <h2>💖 APÓYANOS</h2>
+      <div class="donation-content">
+        <p>Si disfrutas este juego, considera hacer una donación:</p>
+        <div class="qr-container">
+          <img src="assets/images/qrPichincha.jpg" alt="QR Donaciones" class="qr-code">
+          <p class="qr-text">Banco Pichincha - Samy y Álex</p>
+        </div>
+        <p class="thank-you">¡Gracias por tu apoyo! 🎮</p>
       </div>
     </div>
   </div>
 
-  <!-- Panel de Créditos eliminado -->
+  <!-- Área del Canvas del Juego -->
+  <div class="game-container" id="gameContainer" style="display: none;">
+    // Área del Canvas del Juego -->
+    <canvas id="gameCanvas" width="320" height="240"></canvas>
+    
+    <!-- Panel de Estado del Juego -->
+    <div class="game-stats" id="gameStats">
+      <div class="stat-item">
+        <span class="stat-label">HP:</span>
+        <span class="stat-value" id="playerHealth">100</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Balas:</span>
+        <span class="stat-value" id="playerAmmo">50</span>
+      </div>
+    </div>
+  </div>
 
-  <!-- Canvas del Juego -->
-  <canvas id="gameCanvas"></canvas>
-  <!-- Capa HTML para enemigos Noboa -->
-  <div id="enemyLayer"></div>
+  <!-- Botón Flotante -->
+  <div class="floating-button" id="floatingButton">
+    <button id="respawnEnemies">🔄</button>
+  </div>
 
-
-  <!-- ========================================= -->
-  <!-- ESTRUCTURA MODULAR DE SCRIPTS ESENCIALES  -->
-  <!-- ========================================= -->
-  <!-- 1. Núcleo del motor DOOM y física -->
+  <!-- Scripts JavaScript - SOLO 6 ARCHIVOS ESENCIALES -->
+  <script>
+    console.log('🚀 DOOM HD - Versión Optimizada');
+    console.log('📦 Cargando solo 6 módulos esenciales...');
+  </script>
+  
+  <!-- CORE: Motor DOOM HD -->
   <script src="assets/js/core/DOOM-INTERMEDIO.js"></script>
+  
+  <!-- FÍSICA: Sistema de físicas del mundo -->
   <script src="assets/js/physics/WorldPhysics.js"></script>
-
-  <!-- 2. Optimización de rendimiento -->
-  <script src="assets/js/optimization/SISTEMA-OPTIMIZACION-RENDIMIENTO.js"></script>
-
-  <!-- 3. Correctores esenciales (solo los necesarios) -->
-  <script src="assets/js/correctors/CORRECTOR-MAESTRO-UNIFICADO.js"></script>
-  <script src="assets/js/correctors/CORRECTOR-BUCLES-SPAM.js"></script>
-  <script src="assets/js/correctors/CORRECTOR-CAMARA-VERTICAL-AVANZADO.js"></script>
-  <script src="assets/js/correctors/INICIALIZADOR-CONTROLES-POST-DOOM.js"></script>
-
-  <!-- 4. Sistemas de disparo unificados -->
-  <script src="assets/js/correctors/SISTEMA-BALA-UNIFICADO-DEFINITIVO.js"></script>
-  <script src="assets/js/correctors/SISTEMA-EMERGENCIA-DISPARO.js"></script>
-
-  <!-- 5. Sistemas de juego y validación -->
-  <!-- SINCRONIZADOR DE MAPA (DEBE IR ANTES DEL MOVIMIENTO) -->
-  <script src="assets/js/core/mapa-sync.js"></script>
-  <script src="assets/js/systems/CONSTRUCCION-DEFINITIVA-LABERINTO.js"></script>
-  <script src="assets/js/systems/SISTEMA-MOVIMIENTO-UNIFICADO.js"></script>
-  <script src="assets/js/debug/movimiento-debug.js"></script>
-  <script src="assets/js/systems/VALIDADOR-ARCHIVOS.js"></script>
-  <script src="assets/js/systems/SISTEMA-CARTESIANO-ENEMIGOS.js"></script>
-
-  <!-- 6. Interfaz y audio -->
+  
+  <!-- INICIALIZACIÓN: Sistema de inicialización del juego -->
+  <script src="assets/js/core/game-initialization.js"></script>
+  
+  <!-- IA: Sistema de memoria avanzada -->
+  <script src="assets/js/ai/learning-memory-advanced.js"></script>
+  
+  <!-- UI: Sistema de menús -->
   <script src="assets/js/menu-system.js"></script>
+  
+  <!-- AUDIO: Sistema de audio -->
   <script src="assets/js/audio.js"></script>
 
-  <!-- 7. Inicialización unificada (siempre al final) -->
-  <script src="assets/js/core/game-initialization.js"></script>
-
-  <!-- 8. Renderizado de enemigos (UI) -->
-  <script src="assets/js/ui/enemy-html-render.js"></script>
-
-<!-- Registrar eventos de errores de controles y contador con Learning Memory -->
-<script>
-if (window.learningMemory) {
-  // Consultar recomendaciones sobre qué cambiar
-  const recomendaciones = window.learningMemory.consultarMemoria('controles de movimiento y UI');
-  console.log('🧠 LM recomendaciones:', recomendaciones);
-  // Registrar estado de sistemas rotos
-  learningMemory.registrarEvento('CONTROLES_WASD', { status: 'broken' });
-  learningMemory.registrarEvento('CAMARA_FLECHAS', { status: 'broken' });
-  learningMemory.registrarEvento('CAMARA_MOUSE', { status: 'broken' });
-  learningMemory.registrarEvento('CONTADOR_BALAS', { status: 'broken' });
-  learningMemory.registrarEvento('CONTADOR_VIDA', { status: 'broken' });
-  // Guardar estado en localStorage (simulación JSON)
-  learningMemory.guardarEstado();
-}
-</script>
-
-<script>
-// Inicialización centralizada de scripts interactivos (ejecución inmediata)
-(function iniciarScriptsInteractivos() {
-
-  // Verificar si spawn está dentro de pared y reposicionar si es necesario
-  if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function' &&
-      window.WorldPhysics.checkCollision(window.GAME.player.x, window.GAME.player.y)) {
-    console.warn("Spawn inicial en pared detectado, buscando nueva posición segura...");
-    var nuevaPos = buscarCeldaVacia();
-    window.GAME.player.x = nuevaPos.x;
-    window.GAME.player.y = nuevaPos.y;
-    console.log("Jugador reposicionado a:", nuevaPos);
-  }
-
-  // --- Colisión para enemigos (usa la lógica robusta del jugador) ---
-  function puedeMoverEnemigo(nuevoX, nuevoY) {
-    if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
-      return !window.WorldPhysics.checkCollision(nuevoX, nuevoY);
-    }
-    return true;
-  }
-
-  // --- Movimiento simple de enemigos: siguen al jugador, pero con colisión ---
-  function moverEnemigos() {
-    if (!window.GAME || !window.GAME.enemies || !window.GAME.player) return;
-    var p = window.GAME.player;
-    window.GAME.enemies.forEach(function(enemy) {
-      if (!enemy.active) return;
-      // Solo sobre el eje X/Y, pegados al piso
-      enemy.z = 0;
-      var dx = p.x - enemy.x;
-      var dy = p.y - enemy.y;
-      var dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist > 24 && dist < 800) { // Solo si está lejos y no demasiado lejos
-        var vel = 1.2; // velocidad de enemigo
-        var movX = (dx/dist) * vel;
-        var movY = (dy/dist) * vel;
-        // Movimiento por eje con colisión
-        var nuevoX = enemy.x + movX;
-        var nuevoY = enemy.y;
-        if (puedeMoverEnemigo(nuevoX, enemy.y)) {
-          enemy.x = nuevoX;
-        }
-        nuevoY = enemy.y + movY;
-        if (puedeMoverEnemigo(enemy.x, nuevoY)) {
-          enemy.y = nuevoY;
-        }
-      }
-    });
-    window.requestAnimationFrame(moverEnemigos);
-  }
-  window.requestAnimationFrame(moverEnemigos);
-
-  // --- Buscar celda vacía para spawn (VERSIÓN SÚPER MEJORADA) ---
-  function buscarCeldaVacia() {
-    if (!window.GAME || !window.GAME.mapaColisiones) return {x: 64, y: 64};
-    
-    // Usar tamaño dinámico de celda según el motor DOOM (sincronizado con laberinto definitivo)
-    var ts = (window.GAME && window.GAME.tileSize) ? window.GAME.tileSize : 50;
-    var mapa = window.GAME.mapaColisiones;
-    var ancho = mapa[0] ? mapa[0].length : 0;
-    var alto = mapa.length;
-    
-    // Registrar acceso para diagnóstico
-    console.log(`🔍 Iniciando búsqueda de celda vacía - Mapa ${ancho}x${alto}, tileSize=${ts}`);
-    
-    // VERIFICACIÓN CRÍTICA: función que realmente valida que una celda esté libre
-    function esCeldaLibre(x, y) {
-      // Verificar que las coordenadas de celda estén dentro del mapa
-      if (x < 0 || y < 0 || x >= ancho || y >= alto) return false;
-      // Verificar que la celda específica esté libre (0 = libre, 1 = pared)
-      return mapa[y][x] === 0;
-    }
-    
-    // Función ultra segura que verifica área amplia
-    function esCeldaUltraSegura(x, y) {
-      // Primero verificar que la celda central esté libre
-      if (!esCeldaLibre(x, y)) return false;
-      
-      // Verificar un área 9x9 alrededor para máxima seguridad
-      for (var dy = -4; dy <= 4; dy++) {
-        for (var dx = -4; dx <= 4; dx++) {
-          var checkX = x + dx;
-          var checkY = y + dy;
-          if (!esCeldaLibre(checkX, checkY)) return false;
-        }
-      }
-      
-      // Verificación exhaustiva con WorldPhysics
-      if (window.WorldPhysics) {
-        var worldX = x * ts + ts/2;
-        var worldY = y * ts + ts/2;
-        
-        // Verificación en el centro exacto
-        if (window.WorldPhysics.checkCollision(worldX, worldY)) {
-          console.warn("⚠️ Celda aparentemente libre pero WorldPhysics detecta colisión en el centro:", worldX, worldY);
-          return false;
-        }
-        
-        // Verificar 8 puntos alrededor del centro (como un radar)
-        var radios = [0.2, 0.4]; // Verificar en dos círculos concéntricos
-        for (var r = 0; r < radios.length; r++) {
-          var radio = radios[r];
-          for (var angulo = 0; angulo < 360; angulo += 45) {
-            var rad = angulo * Math.PI / 180;
-            var testX = worldX + Math.cos(rad) * radio * ts;
-            var testY = worldY + Math.sin(rad) * radio * ts;
-            
-            if (window.WorldPhysics.checkCollision(testX, testY)) {
-              console.warn(`⚠️ Colisión detectada a ${radio} tiles del centro en ángulo ${angulo}°:`, testX, testY);
-              return false;
-            }
-          }
-        }
-      }
-      
-      return true;
-    }
-    
-    // Función de seguridad estándar 
-    function esCeldaSegura(x, y) {
-      // Primero verificar que la celda central esté libre
-      if (!esCeldaLibre(x, y)) return false;
-      
-      // Verificar área 5x5 alrededor
-      for (var dy = -2; dy <= 2; dy++) {
-        for (var dx = -2; dx <= 2; dx++) {
-          var checkX = x + dx;
-          var checkY = y + dy;
-          if (!esCeldaLibre(checkX, checkY)) return false;
-        }
-      }
-      return true;
-    }
-    
-    // BÚSQUEDA SISTEMÁTICA: posiciones ultra seguras primero
-    console.log("🔍 Buscando posición ultra segura para spawn...");
-    
-    // Lista de áreas conocidas seguras (predefinidas)
-    var zonasSeguras = [
-      {x: 96, y: 96},   // Centro tradicional seguro
-      {x: 64, y: 64},   // Punto inicial común
-      {x: 128, y: 128}, // Centro alternativo
-      {x: 32, y: 32},   // Esquina superior izquierda
-      {x: 160, y: 160}  // Esquina inferior derecha
-    ];
-    
-    // Comprobar zonas conocidas seguras primero
-    for (var i = 0; i < zonasSeguras.length; i++) {
-      var zona = zonasSeguras[i];
-      var tileX = Math.floor(zona.x / ts);
-      var tileY = Math.floor(zona.y / ts);
-      
-      if (esCeldaUltraSegura(tileX, tileY)) {
-        console.log("✅ Zona segura conocida verificada:", tileX, tileY);
-        return {x: zona.x, y: zona.y};
-      }
-    }
-    
-    // Buscar en el centro del mapa (zona que suele ser segura)
-    var centerX = Math.floor(ancho / 2);
-    var centerY = Math.floor(alto / 2);
-    
-    // Verificar el centro exacto primero
-    if (esCeldaUltraSegura(centerX, centerY)) {
-      console.log("✅ Spawn en centro del mapa:", centerX, centerY);
-      return {x: centerX * ts + ts/2, y: centerY * ts + ts/2};
-    }
-    
-    // Buscar en círculos expandiéndose desde el centro
-    console.log("🌀 Buscando en círculos concéntricos...");
-    for (var radio = 1; radio <= Math.min(ancho, alto) / 3; radio++) {
-      // Aumentar la resolución angular para radios más grandes
-      var pasoAngular = Math.max(10, 30 - radio);
-      
-      for (var angulo = 0; angulo < 360; angulo += pasoAngular) {
-        var rad = angulo * Math.PI / 180;
-        var x = Math.floor(centerX + Math.cos(rad) * radio);
-        var y = Math.floor(centerY + Math.sin(rad) * radio);
-        
-        if (esCeldaUltraSegura(x, y)) {
-          console.log("✅ Spawn ultra seguro encontrado:", x, y, "radio:", radio, "ángulo:", angulo);
-          return {x: x * ts + ts/2, y: y * ts + ts/2};
-        }
-      }
-      
-      // Cada 5 radios, informar progreso
-      if (radio % 5 === 0) {
-        console.log(`🔄 Búsqueda en progreso... Radio actual: ${radio}`);
-      }
-    }
-    
-    // FALLBACK 1: buscar posiciones seguras normales
-    console.log("Buscando posición segura estándar...");
-    for (var y = 3; y < alto - 3; y++) {
-      for (var x = 3; x < ancho - 3; x++) {
-        if (esCeldaSegura(x, y)) {
-          console.log("Spawn seguro encontrado:", x, y);
-          return {x: x * ts + ts/2, y: y * ts + ts/2};
-        }
-      }
-    }
-    
-    // FALLBACK 2: buscar cualquier celda libre (mínimo viable)
-    console.log("🔍 Buscando cualquier celda libre...");
-    
-    // Búsqueda en cuadrantes para encontrar áreas potencialmente seguras
-    var cuadrantes = [
-      {startX: 1, endX: Math.floor(ancho/2), startY: 1, endY: Math.floor(alto/2)},           // Superior izquierdo
-      {startX: Math.floor(ancho/2), endX: ancho-1, startY: 1, endY: Math.floor(alto/2)},     // Superior derecho
-      {startX: 1, endX: Math.floor(ancho/2), startY: Math.floor(alto/2), endY: alto-1},      // Inferior izquierdo
-      {startX: Math.floor(ancho/2), endX: ancho-1, startY: Math.floor(alto/2), endY: alto-1} // Inferior derecho
-    ];
-    
-    // Mezclar los cuadrantes para no favorecer siempre el mismo
-    cuadrantes.sort(function() { return 0.5 - Math.random() });
-    
-    for (var c = 0; c < cuadrantes.length; c++) {
-      var cuadrante = cuadrantes[c];
-      console.log(`🔄 Buscando en cuadrante ${c+1}...`);
-      
-      for (var y = cuadrante.startY; y < cuadrante.endY; y++) {
-        for (var x = cuadrante.startX; x < cuadrante.endX; x++) {
-          if (esCeldaLibre(x, y)) {
-            // Verificación adicional con WorldPhysics
-            var worldX = x * ts + ts/2;
-            var worldY = y * ts + ts/2;
-            
-            if (!window.WorldPhysics || !window.WorldPhysics.checkCollision(worldX, worldY)) {
-              console.log("✅ Celda libre básica encontrada en cuadrante " + (c+1) + ":", x, y);
-              return {x: worldX, y: worldY};
-            }
-          }
-        }
-      }
-    }
-    
-    // EMERGENCIA TOTAL: Coordenadas fijas específicas
-    var posicionesEmergencia = [
-      {x: 96, y: 96},   // Centro tradicional
-      {x: 64, y: 64},   // Inicio común
-      {x: 32, y: 32},   // Esquina
-      {x: 128, y: 128}, // Otro centro
-      {x: 160, y: 32},  // Esquina superior derecha
-      {x: 32, y: 160}   // Esquina inferior izquierda
-    ];
-    
-    console.error("⚠️ ¡EMERGENCIA! Probando posiciones hardcodeadas...");
-    
-    for (var i = 0; i < posicionesEmergencia.length; i++) {
-      var pos = posicionesEmergencia[i];
-      console.log(`Probando posición de emergencia #${i+1}:`, pos);
-      
-      // Verificar si es segura
-      if (!window.WorldPhysics || !window.WorldPhysics.checkCollision(pos.x, pos.y)) {
-        console.log("✅ Posición de emergencia segura encontrada:", pos);
-        return pos;
-      }
-    }
-    
-    // ÚLTIMO RECURSO: Posición absolutamente fija y conocida
-    console.error("🆘 ¡EMERGENCIA CRÍTICA! No se encontró ninguna posición segura. Usando coordenadas finales.");
-    return {x: 96, y: 96}; // Posición de último recurso
-  }
-  // --- Sistema de colisiones para el jugador (anti atravesar paredes) ---
-  // Colisión robusta: revisa un radio alrededor del jugador
-  function puedeMoverJugador(nuevoX, nuevoY) {
-    if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
-      return !window.WorldPhysics.checkCollision(nuevoX, nuevoY);
-    }
-    return true;
-  }
-
-  <!-- Movimiento gestionado por SISTEMA-MOVIMIENTO-UNIFICADO.js -->
-  // MOVIMIENTO FALLBACK WASD CARDINAL (sin ángulo) - CORREGIDO
-  // Comentar listener de fallback WASD para evitar duplicar movimiento
-  /*
-    window.addEventListener('keydown', function(e) {
-      if (!window.GAME || !window.GAME.player || !window.WorldPhysics) return;
-      var vel = 1.0; // Velocidad muy controlable y reducida
-      var nx = window.GAME.player.x;
-      var ny = window.GAME.player.y;
-      switch (e.code) {
-        case 'KeyW': ny -= vel; break; // W = arriba (correcto)
-        case 'KeyS': ny += vel; break; // S = abajo (correcto)
-        case 'KeyA': nx -= vel; break; // A = izquierda (correcto)
-        case 'KeyD': nx += vel; break; // D = derecha (correcto)
-        default: return;
-      }
-      e.preventDefault();
-      if (!window.WorldPhysics.checkCollision(nx, window.GAME.player.y)) window.GAME.player.x = nx;
-      if (!window.WorldPhysics.checkCollision(window.GAME.player.x, ny)) window.GAME.player.y = ny;
-    });
-  */
-  // --- Botón flotante para reiniciar enemigos ---
-  var btnRespawn = document.getElementById('respawnEnemiesBtnFloating');
-  var canvas = document.getElementById('gameCanvas');
-  var mainMenu = document.getElementById('mainMenu');
-  function toggleRespawnBtnFloating() {
-    if (!btnRespawn || !canvas) return;
-    var menuVisible = mainMenu && mainMenu.style.display !== 'none' && mainMenu.style.display !== '';
-    btnRespawn.style.display = (canvas.style.display !== 'none' && !menuVisible) ? 'block' : 'none';
-  }
-  if (btnRespawn) {
-    btnRespawn.addEventListener('click', function() {
-      if (window.doomGame && typeof window.doomGame.respawnEnemies === 'function') {
-        try {
-          window.doomGame.respawnEnemies();
-          btnRespawn.innerHTML = '<span style="font-size:1.3em;">✅</span> ENEMIGOS REINICIADOS';
-          setTimeout(function(){
-            btnRespawn.innerHTML = '<span style="font-size:1.3em;">👾</span> REINICIAR ENEMIGOS';
-          }, 1200);
-        } catch(e) { /* Silenciar error */ }
-      }
-    });
-    function respawnBtnLoop() {
-      toggleRespawnBtnFloating();
-      window.requestAnimationFrame(respawnBtnLoop);
-    }
-    window.requestAnimationFrame(respawnBtnLoop);
-  }
-
-  // --- Disparo sincronizado con la proyección 2.5D y la cruz ---
-  function detectarImpactoEnemigoConCruz() {
-    if (!window.GAME || !window.GAME.enemies || !canvas) return null;
-    var FOV = Math.PI / 3;
-    var HALF_FOV = FOV / 2;
-    var player = window.GAME.player || { x: 0, y: 0, angle: 0 };
-    var screenW = canvas.width;
-    var screenH = canvas.height;
-    var baseSize = 144;
-    var mejorEnemigo = null;
-    var mejorDistancia = 99999;
-    window.GAME.enemies.forEach(function(enemy) {
-      if (enemy.active === false) return;
-      var tipo = enemy.type || 'casual';
-      var dx = enemy.x - player.x;
-      var dy = enemy.y - player.y;
-      var dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < 40 || dist > 1200) return;
-      var angleToEnemy = Math.atan2(dy, dx);
-      var relAngle = angleToEnemy - player.angle;
-      while (relAngle < -Math.PI) relAngle += 2*Math.PI;
-      while (relAngle > Math.PI) relAngle -= 2*Math.PI;
-      // Solo permite disparar si el ángulo relativo es cercano a 0 (apuntando directo)
-      if (Math.abs(relAngle) < 0.15) { // 0.15 radianes ~8.6 grados
-        if (dist < mejorDistancia) {
-          mejorDistancia = dist;
-          mejorEnemigo = enemy;
-        }
-      }
-    });
-    return mejorEnemigo;
-  }
-
-  function dispararConCruz() {
-    var enemigo = detectarImpactoEnemigoConCruz();
-    if (enemigo) {
-      // Marca como inactivo o aplica daño
-      enemigo.active = false;
-      // Efecto visual opcional: destello o animación
-      // Puedes agregar aquí lógica de puntaje, sonido, etc.
-      // Parpadeo rápido del sprite (si quieres)
-      var layer = document.getElementById('enemyLayer');
-      if (layer) {
-        var imgs = layer.getElementsByTagName('img');
-        for (var i = 0; i < imgs.length; i++) {
-          if (imgs[i].alt === (enemigo.type || 'casual')) {
-            imgs[i].style.filter = 'brightness(2) drop-shadow(0 0 8px #ff0)';
-            (function(img){ setTimeout(function(){ img.style.filter = ''; }, 120); })(imgs[i]);
-          }
-        }
-      }
-    }
-  }
-
-  // Disparo con ESPACIO o CLIC (solo si el menú está oculto)
-  function disparoHandler(e) {
-    var mainMenu = document.getElementById('mainMenu');
-    var menuVisible = mainMenu && mainMenu.style.display !== 'none' && mainMenu.style.display !== '';
-    if (!menuVisible) {
-      dispararConCruz();
-    }
-  }
-  window.addEventListener('keydown', function(e) {
-    if (e.code === 'Space') {
-      disparoHandler(e);
-    }
-  });
-  window.addEventListener('mousedown', function(e) {
-    // Solo botón izquierdo
-    if (e.button === 0) {
-      disparoHandler(e);
-    }
-  });
-
-  // --- Comando de emergencia: Ctrl+S para reposicionar jugador ---
-  document.addEventListener('keydown', function(e) {
-    if (e.code === 'KeyS' && e.ctrlKey) { // Ctrl+S para emergencia
-      e.preventDefault(); // Evitar que el navegador abra "Guardar como"
-      console.log("🆘 Comando de emergencia Ctrl+S activado - Reposicionando jugador...");
-      if (window.GAME && window.GAME.player) {
-        var posicionAnterior = {x: window.GAME.player.x, y: window.GAME.player.y};
-        console.log("Posición antes del comando de emergencia:", posicionAnterior);
-        
-        // Verificar si realmente está en pared
-        var estaEnPared = window.WorldPhysics && window.WorldPhysics.checkCollision(posicionAnterior.x, posicionAnterior.y);
-        console.log("¿Está realmente en pared?", estaEnPared ? "SÍ" : "NO");
-        
-        var nuevaPos = buscarCeldaVacia();
-        window.GAME.player.x = nuevaPos.x;
-        window.GAME.player.y = nuevaPos.y;
-        
-        console.log("🔄 Reposicionamiento manual completado:");
-        console.log("  Posición anterior:", posicionAnterior);
-        console.log("  Nueva posición:", nuevaPos);
-        
-        // Verificar que la nueva posición no esté en pared
-        if (window.WorldPhysics && window.WorldPhysics.checkCollision(nuevaPos.x, nuevaPos.y)) {
-          console.error("⚠️ ¡ADVERTENCIA! La nueva posición también está en pared. Usando coordenadas de emergencia.");
-          window.GAME.player.x = 128;
-          window.GAME.player.y = 128;
-          console.log("Posición de emergencia final: (128, 128)");
-        } else {
-          console.log("✅ Nueva posición verificada como libre");
-        }
-      }
-    }
-  });
-
-  // --- Algoritmo robusto para forzar la aparición de sprites de enemigos Noboa en el DOM ---
-  function forceNoboaSpritesInDOM() {
-    // Deshabilitado para evitar crash del navegador
-    return;
-    // Spawn fijo: jugador en (50,50)
-    window.GAME = window.GAME || {};
-    window.GAME.player = { x: 50, y: 50, angle: 0 };
-
-    // 1. Si no hay enemigos activos, crear algunos de prueba
-    if (!window.GAME) window.GAME = {};
-    var canvas = document.getElementById('gameCanvas');
-    // Asegura tamaño mínimo del canvas
-    if (canvas) {
-      if (!canvas.width || canvas.width < 100) canvas.width = 800;
-      if (!canvas.height || canvas.height < 100) canvas.height = 600;
-      canvas.style.width = canvas.width + 'px';
-      canvas.style.height = canvas.height + 'px';
-      canvas.style.display = 'block';
-    }
-    if (!window.GAME.enemies || !Array.isArray(window.GAME.enemies) || window.GAME.enemies.length === 0) {
-      // Spawnea MENOS enemigos SOLO en celdas vacías (reducido a la mitad)
-      var tipos = ['casual']; // Solo un tipo para reducir spawns
-      window.GAME.enemies = [];
-      for (var i = 0; i < tipos.length; i++) {
-        var pos = buscarCeldaVacia();
-        window.GAME.enemies.push({ x: pos.x, y: pos.y, z: 0, type: tipos[i], active: true });
-      }
-      if (!window.GAME.player) {
-        // Spawn fijo en coordenadas 50,50
-        console.log("Spawn fijo: jugador en (50,50)");
-        window.GAME.player = { x: 50, y: 50, angle: 0 };
-      }
-      if (!window.GAME.player) {
-        // Spawnea jugador también en celda vacía
-        console.log("=== INICIANDO SPAWN DEL JUGADOR ===");
-        var posJ = buscarCeldaVacia();
-        console.log("Posición calculada por buscarCeldaVacia():", posJ);
-        
-        window.GAME.player = { x: posJ.x, y: posJ.y, angle: 0 };
-        
-        // VERIFICACIÓN CRÍTICA: comprobar que el jugador no esté en una pared
-        if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
-          var estaEnPared = window.WorldPhysics.checkCollision(window.GAME.player.x, window.GAME.player.y);
-          console.log("Verificación de colisión inicial:", estaEnPared ? "¡EN PARED!" : "LIBRE");
-          
-          if (estaEnPared) {
-            console.error("🚨 ¡SPAWN EN PARED DETECTADO! 🚨");
-            console.log("Coordenadas problemáticas:", window.GAME.player.x, window.GAME.player.y);
-            
-            // Verificar el mapa en esa posición
-            if (window.GAME.mapaColisiones) {
-              var mapa = window.GAME.mapaColisiones;
-              var cx = Math.floor(window.GAME.player.x / 32);
-              var cy = Math.floor(window.GAME.player.y / 32);
-              console.log("Celda del mapa [", cy, "][", cx, "] =", mapa[cy] ? mapa[cy][cx] : "INDEFINIDO");
-            }
-          }
-          
-          var intentos = 0;
-          while (window.WorldPhysics.checkCollision(window.GAME.player.x, window.GAME.player.y) && intentos < 10) {
-            intentos++;
-            console.warn("🔄 Reintento #" + intentos + " - Jugador en pared, buscando nueva posición...");
-            
-            var nuevaPos = buscarCeldaVacia();
-            console.log("Nueva posición calculada:", nuevaPos);
-            
-            window.GAME.player.x = nuevaPos.x;
-            window.GAME.player.y = nuevaPos.y;
-            
-            var siguenEnPared = window.WorldPhysics.checkCollision(window.GAME.player.x, window.GAME.player.y);
-            console.log("Resultado del reintento:", siguenEnPared ? "SIGUE EN PARED" : "POSICIÓN LIBRE");
-          }
-          
-          if (intentos >= 10) {
-            console.error("🆘 ¡CRÍTICO! No se pudo encontrar spawn seguro después de 10 intentos.");
-            console.log("Forzando posición de emergencia: (96, 96)");
-            window.GAME.player.x = 96;
-            window.GAME.player.y = 96;
-            
-            // Verificar también la posición de emergencia
-            var emergenciaEnPared = window.WorldPhysics.checkCollision(96, 96);
-            console.log("Posición de emergencia:", emergenciaEnPared ? "TAMBIÉN EN PARED 😱" : "LIBRE ✅");
-          } else if (intentos > 0) {
-            console.log("✅ Jugador reposicionado exitosamente después de", intentos, "intentos");
-          } else {
-            console.log("✅ Jugador spawneado correctamente en primera posición");
-          }
-          
-          console.log("=== POSICIÓN FINAL DEL JUGADOR ===");
-          console.log("Coordenadas:", window.GAME.player.x, window.GAME.player.y);
-          var cx = Math.floor(window.GAME.player.x / 32);
-          var cy = Math.floor(window.GAME.player.y / 32);
-          console.log("Celda del mapa: [" + cy + "][" + cx + "]");
-          if (window.GAME.mapaColisiones && window.GAME.mapaColisiones[cy] && window.GAME.mapaColisiones[cy][cx] !== undefined) {
-            console.log("Valor de celda:", window.GAME.mapaColisiones[cy][cx], window.GAME.mapaColisiones[cy][cx] === 0 ? "(LIBRE)" : "(PARED)");
-          }
-        }
-      }
-      if (!window.GAME.enemySprites) {
-        window.GAME.enemySprites = {};
-        var tiposSprites = ['casual','deportivo','presidencial']; // Mantener todos los sprites disponibles
-        tiposSprites.forEach(function(tipo) {
-          var img = new window.Image();
-          img.src = 'assets/images/noboa-' + tipo + '.png';
-          window.GAME.enemySprites[tipo] = img;
-        });
-      }
-    }
-    // 2. Renderizado HTML manual de los sprites en enemyLayer SOLO si el menú está oculto
-    var layer = document.getElementById('enemyLayer');
-    var mainMenu = document.getElementById('mainMenu');
-    if (!layer || !canvas) return;
-    // Solo renderiza si el menú está oculto (juego activo)
-    var menuVisible = mainMenu && mainMenu.style.display !== 'none' && mainMenu.style.display !== '';
-    if (menuVisible) {
-      layer.innerHTML = '';
-      layer.style.display = 'none';
-      return;
-    }
-    layer.innerHTML = '';
-    layer.style.display = 'block';
-    layer.style.pointerEvents = 'none';
-    layer.style.position = 'absolute';
-    layer.style.visibility = 'visible';
-    layer.style.opacity = '1';
-    layer.style.zIndex = '9999';
-    layer.classList.remove('hidden');
-    var rect = canvas.getBoundingClientRect();
-    layer.style.left = rect.left + window.scrollX + 'px';
-    layer.style.top = rect.top + window.scrollY + 'px';
-    layer.style.width = canvas.width + 'px';
-    layer.style.height = canvas.height + 'px';
-    layer.style.background = 'transparent';
-    // 3. Renderiza los enemigos con proyección 2.5D básica
-    var FOV = Math.PI / 3; // 60 grados
-    var HALF_FOV = FOV / 2;
-    var player = window.GAME.player || { x: 0, y: 0, angle: 0 };
-    var screenW = canvas.width;
-    var screenH = canvas.height;
-    // Altura real de Noboa en metros
-    var alturaNoboaM = 1.8;
-    // Relación: 1 metro = 32 unidades del mundo (según celdas de 32px)
-    var metros_a_unidades = 32;
-    var alturaNoboaUnidades = alturaNoboaM * metros_a_unidades; // 57.6 unidades
-    // La proyección 2.5D escala el sprite según la distancia
-    // --- Función de raycast simple para detectar si hay muro entre jugador y enemigo ---
-    function hayMuroEntreJugadorYEnemigo(x0, y0, x1, y1) {
-      if (window.WorldPhysics && typeof window.WorldPhysics.raycast === 'function') {
-        return window.WorldPhysics.raycast(x0, y0, x1, y1);
-      }
-      return false;
-    }
-
-    // Si el jugador tiene pitch, lo ignoramos para la proyección de enemigos (DOOM clásico)
-    window.GAME.enemies.forEach(function(enemy, idx) {
-      if (enemy.active === false) return;
-      var tipo = enemy.type || 'casual';
-      var imgObj = window.GAME.enemySprites && window.GAME.enemySprites[tipo];
-      if (!imgObj || !imgObj.src) return;
-      // Vector del enemigo respecto al jugador
-      var dx = enemy.x - player.x;
-      var dy = enemy.y - player.y;
-      var dist = Math.sqrt(dx*dx + dy*dy);
-      // No renderizar si está demasiado lejos o cerca
-      if (dist < 40 || dist > 1200) return;
-      // Ángulo relativo al jugador (solo yaw)
-      var angleToEnemy = Math.atan2(dy, dx);
-      var relAngle = angleToEnemy - player.angle;
-      // Normaliza ángulo entre -PI y PI
-      while (relAngle < -Math.PI) relAngle += 2*Math.PI;
-      while (relAngle > Math.PI) relAngle -= 2*Math.PI;
-      // Proyección horizontal: centro pantalla + desplazamiento proporcional al ángulo
-      var screenX = (screenW/2) + Math.tan(relAngle) * (screenW/2) / Math.tan(HALF_FOV);
-      // Proyección vertical: SIEMPRE pegado al piso, no sigue el pitch
-      // Calcula la altura proyectada para que represente 1.8m en el mundo
-      var distanciaReferencia = 160; // Unos 5 celdas
-      var alturaReferenciaPx = 180; // 180px en pantalla a 1.8m a 5 celdas
-      var factor_proyeccion = (alturaReferenciaPx * distanciaReferencia) / alturaNoboaUnidades;
-      var alturaSpritePx = Math.max(32, (alturaNoboaUnidades / dist) * factor_proyeccion);
-
-      // Mantener la proporción original de la imagen
-      var proporcion = 1;
-      if (imgObj.naturalWidth && imgObj.naturalHeight) {
-        proporcion = imgObj.naturalWidth / imgObj.naturalHeight;
-      } else if (imgObj.width && imgObj.height) {
-        proporcion = imgObj.width / imgObj.height;
-      }
-      var anchoSpritePx = alturaSpritePx * proporcion;
-
-      var screenY = screenH - alturaSpritePx - 24;
-      var leftEdge = screenX - anchoSpritePx/2;
-      var rightEdge = screenX + anchoSpritePx/2;
-      if (rightEdge < 0 || leftEdge > screenW) return;
-
-      // --- NO renderizar si hay muro entre jugador y enemigo (robusto, revisa centro y bordes del sprite) ---
-      if (window.WorldPhysics && typeof window.WorldPhysics.isVisible === 'function') {
-        // Revisar centro, borde izquierdo y derecho del sprite (usando ancho real)
-        var puntosSprite = [
-          [enemy.x, enemy.y],
-          [enemy.x - (anchoSpritePx/2) * Math.cos(angleToEnemy + Math.PI/2), enemy.y - (anchoSpritePx/2) * Math.sin(angleToEnemy + Math.PI/2)],
-          [enemy.x + (anchoSpritePx/2) * Math.cos(angleToEnemy + Math.PI/2), enemy.y + (anchoSpritePx/2) * Math.sin(angleToEnemy + Math.PI/2)]
-        ];
-        var visible = false;
-        for (var i = 0; i < puntosSprite.length; i++) {
-          if (window.WorldPhysics.isVisible(player.x, player.y, puntosSprite[i][0], puntosSprite[i][1])) {
-            visible = true;
-            break;
-          }
-        }
-        if (!visible) return;
-      }
-
-      var img = document.createElement('img');
-      img.src = imgObj.src;
-      img.alt = tipo;
-      img.style.position = 'absolute';
-      img.style.left = leftEdge + 'px';
-      img.style.top = screenY + 'px';
-      img.style.width = anchoSpritePx + 'px';
-      img.style.height = alturaSpritePx + 'px';
-      img.style.objectFit = 'contain';
-      img.style.pointerEvents = 'none';
-      img.style.zIndex = Math.floor(10000 - dist); // Más cerca, más arriba
-      img.style.userSelect = 'none';
-      layer.appendChild(img);
-    });
-  }
-
-
-  // Llama siempre al cargar y en cada resize
-  // Eliminado observer redundante, el loop de renderizado ya sincroniza el estado
-
-
-  // --- Botón para mostrar enemigos desde el menú principal ---
-  // Botón mostrar enemigos eliminado
-
-  // --- Botón para guardar el estado de aprendizaje de Learning Memory ---
-  var btnSaveLM = document.getElementById('saveLearningMemoryBtn');
-  if (btnSaveLM && window.learningMemory && typeof window.learningMemory.guardarEstado === 'function') {
-    btnSaveLM.addEventListener('click', function() {
-      try {
-        window.learningMemory.guardarEstado();
-        btnSaveLM.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">GUARDADO</span>';
-        setTimeout(function() {
-          btnSaveLM.innerHTML = '<span class="btn-icon">🧠</span><span class="btn-text">GUARDAR LEARNING MEMORY</span>';
-        }, 1500);
-      } catch(e) { /* Silenciar error */ }
-    });
-  }
-
-  // --- Función mejorada para reposicionar jugador automáticamente ---
-  var ultimoReposicionamiento = 0;
-  var mensajeReposicionamientoTimeout = null;
-  var contadorAtascamientos = 0;
-  var ultimaPosicionSegura = null;
-  // Nuevas variables para sistema anti-atascamiento mejorado
-  var ultimasPosiciones = [];
-  var contadorInmovilidad = 0;
-  var inmovilDetectadaEnTiempo = 0;
-  
-  // Posiciones seguras estratégicas en el mapa (ampliadas)
-  var posicionesEmergencia = [
-    {x: 96, y: 96}, {x: 32, y: 32}, {x: 128, y: 128}, 
-    {x: 64, y: 160}, {x: 160, y: 64}, {x: 32, y: 96},
-    {x: 96, y: 128}, {x: 128, y: 96}, {x: 32, y: 128},
-    {x: 128, y: 32}, {x: 64, y: 192}, {x: 192, y: 64},
-    {x: 48, y: 48}, {x: 144, y: 144}, {x: 80, y: 112}
-  ];
-  
-  // Sistema para bloquear temporalmente el movimiento durante reposicionamientos
-  var bloqueoDeSeguridadActivo = false;
-  var tiempoBloqueo = 0;
-  
-  // Función para mostrar mensajes al usuario - VERSIÓN SUPER VISIBLE
-  function mostrarMensaje(texto, tipo) {
-    // Crear o actualizar el div de mensaje
-    var mensajeDiv = document.getElementById('mensajeReposicionamiento');
-    if (!mensajeDiv) {
-      mensajeDiv = document.createElement('div');
-      mensajeDiv.id = 'mensajeReposicionamiento';
-      mensajeDiv.style.position = 'fixed'; // Cambiado a fixed para que siempre sea visible
-      mensajeDiv.style.top = '20%';
-      mensajeDiv.style.left = '50%';
-      mensajeDiv.style.transform = 'translateX(-50%)';
-      mensajeDiv.style.padding = '20px 30px'; // Aumentado para mayor visibilidad
-      mensajeDiv.style.borderRadius = '12px'; // Más redondeado
-      mensajeDiv.style.fontWeight = 'bold';
-      mensajeDiv.style.fontSize = '22px'; // Más grande
-      mensajeDiv.style.textAlign = 'center';
-      mensajeDiv.style.boxShadow = '0 6px 16px rgba(0,0,0,0.6)'; // Sombra más intensa
-      mensajeDiv.style.zIndex = '99999'; // Zindex aumentado para asegurar que esté por encima de todo
-      mensajeDiv.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // Animación más exagerada
-      mensajeDiv.style.opacity = '0';
-      mensajeDiv.style.transform = 'translateX(-50%) translateY(-40px) scale(0.8)'; // Añadir escala para efecto pop
-      mensajeDiv.style.pointerEvents = 'none'; // Asegurar que no bloquee interacciones
-      document.body.appendChild(mensajeDiv);
-    }
-    
-    // Estilo según el tipo de mensaje
-    if (tipo === 'error') {
-      mensajeDiv.style.background = 'rgba(220,53,69,0.9)';  // Bootstrap danger red
-      mensajeDiv.style.color = 'white';
-      mensajeDiv.style.border = '2px solid #dc3545';
-    } else if (tipo === 'success') {
-      mensajeDiv.style.background = 'rgba(40,167,69,0.9)';  // Bootstrap success green
-      mensajeDiv.style.color = 'white';
-      mensajeDiv.style.border = '2px solid #28a745';
-    } else if (tipo === 'info') {
-      mensajeDiv.style.background = 'rgba(23,162,184,0.9)'; // Bootstrap info blue
-      mensajeDiv.style.color = 'white';
-      mensajeDiv.style.border = '2px solid #17a2b8';
-    } else if (tipo === 'warning') {
-      mensajeDiv.style.background = 'rgba(255,193,7,0.9)';  // Bootstrap warning yellow
-      mensajeDiv.style.color = 'black';
-      mensajeDiv.style.border = '2px solid #ffc107';
-    } else {
-      mensajeDiv.style.background = 'rgba(52,58,64,0.9)';   // Bootstrap dark gray
-      mensajeDiv.style.color = 'white';
-      mensajeDiv.style.border = '2px solid #343a40';
-    }
-    
-    // Añadir un emoji relevante al mensaje
-    var emoji = '';
-    if (tipo === 'error') emoji = '⚠️ ';
-    else if (tipo === 'success') emoji = '✅ ';
-    else if (tipo === 'info') emoji = 'ℹ️ ';
-    else if (tipo === 'warning') emoji = '⚡ ';
-    
-    mensajeDiv.textContent = emoji + texto;
-    mensajeDiv.style.display = 'block';
-    
-    // Animación de entrada MEJORADA con efectos visuales
-    setTimeout(function() {
-      mensajeDiv.style.opacity = '1';
-      mensajeDiv.style.transform = 'translateX(-50%) translateY(0) scale(1.1)'; // Escala aumentada para efecto bounce
-      
-      // Efecto bounce sutíl
-      setTimeout(function() {
-        mensajeDiv.style.transform = 'translateX(-50%) translateY(0) scale(1)';
-      }, 150);
-    }, 10);
-    
-    // Ocultar mensaje después de un tiempo - con mayor duración para mensajes importantes
-    clearTimeout(window.mensajeReposicionamientoTimeout);
-    window.mensajeReposicionamientoTimeout = setTimeout(function() {
-      mensajeDiv.style.opacity = '0';
-      mensajeDiv.style.transform = 'translateX(-50%) translateY(-40px) scale(0.8)';
-      
-      // Quitar completamente después de la animación
-      setTimeout(function() {
-        mensajeDiv.style.display = 'none';
-      }, 500); // Aumentado para animación más suave
-    }, tipo === 'error' || tipo === 'warning' ? 5000 : 3000); // Más tiempo para mensajes críticos
-  }
-  
-  // Función mejorada para reposicionar al jugador
-  function verificarYReposicionarJugador() {
-    // Verificación de disponibilidad de sistemas
-    if (!window.GAME || !window.GAME.player) {
-      console.error("❌ No se puede verificar jugador - GAME o player no disponible");
-      return;
-    }
-    
-    var p = window.GAME.player;
-    var ahora = Date.now();
-    
-    // Si hay un bloqueo de seguridad activo, verificar si podemos desactivarlo
-    if (bloqueoDeSeguridadActivo) {
-      if (ahora - tiempoBloqueo > 500) { // 500ms de bloqueo
-        bloqueoDeSeguridadActivo = false;
-        console.log("🔓 Bloqueo de seguridad desactivado");
-      } else {
-        return; // Seguimos en bloqueo, no hacer nada
-      }
-    }
-    
-    // DETECCIÓN ULTRA-AGRESIVA: Verificar paredes/colisiones en más puntos
-    var estaEnPared = false;
-    
-    // MÉTODO DE DETECCIÓN 1: Colisiones directas con WorldPhysics con múltiples puntos
-    if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
-      // Verificar punto central
-      estaEnPared = window.WorldPhysics.checkCollision(p.x, p.y);
-      
-      // Verificar con radios variados para una detección más precisa
-      if (!estaEnPared) {
-        estaEnPared = window.WorldPhysics.checkCollision(p.x, p.y, 8);
-      }
-      
-      // Verificar puntos adicionales alrededor del jugador
-      if (!estaEnPared) {
-        // Puntos a 5 unidades en direcciones cardinales
-        var puntosAdicionales = [
-          {x: p.x + 5, y: p.y}, {x: p.x - 5, y: p.y},
-          {x: p.x, y: p.y + 5}, {x: p.x, y: p.y - 5}
-        ];
-        
-        for (var i = 0; i < puntosAdicionales.length && !estaEnPared; i++) {
-          var punto = puntosAdicionales[i];
-          if (window.WorldPhysics.checkCollision(punto.x, punto.y)) {
-            estaEnPared = true;
-            console.warn("⚠️ Colisión detectada en punto cercano: " + i);
-          }
-        }
-      }
-    }
-    
-    // MÉTODO DE DETECCIÓN 2: Verificar celda en el mapa (y celdas adyacentes)
-    if (!estaEnPared && window.GAME.mapaColisiones) {
-      var tileX = Math.floor(p.x / 32);
-      var tileY = Math.floor(p.y / 32);
-      
-      // Verificar celda actual
-      if (tileX >= 0 && tileY >= 0 && 
-          tileX < window.GAME.mapaColisiones[0].length && 
-          tileY < window.GAME.mapaColisiones.length) {
-        
-        if (window.GAME.mapaColisiones[tileY][tileX] === 1) {
-          estaEnPared = true;
-          console.warn("⚠️ Jugador detectado en celda de pared según mapa");
-        }
-      }
-      
-      // Verificar celdas adyacentes si estamos muy cerca del borde
-      if (!estaEnPared) {
-        var bordeX = (p.x % 32);
-        var bordeY = (p.y % 32);
-        var celdasCercanas = [];
-        
-        // Si estamos cerca del borde, verificar celdas adyacentes
-        if (bordeX < 5) celdasCercanas.push({dx: -1, dy: 0});
-        if (bordeX > 27) celdasCercanas.push({dx: 1, dy: 0});
-        if (bordeY < 5) celdasCercanas.push({dx: 0, dy: -1});
-        if (bordeY > 27) celdasCercanas.push({dx: 0, dy: 1});
-        
-        for (var j = 0; j < celdasCercanas.length && !estaEnPared; j++) {
-          var cellDelta = celdasCercanas[j];
-          var checkX = tileX + cellDelta.dx;
-          var checkY = tileY + cellDelta.dy;
-          
-          if (checkX >= 0 && checkY >= 0 && 
-              checkX < window.GAME.mapaColisiones[0].length &&
-              checkY < window.GAME.mapaColisiones.length &&
-              window.GAME.mapaColisiones[checkY][checkX] === 1) {
-            estaEnPared = true;
-            console.warn("⚠️ Jugador DEMASIADO CERCA de pared en celda adyacente");
-          }
-        }
-      }
-    }
-    
-    // MÉTODO DE DETECCIÓN 3: Análisis de inmovilidad con umbral ULTRA REDUCIDO
-    ultimasPosiciones.push({ x: p.x, y: p.y, tiempo: ahora });
-    
-    // Mantener solo las últimas 5 posiciones (reducido para detección más rápida)
-    if (ultimasPosiciones.length > 5) {
-      ultimasPosiciones.shift();
-    }
-    
-    // Analizar si el jugador no se ha movido a pesar de intentos - UMBRAL ULTRA SENSIBLE
-    if (ultimasPosiciones.length >= 2) { // Reducido a solo 2 posiciones para detección inmediata
-      var primeraPos = ultimasPosiciones[0];
-      var ultimaPos = ultimasPosiciones[ultimasPosiciones.length - 1];
-      var deltaX = Math.abs(ultimaPos.x - primeraPos.x);
-      var deltaY = Math.abs(ultimaPos.y - primeraPos.y);
-      var deltaTiempo = ultimaPos.tiempo - primeraPos.tiempo;
-      
-      // Si no nos hemos movido significativamente en 300ms (reducido a 300ms) y hay teclas presionadas
-      if (deltaX < 0.2 && deltaY < 0.2 && deltaTiempo > 300) {
-        // Verificar si hay teclas de movimiento presionadas
-        var teclasMovimiento = window.GAME.keysPressed && 
-          (window.GAME.keysPressed[87] || window.GAME.keysPressed['KeyW'] || // W
-           window.GAME.keysPressed[65] || window.GAME.keysPressed['KeyA'] || // A
-           window.GAME.keysPressed[83] || window.GAME.keysPressed['KeyS'] || // S
-           window.GAME.keysPressed[68] || window.GAME.keysPressed['KeyD'] || // D
-           window.GAME.keysPressed[38] || window.GAME.keysPressed['ArrowUp'] || // ↑
-           window.GAME.keysPressed[37] || window.GAME.keysPressed['ArrowLeft'] || // ←
-           window.GAME.keysPressed[40] || window.GAME.keysPressed['ArrowDown'] || // ↓
-           window.GAME.keysPressed[39] || window.GAME.keysPressed['ArrowRight']);  // →
-        
-        if (teclasMovimiento) {
-          contadorInmovilidad++;
-          console.warn(`⚠️ Inmovilidad detectada con teclas presionadas: ${contadorInmovilidad} ciclos`);
-          
-          // Si llevamos varios ciclos inmóviles, considerarlo como atrapamiento
-          // Reducido de 3 a 2 para ser más sensible
-          if (contadorInmovilidad >= 2) {
-            estaEnPared = true;
-            inmovilDetectadaEnTiempo = ahora;
-            console.error("🚫 ATRAPAMIENTO DETECTADO - Jugador inmóvil a pesar de intentos de movimiento");
-          }
-        } else {
-          // Reiniciar contador si no hay teclas presionadas
-          contadorInmovilidad = 0;
-        }
-      } else {
-        // Se detectó movimiento, reiniciar contador de inmovilidad
-        contadorInmovilidad = 0;
-      }
-    }
-    
-    // Si el jugador NO está en pared, actualizar posición segura y continuar juego normal
-    if (!estaEnPared) {
-      // Solo guardar si estamos BIEN lejos de paredes (distancia aumentada)
-      var estaLejosDePared = true;
-      
-      if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
-        // Verificar con un radio amplio para asegurarnos de estar lejos de paredes
-        estaLejosDePared = !window.WorldPhysics.checkCollision(p.x, p.y, 40); // Radio aumentado a 40
-      }
-      
-      if (estaLejosDePared) {
-        ultimaPosicionSegura = {
-          x: p.x,
-          y: p.y,
-          tiempo: ahora
-        };
-        
-        // Reiniciar contadores solo si estamos realmente lejos de paredes
-        contadorAtascamientos = 0;
-        contadorInmovilidad = 0;
-      }
-      return;
-    }
-    
-    // ⚠️⚠️⚠️ SISTEMA DE RESCATE ACTIVADO: EL JUGADOR ESTÁ ATRAPADO ⚠️⚠️⚠️
-    
-    // Activar bloqueo de seguridad para evitar múltiples reposicionamientos rápidos
-    bloqueoDeSeguridadActivo = true;
-    tiempoBloqueo = ahora;
-    
-    // Incrementar contadores agresivamente
-    contadorAtascamientos++;
-    
-    // Registrar el evento con detalles extensos
-    console.error(`🚨 SISTEMA ANTI-ATRAPAMIENTO ACTIVADO (Intento #${contadorAtascamientos})`);
-    console.log(`⏱️ ${new Date().toLocaleTimeString()} | Posición: (${p.x.toFixed(2)}, ${p.y.toFixed(2)})`);
-    
-    // ESTRATEGIAS DE LIBERACIÓN MEJORADAS (más agresivas y con más opciones)
-    var nuevaPos = null;
-    var metodoReposicionamiento = "";
-    
-    // Estrategia 1: Intentar ajustes rápidos alrededor de la posición actual (más agresivos)
-    if (contadorAtascamientos <= 2) {
-      // Intentar mover en múltiples distancias y direcciones
-      var ajustes = [
-        // Micro ajustes
-        {x: 0.5, y: 0}, {x: 0, y: 0.5}, {x: -0.5, y: 0}, {x: 0, y: -0.5},
-        {x: 0.5, y: 0.5}, {x: -0.5, y: 0.5}, {x: -0.5, y: -0.5}, {x: 0.5, y: -0.5},
-        // Ajustes medios
-        {x: 2, y: 0}, {x: 0, y: 2}, {x: -2, y: 0}, {x: 0, y: -2},
-        {x: 2, y: 2}, {x: -2, y: 2}, {x: -2, y: -2}, {x: 2, y: -2},
-        // Ajustes grandes (más agresivo)
-        {x: 5, y: 0}, {x: 0, y: 5}, {x: -5, y: 0}, {x: 0, y: -5},
-        {x: 5, y: 5}, {x: -5, y: 5}, {x: -5, y: -5}, {x: 5, y: -5}
-      ];
-      
-      for (var i = 0; i < ajustes.length && !nuevaPos; i++) {
-        var testX = p.x + ajustes[i].x;
-        var testY = p.y + ajustes[i].y;
-        
-        if (window.WorldPhysics && !window.WorldPhysics.checkCollision(testX, testY)) {
-          nuevaPos = {x: testX, y: testY};
-          metodoReposicionamiento = "MICRO-AJUSTE";
-          break;
-        }
-      }
-    }
-    
-    // Estrategia 2: Usar última posición segura conocida con más agresividad
-    if (!nuevaPos && ultimaPosicionSegura) {
-      // Usar posiciones seguras incluso de hace más tiempo
-      if ((ahora - ultimaPosicionSegura.tiempo) < 10000) { // Aumentado a 10 segundos
-        nuevaPos = ultimaPosicionSegura;
-        metodoReposicionamiento = "RETORNO SEGURO";
-        
-        // Añadir variación según número de intentos para evitar ciclos
-        var variacion = Math.min(contadorAtascamientos * 0.5, 5.0);
-        nuevaPos.x += (Math.random() * variacion * 2) - variacion;
-        nuevaPos.y += (Math.random() * variacion * 2) - variacion;
-      }
-    }
-    
-    // Estrategia 3: Buscar celda vacía cercana con radio más amplio
-    if (!nuevaPos) {
-      // Radio más amplio basado en número de intentos
-      var radio = Math.min(contadorAtascamientos + 2, 8); // Hasta 8 celdas de distancia
-      var px = Math.floor(p.x / 32);
-      var py = Math.floor(p.y / 32);
-      
-      for (var dy = -radio; dy <= radio && !nuevaPos; dy++) {
-        for (var dx = -radio; dx <= radio && !nuevaPos; dx++) {
-          var nx = px + dx;
-          var ny = py + dy;
-          
-          // Verificar que la celda exista y esté vacía
-          if (window.GAME.mapaColisiones && 
-              ny >= 0 && ny < window.GAME.mapaColisiones.length && 
-              nx >= 0 && nx < window.GAME.mapaColisiones[0].length && 
-              window.GAME.mapaColisiones[ny][nx] === 0) {
-            
-            // Convertir a coordenadas de mundo y verificar con WorldPhysics
-            var wx = (nx + 0.5) * 32;
-            var wy = (ny + 0.5) * 32;
-            
-            if (!window.WorldPhysics || !window.WorldPhysics.checkCollision(wx, wy)) {
-              nuevaPos = {x: wx, y: wy};
-              metodoReposicionamiento = "CELDA CERCANA";
-              break;
-            }
-          }
-        }
-      }
-    }
-    
-    // Estrategia 4: Buscar celda vacía en cualquier parte del mapa
-    if (!nuevaPos) {
-      nuevaPos = buscarCeldaVacia();
-      metodoReposicionamiento = "CELDA GLOBAL";
-    }
-    
-    // Estrategia 5: Usar puntos de emergencia predefinidos con mayor variación
-    if (!nuevaPos || contadorAtascamientos > 5) {
-      // Elegir un punto de emergencia basado en el número de intentos
-      var indice = contadorAtascamientos % posicionesEmergencia.length;
-      nuevaPos = {
-        x: posicionesEmergencia[indice].x,
-        y: posicionesEmergencia[indice].y
-      };
-      
-      // Añadir variación progresiva según número de intentos
-      var varMax = Math.min(contadorAtascamientos, 20);
-      nuevaPos.x += (Math.random() * varMax) - (varMax / 2);
-      nuevaPos.y += (Math.random() * varMax) - (varMax / 2);
-      
-      metodoReposicionamiento = "PUNTO DE EMERGENCIA ALEATORIO";
-    }
-    
-    // Mostrar mensaje visual mejorado según gravedad
-    if (contadorAtascamientos <= 2) {
-      mostrarMensaje('⚠️ Atrapado. Reposicionando...', 'info');
-    } else if (contadorAtascamientos <= 5) {
-      mostrarMensaje('🚨 ¡ATASCADO! Reposicionamiento emergencia...', 'warning');
-    } else if (contadorAtascamientos <= 10) {
-      mostrarMensaje('🆘 ¡EMERGENCIA! Teletransporte forzado', 'error');
-    } else {
-      mostrarMensaje('💥 PROTOCOLO DE RESCATE EXTREMO ACTIVADO', 'error');
-    }
-    
-    // Efectuar el reposicionamiento
-    console.log(`🔄 Reposicionamiento (${metodoReposicionamiento})...`);
-    var posicionAnterior = {x: p.x, y: p.y};
-    
-    // Aplicar el movimiento con variación más agresiva según número de intentos
-    p.x = nuevaPos.x;
-    p.y = nuevaPos.y;
-    
-    // Añadir variación aleatoria más intensa para evitar bucles
-    var intensidadVariacion = Math.min(0.5 + (contadorAtascamientos * 0.2), 5.0);
-    p.x += (Math.random() * intensidadVariacion) - (intensidadVariacion / 2);
-    p.y += (Math.random() * intensidadVariacion) - (intensidadVariacion / 2);
-    
-    console.log("  Anterior:", posicionAnterior);
-    console.log("  Nueva:", {x: p.x, y: p.y});
-    
-    // Sistema de verificación y reintento agresivo
-    if (window.WorldPhysics && window.WorldPhysics.checkCollision(p.x, p.y)) {
-      console.error("❌ Reposicionamiento falló. ¡Activando protocolos de emergencia!");
-      
-      // SISTEMA DE RESCATE EXTREMO: Intentar múltiples ubicaciones aleatorias
-      var rescateExitoso = false;
-      
-      // Intentar todos los puntos de emergencia con variaciones
-      for (var i = 0; i < posicionesEmergencia.length && !rescateExitoso; i++) {
-        var posRescate = posicionesEmergencia[i];
-        var varRescate = 10 + (contadorAtascamientos * 0.5);
-        
-        p.x = posRescate.x + (Math.random() * varRescate) - (varRescate / 2);
-        p.y = posRescate.y + (Math.random() * varRescate) - (varRescate / 2);
-        
-        if (!window.WorldPhysics.checkCollision(p.x, p.y)) {
-          rescateExitoso = true;
-          console.log(`✅ Rescate exitoso usando punto de emergencia #${i+1}`);
-          break;
-        }
-      }
-      
-      // Si todavía estamos atrapados, usar teletransporte totalmente aleatorio
-      if (!rescateExitoso) {
-        // Último recurso desesperado: teletransporte a una posición aleatoria en el mapa
-        p.x = 32 + Math.floor(Math.random() * 192);
-        p.y = 32 + Math.floor(Math.random() * 192);
-        mostrarMensaje('⚡ ¡RESCATE DE EMERGENCIA TOTAL! Teletransporte aleatorio', 'error');
-        console.error("⚡ TELETRANSPORTE FINAL ALEATORIO ACTIVADO");
-      }
-    } else {
-      console.log("✅ Reposicionamiento exitoso");
-      // Reset contador solo si fue exitoso y estamos lejos del punto anterior
-      var distancia = Math.sqrt(Math.pow(p.x - posicionAnterior.x, 2) + Math.pow(p.y - posicionAnterior.y, 2));
-      if (distancia > 10) {
-        contadorAtascamientos = 0;
-        console.log("🔄 Contadores reiniciados por reposicionamiento exitoso distante");
-      }
-    }
-  }
-
-  // Función de teletransporte manual para emergencias EXTREMAS
-  function teletransporteManual() {
-    if (!window.GAME || !window.GAME.player) return;
-    
-    // Activar bloqueo de seguridad para evitar conflictos con sistema automático
-    bloqueoDeSeguridadActivo = true;
-    tiempoBloqueo = Date.now();
-    
-    // Mostrar mensaje al usuario con animación
-    mostrarMensaje('🌠 ¡TELETRANSPORTE DE EMERGENCIA ACTIVADO!', 'warning');
-    
-    // Añadir feedback visual más claro
-    var flashDiv = document.createElement('div');
-    flashDiv.style.position = 'fixed';
-    flashDiv.style.top = '0';
-    flashDiv.style.left = '0';
-    flashDiv.style.width = '100%';
-    flashDiv.style.height = '100%';
-    flashDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-    flashDiv.style.zIndex = '10000';
-    flashDiv.style.pointerEvents = 'none';
-    document.body.appendChild(flashDiv);
-    
-    // Quitar el flash después de 300ms
-    setTimeout(function() {
-      document.body.removeChild(flashDiv);
-    }, 300);
-    
-    console.log("🌠 TELETRANSPORTE MANUAL DE EMERGENCIA activado por el usuario");
-    var posicionAnterior = {x: window.GAME.player.x, y: window.GAME.player.y};
-    
-    // Intentar múltiples métodos para encontrar una posición segura
-    var nuevaPos = null;
-    var exito = false;
-    
-    // Método 1: Buscar celda ultra-segura con verificación extensiva
-    console.log("🔍 Buscando celda ultra-segura para teletransporte...");
-    for (var intentos = 0; intentos < 5 && !exito; intentos++) { // Intentar hasta 5 veces
-      nuevaPos = buscarCeldaVacia();
-      window.GAME.player.x = nuevaPos.x;
-      window.GAME.player.y = nuevaPos.y;
-      
-      // Verificar con múltiples puntos alrededor para asegurar que es seguro
-      var esPosicionSegura = true;
-      
-      if (window.WorldPhysics) {
-        // Verificar punto central
-        if (window.WorldPhysics.checkCollision(window.GAME.player.x, window.GAME.player.y)) {
-          esPosicionSegura = false;
-        } else {
-          // Verificar puntos cercanos
-          var puntosVerificacion = [
-            {x: window.GAME.player.x + 5, y: window.GAME.player.y},
-            {x: window.GAME.player.x - 5, y: window.GAME.player.y},
-            {x: window.GAME.player.x, y: window.GAME.player.y + 5},
-            {x: window.GAME.player.x, y: window.GAME.player.y - 5}
-          ];
-          
-          for (var i = 0; i < puntosVerificacion.length && esPosicionSegura; i++) {
-            var punto = puntosVerificacion[i];
-            if (window.WorldPhysics.checkCollision(punto.x, punto.y)) {
-              esPosicionSegura = false;
-            }
-          }
-        }
-      }
-      
-      if (esPosicionSegura) {
-        exito = true;
-        console.log("✅ Teletransporte exitoso a celda ultra-segura:", nuevaPos);
-        break;
-      } else {
-        console.log(`Intento ${intentos+1} falló, buscando otra posición...`);
-      }
-    }
-    
-    // Método 2: Probar posiciones de emergencia predefinidas con verificación mejorada
-    if (!exito) {
-      console.log("🚀 Intentando posiciones de emergencia predefinidas...");
-      
-      // Crear copia mezclada de las posiciones para no siempre intentar en el mismo orden
-      var posicionesDesordenadas = [...posicionesEmergencia];
-      
-      // Función de aleatorización de array (Fisher-Yates shuffle)
-      for (var i = posicionesDesordenadas.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var temp = posicionesDesordenadas[i];
-        posicionesDesordenadas[i] = posicionesDesordenadas[j];
-        posicionesDesordenadas[j] = temp;
-      }
-      
-      for (var i = 0; i < posicionesDesordenadas.length && !exito; i++) {
-        var posEmergencia = posicionesDesordenadas[i];
-        
-        // Probar con diferentes variaciones de la misma posición
-        for (var variacion = 0; variacion < 5 && !exito; variacion++) {
-          var varMagnitud = 3 + (variacion * 2); // Aumentar la variación en cada intento
-          
-          window.GAME.player.x = posEmergencia.x + (Math.random() * varMagnitud * 2) - varMagnitud;
-          window.GAME.player.y = posEmergencia.y + (Math.random() * varMagnitud * 2) - varMagnitud;
-          
-          if (!window.WorldPhysics || !window.WorldPhysics.checkCollision(window.GAME.player.x, window.GAME.player.y)) {
-            exito = true;
-            console.log(`✅ Teletransporte exitoso a posición de emergencia #${i+1} con variación #${variacion}:`, {
-              x: window.GAME.player.x,
-              y: window.GAME.player.y
-            });
-            break;
-          }
-        }
-        
-        if (exito) break;
-      }
-    }
-    
-    // Método 3: Sistema de EMERGENCIA EXTREMA - Teletransporte agresivo
-    if (!exito) {
-      // Lista extendida de posiciones de último recurso
-      var posicionesUltimoRecurso = [
-        {x: 96, y: 96},   // Centro tradicional
-        {x: 32, y: 32},   // Esquina superior izquierda
-        {x: 128, y: 128}, // Otra zona central
-        {x: 64, y: 160},  // Zona inferior
-        {x: 192, y: 64},  // Zona derecha
-        {x: 128, y: 32},  // Zona superior derecha
-        {x: 32, y: 128},  // Zona inferior izquierda
-        {x: 224, y: 224}, // Esquina extrema
-        {x: 48, y: 48},   // Cerca de esquina superior izquierda
-        {x: 160, y: 160}, // Otra zona central
-        {x: 96, y: 32},   // Superior central
-        {x: 192, y: 192}, // Inferior derecha
-        {x: 32, y: 192}   // Inferior izquierda
-      ];
-        
-        console.error("🧨 SISTEMA DE EMERGENCIA EXTREMA ACTIVADO");
-        mostrarMensaje('💥 ¡PROTOCOLO DE RESCATE EXTREMO ACTIVADO!', 'error');
-        
-        for (var j = 0; j < posicionesUltimoRecurso.length && !exito; j++) {
-          var posAbsoluta = posicionesUltimoRecurso[j];
-          
-          // Aplicar con gran variación para maximizar probabilidad
-          for (var intento = 0; intento < 5 && !exito; intento++) {
-            var varMagnitud = 8 + (intento * 4); // Aumentar progresivamente la variación
-            
-            window.GAME.player.x = posAbsoluta.x + (Math.random() * varMagnitud * 2) - varMagnitud;
-            window.GAME.player.y = posAbsoluta.y + (Math.random() * varMagnitud * 2) - varMagnitud;
-            
-            if (!window.WorldPhysics || !window.WorldPhysics.checkCollision(window.GAME.player.x, window.GAME.player.y)) {
-              exito = true;
-              console.log("✅ Teletransporte exitoso a posición absoluta con variación extrema");
-              break;
-            }
-          }
-        }
-        
-    // Si aún así falla, teletransporte extremo al centro absoluto del mapa
-        if (!exito) {
-          window.GAME.player.x = 96 + (Math.random() * 2) - 1;
-          window.GAME.player.y = 96 + (Math.random() * 2) - 1;
-          console.log("🆘 Teletransporte FINAL ABSOLUTO a posición (96,96)");
-          mostrarMensaje('🆘 ¡TELETRANSPORTE ABSOLUTO DE ÚLTIMO RECURSO!', 'error');
-        }
-    }
-    
-    console.log("Teletransporte completado:");
-    console.log("  Origen:", posicionAnterior);
-    console.log("  Destino:", {x: window.GAME.player.x, y: window.GAME.player.y});
-    
-    // Resetear todos los contadores de atrapamiento
-    contadorAtascamientos = 0;
-    contadorInmovilidad = 0;
-    ultimasPosiciones = [];
-    
-    // La última posición segura se mantendrá null hasta que se detecte una nueva
-    ultimaPosicionSegura = null;
-  }
-  
-  // --- Llamar a la función de verificación y reposicionamiento en el bucle de juego ---
-  function gameLoop() {
-    // Asegurar que la verificación se ejecute constantemente
-    verificarYReposicionarJugador();
-    window.requestAnimationFrame(gameLoop);
-  }
-  
-  // Iniciar el bucle de verificación de colisiones
-  window.requestAnimationFrame(gameLoop);
-  
-  // CORRECTOR DE INICIALIZACIÓN INFINITA - VERSIÓN ULTRA AGRESIVA
-  // Esta variable nos ayudará a detectar y romper bucles infinitos de inicialización
-  window.intentosInicializacion = (window.intentosInicializacion || 0) + 1;
-  
-  // Mostrar mensaje en consola cada 3 intentos para debug
-  if (window.intentosInicializacion % 3 === 0) {
-    console.warn(`⚠️ Intentos de inicialización: ${window.intentosInicializacion}`);
-  }
-  
-  // Si detectamos varios intentos, asumimos que hay un bucle - umbral reducido a 5
-  if (window.intentosInicializacion > 5) {
-    console.error("🚨 Detectado bucle de inicialización. FORZANDO TERMINACIÓN...");
-    
-    // 1. Activar último recurso
-    if (typeof window.ultimoRecurso === 'function') {
-      window.ultimoRecurso();
-    } else {
-      // 2. Si no existe la función de último recurso, hacer lo básico
-      // Forzar reinicio inmediato del jugador a posición ultra segura
-      if (!window.GAME) window.GAME = {};
-      if (!window.GAME.player) window.GAME.player = { x: 96, y: 96, angle: 0 };
-      
-      // Teleportar al centro absoluto del mapa
-      window.GAME.player.x = 96;
-      window.GAME.player.y = 96;
-      
-      console.log("🔄 Posición forzada a coordenadas seguras (96,96)");
-      mostrarMensaje('⚠️ EMERGENCIA: Sistema reiniciado por bucle detectado', 'error');
-      
-      // Reiniciar todos los contadores críticos
-      if (typeof contadorAtascamientos !== 'undefined') contadorAtascamientos = 0;
-      if (typeof contadorInmovilidad !== 'undefined') contadorInmovilidad = 0;
-      if (typeof ultimasPosiciones !== 'undefined') ultimasPosiciones = [];
-      
-      // Efecto visual para indicar el reinicio
-      var flashDiv = document.createElement('div');
-      flashDiv.style.position = 'fixed';
-      flashDiv.style.top = '0';
-      flashDiv.style.left = '0';
-      flashDiv.style.width = '100%';
-      flashDiv.style.height = '100%';
-      flashDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
-      flashDiv.style.zIndex = '10000';
-      flashDiv.style.transition = 'opacity 0.5s';
-      document.body.appendChild(flashDiv);
-      
-      setTimeout(function() {
-        flashDiv.style.opacity = '0';
-        setTimeout(function() {
-          document.body.removeChild(flashDiv);
-        }, 500);
-      }, 300);
-    }
-    
-    // Reset contador
-    window.intentosInicializacion = 0;
-  }
-  
-  // Ejecutar verificación adicional cada 100ms para mayor seguridad
-  // Sistema anti-atrapamiento PRINCIPAL que se ejecuta con alta frecuencia
-  setInterval(verificarYReposicionarJugador, 30); // Aumentado a 30ms para respuesta aún más rápida
-  
-  // Sistema secundario de seguridad que verifica la posición periódicamente
-  setInterval(function() {
-    if (window.GAME && window.GAME.player && window.WorldPhysics) {
-      // Verificar si el jugador está atascado sin moverse durante mucho tiempo
-      if (window.GAME.lastCheckPosition) {
-        var dx = Math.abs(window.GAME.player.x - window.GAME.lastCheckPosition.x);
-        var dy = Math.abs(window.GAME.player.y - window.GAME.lastCheckPosition.y);
-        
-        // Si no se ha movido prácticamente nada y hay teclas presionadas, puede estar atascado
-        if (dx < 0.01 && dy < 0.01) {
-          window.GAME.stuckFrames = (window.GAME.stuckFrames || 0) + 1;
-          
-          // Sistema más agresivo para detección de atrapamiento
-          if (window.GAME.stuckFrames > 3 && Object.keys(window.GAME.keysPressed || {}).length > 0) {
-            console.warn("⚠️ Atrapamiento detectado por sistema secundario - Activando reposicionamiento");
-            verificarYReposicionarJugador();
-            window.GAME.stuckFrames = 0;
-          }
-        } else {
-          window.GAME.stuckFrames = 0;
-        }
-      }
-      
-      window.GAME.lastCheckPosition = {
-        x: window.GAME.player.x,
-        y: window.GAME.player.y
-      };
-    }
-  }, 500); // Aumentado a 500ms para verificar más frecuentemente
-  
-  // Sistema TERCIARIO de emergencia extrema (último recurso) - VERSIÓN ULTRA AGRESIVA
-  setInterval(function() {
-    if (!window.GAME || !window.GAME.player) return;
-    
-    // Si llevamos muchos intentos de reposicionamiento sin éxito, activar emergencia extrema
-    // Bajando el umbral a 8 para activación más rápida
-    if (contadorAtascamientos > 8) {
-      console.error("🆘 EMERGENCIA EXTREMA: Jugador atascado después de 8+ intentos");
-      
-      // Teletransporte FORZADO a posiciones absolutamente seguras en secuencia
-      var posicionesUltraSeguras = [
-        {x: 96, y: 96},   // Centro del mapa
-        {x: 64, y: 64},   // Cerca del centro
-        {x: 128, y: 128}, // Otra posición segura
-        {x: 160, y: 160}, // Más alejada
-        {x: 64, y: 128},  // Otro cuadrante
-        {x: 128, y: 64}   // Otro más
-      ];
-      
-      // Elegir posición basada en el contador de intentos para probar diferentes lugares
-      var indice = contadorAtascamientos % posicionesUltraSeguras.length;
-      var posFinal = posicionesUltraSeguras[indice];
-      
-      // Añadir una pequeña variación para evitar caer exactamente en el mismo lugar
-      posFinal = {
-        x: posFinal.x + (Math.random() * 10) - 5,
-        y: posFinal.y + (Math.random() * 10) - 5
-      };
-      
-      // FORZAR la posición sin importar nada
-      window.GAME.player.x = posFinal.x;
-      window.GAME.player.y = posFinal.y;
-      
-      // Mostrar notificación especial con animación mejorada
-      mostrarMensaje('💥 PROTOCOLO DE RESCATE MÁXIMO ACTIVADO', 'error');
-      
-      // Efecto visual para claridad
-      var flashDiv = document.createElement('div');
-      flashDiv.style.position = 'fixed';
-      flashDiv.style.top = '0';
-      flashDiv.style.left = '0';
-      flashDiv.style.width = '100%';
-      flashDiv.style.height = '100%';
-      flashDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
-      flashDiv.style.zIndex = '10000';
-      flashDiv.style.transition = 'opacity 0.5s';
-      flashDiv.style.pointerEvents = 'none';
-      document.body.appendChild(flashDiv);
-      
-      setTimeout(function() {
-        flashDiv.style.opacity = '0';
-        setTimeout(function() {
-          document.body.removeChild(flashDiv);
-        }, 500);
-      }, 300);
-      
-      console.log("🧨 Teletransporte de EMERGENCIA ULTRA a:", posFinal);
-      
-      // Reiniciar todos los contadores y sistemas
-      contadorAtascamientos = 0;
-      contadorInmovilidad = 0;
-      ultimasPosiciones = [];
-      window.GAME.stuckFrames = 0;
-    }
-    
-    // Verificar si hay teclas WASD presionadas para diagnóstico
-    if (window.GAME.keysPressed) {
-      var teclasWASD = [
-        window.GAME.keysPressed[87] || window.GAME.keysPressed['KeyW'], // W
-        window.GAME.keysPressed[65] || window.GAME.keysPressed['KeyA'], // A
-        window.GAME.keysPressed[83] || window.GAME.keysPressed['KeyS'], // S
-        window.GAME.keysPressed[68] || window.GAME.keysPressed['KeyD']  // D
-      ];
-      
-      var teclasPresionadas = teclasWASD.filter(Boolean).length;
-      if (teclasPresionadas > 0) {
-        console.log(`🎮 Teclas WASD activas: ${teclasPresionadas}/4`);
-      }
-    }
-  }, 1000); // Frecuencia aumentada para mejor monitoreo
-  
-  // Agregar teclas de emergencia mejoradas para controlar el juego
-  document.addEventListener('keydown', function(e) {
-    // Tecla T para teletransporte
-    if (e.code === 'KeyT') {
-      console.log("🌟 Teletransporte manual activado por tecla T");
-      e.preventDefault();
-      teletransporteManual();
-    }
-    
-    // Tecla R para resetear el juego completamente (emergencia extrema)
-    if (e.code === 'KeyR') {
-      console.log("🔄 REINICIO DE EMERGENCIA solicitado por tecla R");
-      e.preventDefault();
-      
-      // Mostrar mensaje de reinicio
-      mostrarMensaje('🔄 REINICIO COMPLETO EN PROGRESO...', 'warning');
-      
-      // Forzar reinicio total del sistema
-      setTimeout(function() {
-        // Reiniciar contadores y sistemas
-        contadorAtascamientos = 0;
-        contadorInmovilidad = 0;
-        ultimasPosiciones = [];
-        
-        // Reiniciar posición del jugador
-        if (window.GAME && window.GAME.player) {
-          window.GAME.player.x = 96;
-          window.GAME.player.y = 96;
-          window.GAME.player.angle = 0;
-        }
-        
-        // Forzar reinicio de sistemas
-        window.repararControlesWASD();
-        
-        mostrarMensaje('✅ SISTEMA REINICIADO - Controles reparados', 'success');
-      }, 100);
-    }
-    
-    // Tecla F para forzar salida de paredes (emergencia)
-    if (e.code === 'KeyF') {
-      console.log("🧱 Forzando SALIDA DE PARED por tecla F");
-      e.preventDefault();
-      
-      // Mover al jugador en todas las direcciones hasta encontrar espacio libre
-      if (window.GAME && window.GAME.player) {
-        var p = window.GAME.player;
-        var posOriginal = {x: p.x, y: p.y};
-        var direcciones = [
-          {x: 0, y: -5},  // Arriba
-          {x: 5, y: 0},   // Derecha
-          {x: 0, y: 5},   // Abajo
-          {x: -5, y: 0},  // Izquierda
-          {x: 5, y: 5},   // Diagonal
-          {x: -5, y: 5},  // Diagonal
-          {x: -5, y: -5}, // Diagonal
-          {x: 5, y: -5}   // Diagonal
-        ];
-        
-        // Probar cada dirección con diferentes distancias
-        var exito = false;
-        for (var dist = 1; dist <= 5 && !exito; dist++) {
-          for (var i = 0; i < direcciones.length && !exito; i++) {
-            p.x = posOriginal.x + (direcciones[i].x * dist);
-            p.y = posOriginal.y + (direcciones[i].y * dist);
-            
-            // Verificar si esta posición está libre
-            if (!window.WorldPhysics || !window.WorldPhysics.checkCollision(p.x, p.y)) {
-              exito = true;
-              mostrarMensaje('✅ Salida de pared exitosa', 'success');
-              break;
-            }
-          }
-        }
-        
-        // Si todas fallan, teleportar al centro
-        if (!exito) {
-          p.x = 96;
-          p.y = 96;
-          mostrarMensaje('⚡ Teletransporte al centro del mapa', 'warning');
-        }
-      }
-    }
-  });
-
-// Función de diagnóstico para verificar que las teclas WASD funcionan correctamente
-window.diagnosticarControlesWASD = function() {
-  console.log("🔍 Iniciando diagnóstico de controles WASD...");
-  
-  // Verificar que el sistema de controles está inicializado
-  if (!window.GAME || !window.GAME.keysPressed) {
-    console.error("❌ Sistema de controles no inicializado correctamente");
-    return false;
-  }
-  
-  // Verificar estructura del registro de teclas
-  console.log("📊 Estructura actual de keysPressed:", window.GAME.keysPressed);
-  
-  // Verificar funciones críticas
-  var funcionesNecesarias = [
-    "aplicarMovimientoDirecto",
-    "handleKeyEvent"
-  ];
-  
-  var resultados = [];
-  var todoOK = true;
-  
-  funcionesNecesarias.forEach(function(fn) {
-    var existe = false;
-    var ubicacion = "No encontrada";
-    
-    // Buscar en el objeto window
-    if (typeof window[fn] === 'function') {
-      existe = true;
-      ubicacion = "window";
-    }
-    
-    // Buscar en GAME
-    if (window.GAME && typeof window.GAME[fn] === 'function') {
-      existe = true;
-      ubicacion = "GAME";
-    }
-    
-    // Buscar en doomGame
-    if (window.doomGame && typeof window.doomGame[fn] === 'function') {
-      existe = true;
-      ubicacion = "doomGame";
-    }
-    
-    resultados.push({funcion: fn, existe: existe, ubicacion: ubicacion});
-    if (!existe) todoOK = false;
-  });
-  
-  console.log("📑 Resultados del diagnóstico:");
-  resultados.forEach(function(res) {
-    if (res.existe) {
-      console.log(`✅ Función ${res.funcion} encontrada en ${res.ubicacion}`);
-    } else {
-      console.error(`❌ Función ${res.funcion} no encontrada`);
-    }
-  });
-  
-  console.log("🎮 Estado final: " + (todoOK ? "✅ WASD debería funcionar correctamente" : "❌ Hay problemas con WASD"));
-  return todoOK;
-};
-
-// Función SUPER OPTIMIZADA para reparar controles WASD si no están funcionando
-window.repararControlesWASD = function() {
-  console.log("🔧 Iniciando reparación AVANZADA de controles WASD...");
-  
-  // Primero, asegurarse que el objeto GAME existe y está correctamente inicializado
-  if (!window.GAME) {
-    console.error("❌ El objeto GAME no está disponible - Intentando recrearlo");
-    window.GAME = window.GAME || {};
-    window.GAME.player = window.GAME.player || { x: 96, y: 96, angle: 0 };
-    window.GAME.keysPressed = {};
-    console.log("✅ Objeto GAME recreado en modo emergencia");
-  }
-  
-  // Asegurar que aplicarMovimientoDirecto esté disponible - VERSIÓN ULTRA ROBUSTA
-  if (!window.aplicarMovimientoDirecto && (!window.GAME || !window.GAME.aplicarMovimientoDirecto)) {
-    // Implementar función mejorada de movimiento con verificación de colisiones
-    window.aplicarMovimientoDirecto = function(direccion, magnitud) {
-      // Asegurarnos que tenemos un objeto GAME y player
-      if (!window.GAME) {
-        console.error("❌ Creando objeto GAME para movimiento");
-        window.GAME = {};
-      }
-      
-      if (!window.GAME.player) {
-        console.error("❌ Creando objeto player para movimiento");
-        window.GAME.player = { x: 96, y: 96, angle: 0 };
-      }
-      
-      var p = window.GAME.player;
-      var factor = magnitud || 1;
-      var movimientoRealizado = false;
-      var posicionOriginal = {x: p.x, y: p.y};
-      
-      // Intentar aplicar movimiento con verificación
-      switch(direccion) {
-        case 'arriba':
-          p.y -= 1 * factor;
-          break;
-        case 'abajo':
-          p.y += 1 * factor;
-          break;
-        case 'izquierda':
-          p.x -= 1 * factor;
-          break;
-        case 'derecha':
-          p.x += 1 * factor;
-          break;
-      }
-      
-      // Verificar si estamos en una pared después del movimiento
-      var hayColision = false;
-      if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
-        hayColision = window.WorldPhysics.checkCollision(p.x, p.y);
-      }
-      
-      // Si hay colisión, intentar moverse con más fuerza
-      if (hayColision) {
-        console.log("⚠️ Colisión detectada, intentando mover con más fuerza");
-        p.x = posicionOriginal.x;
-        p.y = posicionOriginal.y;
-        
-        // Intentar con el doble de fuerza
-        factor *= 2;
-        
-        switch(direccion) {
-          case 'arriba':
-            p.y -= 1 * factor;
-            break;
-          case 'abajo':
-            p.y += 1 * factor;
-            break;
-          case 'izquierda':
-            p.x -= 1 * factor;
-            break;
-          case 'derecha':
-            p.x += 1 * factor;
-            break;
-        }
-        
-        // Verificar nuevamente
-        if (window.WorldPhysics && window.WorldPhysics.checkCollision(p.x, p.y)) {
-          // Restaurar posición si sigue habiendo colisión
-          p.x = posicionOriginal.x;
-          p.y = posicionOriginal.y;
-          console.log("⛔ Movimiento bloqueado por colisión severa");
-        } else {
-          movimientoRealizado = true;
-        }
-      } else {
-        movimientoRealizado = true;
-      }
-      
-      if (movimientoRealizado) {
-        console.log("🚶 Movimiento directo aplicado:", direccion, "con factor:", factor);
-      }
-      
-      return movimientoRealizado;
+  <!-- Inicialización del Juego -->
+  <script>
+    // Configuración global del juego HD
+    window.GAME_CONFIG = {
+      resolution: 'BAJA',
+      width: 640, // Reducido a la mitad
+      height: 400, // Reducido a la mitad
+      quality: 'low',
+      optimized: true,
+      modulesCount: 6
     };
-    
-    window.GAME.aplicarMovimientoDirecto = window.aplicarMovimientoDirecto;
-    console.log("✅ Función aplicarMovimientoDirecto regenerada");
-  }
-  
-  // Asegurar que el sistema de teclas está inicializado
-  if (!window.GAME.keysPressed) {
-    window.GAME.keysPressed = {};
-    console.log("✅ Sistema keysPressed inicializado");
-  }
-  
-  // Restablecer escuchadores de eventos si es necesario
-  document.removeEventListener('keydown', window.handleKeyDownEvent);
-  document.removeEventListener('keyup', window.handleKeyUpEvent);
-  
-  // Crear nuevos manejadores de eventos
-  window.handleKeyDownEvent = function(e) {
-    if (!window.GAME) {
-      console.error("❌ window.GAME no disponible en handleKeyDownEvent - creándolo");
-      window.GAME = window.GAME || {};
-      window.GAME.player = window.GAME.player || { x: 96, y: 96, angle: 0 };
-      window.GAME.keysPressed = {};
-    }
-    window.GAME.keysPressed[e.keyCode] = true;
-    window.GAME.keysPressed[e.code] = true;
-    
-    // Manejar teclas WASD específicamente con sistema de movimiento mejorado
-    switch(e.code) {
-      case 'KeyW':
-        console.log("🔼 Tecla W presionada");
-        e.preventDefault(); // Prevenir comportamiento predeterminado
-        // Aplicar movimiento de manera directa (por si falla el sistema normal)
-        if (window.GAME.player) {
-          // Intentar todos los métodos posibles para mover al jugador
-          if (window.aplicarMovimientoDirecto) window.aplicarMovimientoDirecto('arriba', 2); // Más agresivo (2)
-          else window.GAME.player.y -= 2; // Movimiento directo forzado como último recurso
-        }
-        break;
-      case 'KeyA':
-        console.log("◀️ Tecla A presionada");
-        e.preventDefault(); // Prevenir comportamiento predeterminado
-        if (window.GAME.player) {
-          if (window.aplicarMovimientoDirecto) window.aplicarMovimientoDirecto('izquierda', 2);
-          else window.GAME.player.x -= 2;
-        }
-        break;
-      case 'KeyS':
-        console.log("🔽 Tecla S presionada");
-        e.preventDefault(); // Prevenir comportamiento predeterminado
-        if (window.GAME.player) {
-          if (window.aplicarMovimientoDirecto) window.aplicarMovimientoDirecto('abajo', 2);
-          else window.GAME.player.y += 2;
-        }
-        break;
-      case 'KeyD':
-        console.log("▶️ Tecla D presionada");
-        e.preventDefault(); // Prevenir comportamiento predeterminado
-        if (window.GAME.player) {
-          if (window.aplicarMovimientoDirecto) window.aplicarMovimientoDirecto('derecha', 2);
-          else window.GAME.player.x += 2;
-        }
-        break;
-    }
-  };
-  
-  window.handleKeyUpEvent = function(e) {
-    if (!window.GAME) return;
-    window.GAME.keysPressed[e.keyCode] = false;
-    window.GAME.keysPressed[e.code] = false;
-  };
-  
-  // Registrar los nuevos manejadores
-  document.addEventListener('keydown', window.handleKeyDownEvent);
-  document.addEventListener('keyup', window.handleKeyUpEvent);
-  
-  console.log("🎮 Controles WASD reparados y listos para usar");
-  mostrarMensaje('🔧 Controles WASD reparados con éxito', 'success');
-  return true;
-};
 
-// Sistema de recuperación anti-fallo MÁXIMO para casos extremos
-window.ultimoRecurso = function() {
-  console.error("💥 ACTIVANDO PROTOCOLO DE ÚLTIMO RECURSO");
-  
-  // Notificar al usuario
-  mostrarMensaje('💥 PROTOCOLO DE RECUPERACIÓN ABSOLUTA ACTIVADO', 'error');
-  
-  // 1. Crear/Reiniciar sistema completo
-  window.GAME = window.GAME || {};
-  window.GAME.player = { x: 96, y: 96, angle: 0 }; // Forzar a centro del mapa
-  window.GAME.keysPressed = {};
-  
-  // 2. Registrar nuevos manejadores de eventos
-  document.removeEventListener('keydown', window.handleKeyDownEvent);
-  document.removeEventListener('keyup', window.handleKeyUpEvent);
-  
-  // Crear nuevos manejadores más simples y directos
-  window.handleKeyDownEvent = function(e) {
-    if (!window.GAME) window.GAME = {player: {x: 96, y: 96, angle: 0}, keysPressed: {}};
-    window.GAME.keysPressed[e.keyCode] = true;
-    window.GAME.keysPressed[e.code] = true;
-    
-    // Movimiento directo y forzado para las teclas WASD
-    var p = window.GAME.player;
-    var movido = false;
-    
-    switch(e.code) {
-      case 'KeyW': p.y -= 3; movido = true; break;
-      case 'KeyA': p.x -= 3; movido = true; break;
-      case 'KeyS': p.y += 3; movido = true; break;
-      case 'KeyD': p.x += 3; movido = true; break;
-    }
-    
-    if (movido) {
-      e.preventDefault();
-      console.log("🚀 Movimiento de ÚLTIMO RECURSO aplicado:", e.code);
-    }
-  };
-  
-  window.handleKeyUpEvent = function(e) {
-    if (!window.GAME) window.GAME = {keysPressed: {}};
-    window.GAME.keysPressed[e.keyCode] = false;
-    window.GAME.keysPressed[e.code] = false;
-  };
-  
-  document.addEventListener('keydown', window.handleKeyDownEvent);
-  document.addEventListener('keyup', window.handleKeyUpEvent);
-  
-  // 3. Eliminar bucles de verificación existentes y crear nuevos más simples
-  // Borrar todos los intervalos (reset total)
-  var highestTimeoutId = setTimeout(";");
-  for (var i = 0; i < highestTimeoutId; i++) {
-    clearTimeout(i);
-  }
-  
-  var highestIntervalId = setInterval(";");
-  for (var i = 0; i < highestIntervalId; i++) {
-    clearInterval(i);
-  }
-  
-  // Crear nuevo sistema anti-paredes ultra simplificado
-  setInterval(function() {
-    if (!window.GAME || !window.GAME.player) return;
-    
-    var p = window.GAME.player;
-    
-    // Verificar si estamos en una pared usando el método más básico
-    var estaEnPared = false;
-    if (window.WorldPhysics && typeof window.WorldPhysics.checkCollision === 'function') {
-      estaEnPared = window.WorldPhysics.checkCollision(p.x, p.y);
-    }
-    
-    if (estaEnPared) {
-      console.warn("⚠️ Colisión detectada en último recurso - teletransportando");
+    // Inicializar cuando la página esté lista
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('✅ DOM listo - Inicializando DOOM HD');
+      console.log('🎮 Resolución:', window.GAME_CONFIG.width + 'x' + window.GAME_CONFIG.height);
       
-      // Teleportar a una posición segura garantizada
-      var posicionesSeguras = [
-        {x: 96, y: 96}, {x: 64, y: 64}, {x: 128, y: 128},
-        {x: 160, y: 160}, {x: 64, y: 128}, {x: 128, y: 64}
-      ];
+      // Asegurar que el menú esté visible y el juego oculto al inicio
+      const mainMenu = document.getElementById('mainMenu');
+      const gameContainer = document.getElementById('gameContainer');
+      const controlPanel = document.getElementById('controlPanel');
+      const donationPanel = document.getElementById('donationPanel');
       
-      // Probar todas las posiciones seguras
-      var rescatado = false;
-      for (var i = 0; i < posicionesSeguras.length && !rescatado; i++) {
-        p.x = posicionesSeguras[i].x;
-        p.y = posicionesSeguras[i].y;
-        
-        if (!window.WorldPhysics.checkCollision(p.x, p.y)) {
-          rescatado = true;
-          console.log("✅ Rescatado a posición segura:", posicionesSeguras[i]);
-        }
+      if (mainMenu) mainMenu.style.display = 'flex';
+      if (gameContainer) gameContainer.style.display = 'none';
+      if (controlPanel) controlPanel.style.display = 'none';
+      if (donationPanel) donationPanel.style.display = 'none';
+      
+      // Inicializar sistemas esenciales
+      if (typeof init === 'function') {
+        init();
+      } else if (typeof window.doomGame !== 'undefined' && typeof window.doomGame.init === 'function') {
+        window.doomGame.init();
       }
       
-      // Si nada funciona, intentar mover el jugador de forma aleatorio hasta encontrar posición segura
-      if (!rescatado) {
-        for (var intento = 0; intento < 100 && !rescatado; intento++) {
-          p.x = 32 + Math.floor(Math.random() * 192);
-          p.y = 32 + Math.floor(Math.random() * 192);
+      console.log('🎯 DOOM HD listo para jugar!');
+    });
+
+    // Control de movimiento WASD simplificado
+    const keys = {};
+    let player = null;
+
+    document.addEventListener('keydown', function(e) {
+      keys[e.code] = true;
+    });
+
+    document.addEventListener('keyup', function(e) {
+      keys[e.code] = false;
+    });
+
+    // Función para manejar el movimiento en cada frame
+    function updatePlayerMovement() {
+      // Obtener referencia al jugador
+      if (window.GAME && window.GAME.player) {
+        player = window.GAME.player;
+      }
+      
+      if (!player) return;
+      
+      // Movimiento WASD mejorado con velocidad reducida
+      const speed = 2; // Velocidad reducida para mejor control
+      let moveX = 0;
+      let moveY = 0;
+      
+      // Movimiento más suave con aceleración gradual
+      if (keys['KeyW']) {
+        moveX += Math.cos(player.angle) * speed;
+        moveY += Math.sin(player.angle) * speed;
+      }
+      if (keys['KeyS']) {
+        moveX -= Math.cos(player.angle) * speed * 0.8; // Retroceder un poco más lento
+        moveY -= Math.sin(player.angle) * speed * 0.8;
+      }
+      if (keys['KeyA']) {
+        moveX += Math.cos(player.angle - Math.PI/2) * speed * 0.9; // Strafe más lento
+        moveY += Math.sin(player.angle - Math.PI/2) * speed * 0.9;
+      }
+      if (keys['KeyD']) {
+        moveX += Math.cos(player.angle + Math.PI/2) * speed * 0.9; // Strafe más lento
+        moveY += Math.sin(player.angle + Math.PI/2) * speed * 0.9;
+      }
+      
+      // Aplicar movimiento con verificación de colisión mejorada
+      if (typeof window.isWalkable === 'function') {
+        // Sistema de movimiento progresivo para evitar atascos
+        // Intentar mover en X e Y por separado con pequeños incrementos
+        const increment = 0.5; // Incremento más pequeño para movimiento más preciso
+        const steps = Math.ceil(Math.max(Math.abs(moveX), Math.abs(moveY)) / increment);
+        
+        if (steps > 0) {
+          const stepX = moveX / steps;
+          const stepY = moveY / steps;
           
-          if (!window.WorldPhysics.checkCollision(p.x, p.y)) {
-            rescatado = true;
-            console.log("✅ Rescatado con posición aleatoria después de", intento, "intentos");
+          for (let i = 0; i < steps; i++) {
+            // Intentar mover en X
+            if (window.isWalkable(player.x + stepX, player.y)) {
+              player.x += stepX;
+            }
+            
+            // Intentar mover en Y
+            if (window.isWalkable(player.x, player.y + stepY)) {
+              player.y += stepY;
+            }
           }
         }
+      } else {
+        // Si no existe la función de colisión, mover con limitación
+        player.x += moveX * 0.5; // Reducir velocidad como precaución
+        player.y += moveY * 0.5;
       }
-    }
-  }, 100);
-  
-  console.log("✅ Sistema de último recurso activado y listo");
-  return true;
-};
-
-// Añadir la tecla U para activar el último recurso
-document.addEventListener('keydown', function(e) {
-  if (e.code === 'KeyU') {
-    console.log("⚠️ ULTIMO RECURSO activado manualmente con tecla U");
-    e.preventDefault();
-    window.ultimoRecurso();
-  }
-});
-
-// Forzar spawn en celda vacía tras carga completa
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    if (typeof buscarCeldaVacia === 'function' && window.GAME) {
-      var sf = buscarCeldaVacia();
-      window.GAME.player = window.GAME.player || { x: sf.x, y: sf.y, angle: 0 };
-      window.GAME.player.x = sf.x;
-      window.GAME.player.y = sf.y;
-      console.log('🏁 Spawn final forzado en celda vacía:', sf);
       
-      // Mostrar serie de mensajes de ayuda con CONTROLES DE EMERGENCIA
-      setTimeout(function() {
-        mostrarMensaje('🎮 Usa WASD para moverte y haz clic para disparar', 'info');
-        
-        // Mensaje sobre teletransporte
-        setTimeout(function() {
-          mostrarMensaje('⚡ TECLA T: Teletransporte manual de emergencia', 'warning');
-          
-          // Mensaje sobre emergencias
-          setTimeout(function() {
-            mostrarMensaje('🛟 SISTEMA ANTI-ATRAPAMIENTO ULTRA activado', 'success');
-            
-            // Mensaje sobre reseteo
-            setTimeout(function() {
-              mostrarMensaje('� TECLA R: Reinicio completo del sistema', 'error');
-              
-              // Mensaje sobre salida de paredes
-              setTimeout(function() {
-                mostrarMensaje('🧱 TECLA F: Forzar salida de paredes', 'warning');
-                
-                // Mensaje sobre último recurso
-                setTimeout(function() {
-                  mostrarMensaje('� TECLA U: Protocolo de último recurso', 'error');
-                  
-                  // Mensaje sobre reparación de controles
-                  setTimeout(function() {
-                    mostrarMensaje('🔧 TECLAS DE EMERGENCIA ACTIVADAS: T, R, F, U', 'success');
-                  }, 3000);
-                }, 3000);
-              }, 3000);
-            }, 3000);
-          }, 3000);
-        }, 3000);
-      }, 1000);
+      // Solicitar el siguiente frame
+      requestAnimationFrame(updatePlayerMovement);
     }
-  }, 500);
-});
-})();
+
+    // Iniciar el bucle de movimiento
+    requestAnimationFrame(updatePlayerMovement);
+
+    // Control de mouse para rotar mejorado
+    document.addEventListener('mousemove', function(e) {
+      if (window.GAME && window.GAME.player && window.GAME.mouseLocked) {
+        // Sensibilidad más baja para control más preciso
+        const sensitivity = 0.0015;
+        // Limitar movimiento máximo por frame para evitar giros bruscos
+        const maxRotation = 0.05;
+        // Aplicar rotación con límite
+        const rotation = Math.min(Math.max(e.movementX * sensitivity, -maxRotation), maxRotation);
+        window.GAME.player.angle += rotation;
+      }
+    });
+
+    // Click para disparar
+    document.addEventListener('click', function() {
+      if (typeof shoot === 'function') {
+        shoot();
+      }
+    });
+
+    console.log('🎮 Sistema de controles HD inicializado');
+  </script>
+</body>
+</html>

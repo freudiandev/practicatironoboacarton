@@ -41,12 +41,12 @@ class GameMenuSystem {
     
     // Botón Controles
     document.getElementById('showControls')?.addEventListener('click', () => {
-      this.showPanel('controlsPanel');
+      this.showPanel('controlPanel');
     });
     
     // Botón Donaciones
     document.getElementById('showDonations')?.addEventListener('click', () => {
-      this.showPanel('donationsPanel');
+      this.showPanel('donationPanel');
     });
     
     // Botón Créditos
@@ -56,11 +56,11 @@ class GameMenuSystem {
     
     // Botones de cerrar paneles
     document.getElementById('closeControls')?.addEventListener('click', () => {
-      this.closePanel('controlsPanel');
+      this.closePanel('controlPanel');
     });
     
     document.getElementById('closeDonations')?.addEventListener('click', () => {
-      this.closePanel('donationsPanel');
+      this.closePanel('donationPanel');
     });
     
     document.getElementById('closeCredits')?.addEventListener('click', () => {
@@ -83,10 +83,19 @@ class GameMenuSystem {
   startGame() {
     console.log('🚀 Iniciando juego...');
     
+    // Cerrar cualquier panel abierto primero
+    this.closeAllPanels();
+    
     // Ocultar menú principal
     const mainMenu = document.getElementById('mainMenu');
     if (mainMenu) {
       mainMenu.style.display = 'none';
+    }
+    
+    // Mostrar contenedor del juego completo
+    const gameContainer = document.getElementById('gameContainer');
+    if (gameContainer) {
+      gameContainer.style.display = 'block';
     }
     
     // Mostrar canvas del juego
@@ -96,13 +105,11 @@ class GameMenuSystem {
       gameCanvas.classList.add('active');
     }
     
-    
     this.menuActive = false;
     this.gameStarted = true;
     
     // Inicializar el juego si no está iniciado
     this.initializeGameEngine();
-    
     
     console.log('✅ Juego iniciado desde menú');
   }
@@ -110,10 +117,19 @@ class GameMenuSystem {
   showMenu() {
     console.log('🎮 Mostrando menú principal...');
     
+    // Cerrar todos los paneles primero
+    this.closeAllPanels();
+    
     // Mostrar menú
     const mainMenu = document.getElementById('mainMenu');
     if (mainMenu) {
       mainMenu.style.display = 'flex';
+    }
+    
+    // Ocultar contenedor del juego completo
+    const gameContainer = document.getElementById('gameContainer');
+    if (gameContainer) {
+      gameContainer.style.display = 'none';
     }
     
     // Ocultar canvas del juego
@@ -123,8 +139,8 @@ class GameMenuSystem {
       gameCanvas.classList.remove('active');
     }
     
-    
     this.menuActive = true;
+    this.gameStarted = false;
     
     // Liberar pointer lock si está activo
     if (document.pointerLockElement) {
@@ -135,10 +151,19 @@ class GameMenuSystem {
   showPanel(panelId) {
     console.log(`📱 Mostrando panel: ${panelId}`);
     
+    // Primero cerrar todos los paneles
+    this.closeAllPanels();
+    
+    // Mostrar el panel específico
     const panel = document.getElementById(panelId);
     if (panel) {
+      panel.style.display = 'flex';
       panel.classList.add('active');
       this.currentPanel = panelId;
+      
+      console.log(`✅ Panel ${panelId} mostrado correctamente`);
+    } else {
+      console.error(`❌ Panel ${panelId} no encontrado`);
     }
   }
   
@@ -151,6 +176,21 @@ class GameMenuSystem {
     if (panel) {
       panel.classList.remove('active');
     }
+    
+    this.currentPanel = null;
+  }
+  
+  closeAllPanels() {
+    console.log('🚫 Cerrando todos los paneles...');
+    
+    const panels = ['controlPanel', 'donationPanel', 'creditsPanel'];
+    panels.forEach(panelId => {
+      const panel = document.getElementById(panelId);
+      if (panel) {
+        panel.classList.remove('active');
+        panel.style.display = 'none';
+      }
+    });
     
     this.currentPanel = null;
   }
