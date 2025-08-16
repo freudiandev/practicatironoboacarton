@@ -1,5 +1,6 @@
 /* Estilos de menús y navegación */
 
+/* Pantalla de menú principal con estética latino-andina colonial */
 .menu-screen {
   position: fixed;
   top: 0;
@@ -9,28 +10,98 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  /* Capa base: atardecer cálido quiteño */
+  background:
+    radial-gradient(120% 80% at 50% 20%, rgba(255,196,96,0.25), transparent 60%),
+    radial-gradient(100% 60% at 85% 10%, rgba(220,80,60,0.2), transparent 50%),
+    linear-gradient(140deg, #7a3a2a 0%, #b56a3a 35%, #caa56a 60%, #6b4032 100%);
+  /* Patrón sutil de azulejos coloniales */
+  background-blend-mode: overlay, screen, normal;
   z-index: 1000;
+}
+
+/* Textura/grano sutil en todo el fondo */
+.menu-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 8px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,0.06) 0 3px, transparent 3px 10px);
+  mix-blend-mode: overlay;
+}
+
+/* Viñeta para sensación de callejuela del centro histórico */
+.menu-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 220px 60px rgba(0,0,0,0.55);
+  pointer-events: none;
 }
 
 .menu-container {
   text-align: center;
-  max-width: 600px;
-  padding: 40px;
-  background: rgba(30, 60, 114, 1); /* Asegurar que sea completamente opaco */
-  border-radius: 20px;
-  border: 2px solid #ff6b6b;
-  width: 90%;
-  backdrop-filter: blur(10px);
+  max-width: 720px;
+  padding: 36px 32px;
+  width: min(92%, 760px);
+  /* Cartel envejecido con papel pintado */
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0 14px, rgba(255,255,255,0.06) 14px 28px),
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.1)),
+    #f2e5c4;
+  color: #3a231a;
+  border-radius: 18px;
+  border: 8px double #d6b66a;
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.55),
+    0 2px 0 rgba(255,255,255,0.4) inset,
+    0 -2px 0 rgba(0,0,0,0.06) inset;
+  position: relative;
 }
 
+/* Clavos decorativos tipo herrería colonial */
+.menu-container::before,
+.menu-container::after {
+  content: "";
+  position: absolute;
+  width: 14px; height: 14px;
+  background: radial-gradient(circle at 30% 30%, #ffe6a8 0 30%, #7a5a2a 60%, #2a1a0a 100%);
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.menu-container::before { top: 10px; left: 10px; }
+.menu-container::after  { top: 10px; right: 10px; }
+.menu-container .pins::before,
+.menu-container .pins::after {
+  content: "";
+  position: absolute;
+  width: 14px; height: 14px;
+  background: radial-gradient(circle at 30% 30%, #ffe6a8 0 30%, #7a5a2a 60%, #2a1a0a 100%);
+  border-radius: 50%;
+  bottom: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.menu-container .pins::before { left: 10px; }
+.menu-container .pins::after  { right: 10px; }
+
 .game-title {
-  font-size: 3rem;
-  margin-bottom: 2rem;
-  text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
-  color: #ff6b6b;
-  font-weight: bold;
-  letter-spacing: 2px;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  margin-bottom: 1.25rem;
+  color: #ffe08a;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  /* Título estilo rótulo de feria / cartel callejero */
+  text-shadow:
+    -3px 3px 0 #7a1a1a,
+    0 0 18px rgba(0,0,0,0.55),
+    0 0 2px rgba(0,0,0,0.9);
+  border-bottom: 3px solid rgba(122,26,26,0.6);
+  display: inline-block;
+  padding: 8px 14px 10px;
+  background: linear-gradient(180deg, rgba(255,224,138,0.12), rgba(255,224,138,0));
 }
 
 .menu-buttons {
@@ -40,48 +111,56 @@
   margin-top: 30px;
 }
 
+/* Botones estilo cartel de madera pintada */
 .menu-btn {
-  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-  border: none;
-  padding: 15px 30px;
-  margin: 5px;
-  border-radius: 25px;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
+  --paint: #d23b3b; /* color principal de pintura gastada */
+  background:
+    /* veta madera */
+    repeating-linear-gradient(90deg, rgba(78,43,24,0.6) 0 4px, rgba(92,54,30,0.6) 4px 9px, rgba(70,40,22,0.6) 9px 14px),
+    /* pintura gastada */
+    linear-gradient(180deg, var(--paint), color-mix(in srgb, var(--paint), #000 15%));
+  border: 3px solid #3a231a;
+  padding: 14px 26px;
+  margin: 4px auto;
+  border-radius: 10px;
+  color: #fff7e6;
+  font-size: 17px;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  width: 300px;
+  letter-spacing: 1.2px;
+  width: min(320px, 90%);
   position: relative;
   overflow: hidden;
+  box-shadow:
+    0 8px 0 #2a1a0a,
+    0 12px 22px rgba(0,0,0,0.35);
 }
 
+/* Brillo al pasar */
 .menu-btn::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -100%;
-  width: 100%;
+  left: -120%;
+  width: 120%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.5s;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.26), transparent);
+  transition: left 0.45s;
 }
 
 .menu-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
-  background: linear-gradient(45deg, #ff5252, #e53935);
+  transform: translateY(-2px) rotate(-0.25deg);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.45);
+  filter: saturate(1.08);
 }
 
-.menu-btn:hover::before {
-  left: 100%;
-}
+.menu-btn:hover::before { left: 110%; }
 
 .menu-btn:active {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  transform: translateY(2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
 }
 
 .menu-btn:disabled {
@@ -97,19 +176,19 @@
 }
 
 .highscores-list {
-  background: rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.35);
   padding: 20px;
   border-radius: 10px;
   margin: 20px 0;
   max-height: 400px;
   overflow-y: auto;
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  border: 1px solid rgba(255, 224, 138, 0.25);
 }
 
 .highscores-list h3 {
-  color: #ff6b6b;
+  color: #ffe08a;
   margin-top: 0;
-  border-bottom: 2px solid rgba(255, 107, 107, 0.3);
+  border-bottom: 2px solid rgba(255, 224, 138, 0.3);
   padding-bottom: 10px;
 }
 
@@ -130,10 +209,51 @@
 
 .back-btn {
   margin-top: 20px;
-  background: linear-gradient(45deg, #666, #888);
+  --paint: #45736a;
+  background:
+    repeating-linear-gradient(90deg, rgba(34,48,44,0.55) 0 4px, rgba(44,64,58,0.55) 4px 9px, rgba(26,36,33,0.55) 9px 14px),
+    linear-gradient(180deg, var(--paint), color-mix(in srgb, var(--paint), #000 15%));
+  border: 3px solid #1c2b26;
 }
 
 .back-btn:hover {
-  background: linear-gradient(45deg, #777, #999);
-  box-shadow: 0 8px 25px rgba(136, 136, 136, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
 }
+
+/* Barra decorativa tipo banderín andino para el menú principal */
+#main-menu .menu-bunting {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.35), transparent 70%),
+    repeating-linear-gradient(90deg,
+      #d23b3b 0 70px,
+      #e0b04d 70px 140px,
+      #2e8b57 140px 210px,
+      #1f6fb2 210px 280px,
+      #7a3a2a 280px 350px
+    );
+  clip-path: polygon(0 0, 100% 0, 100% 65%, 95% 80%, 90% 65%, 85% 80%, 80% 65%, 75% 80%, 70% 65%, 65% 80%, 60% 65%, 55% 80%, 50% 65%, 45% 80%, 40% 65%, 35% 80%, 30% 65%, 25% 80%, 20% 65%, 15% 80%, 10% 65%, 5% 80%, 0 65%);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+  z-index: 1;
+}
+
+/* Textura adicional en fondo del main menu (pared desconchada) */
+#main-menu .menu-backdrop-texture {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120px 80px at 20% 70%, rgba(255,255,255,0.08), transparent 70%),
+    radial-gradient(160px 100px at 80% 60%, rgba(0,0,0,0.15), transparent 70%),
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0 3px, transparent 3px 7px);
+  mix-blend-mode: multiply;
+}
+
+/* Variantes de color para botones (opcional) */
+.menu-btn:nth-child(1) { --paint: #c43a3a; }
+.menu-btn:nth-child(2) { --paint: #1f6fb2; }
+.menu-btn:nth-child(3) { --paint: #2e8b57; }

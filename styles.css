@@ -3,24 +3,15 @@
 body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  /* El fondo global será sobrepasado por el menú; mantener neutro */
+  background: #0b0b0b;
   font-family: 'Arial', sans-serif;
   color: white;
   overflow: hidden;
 }
 
-.menu-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  z-index: 1000;
-}
+/* Evitar que este archivo sobreescriba la estética del menú principal */
+#main-menu.menu-screen { background: transparent; }
 
 .hidden {
   display: none !important;

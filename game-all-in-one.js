@@ -23,7 +23,8 @@ window.GAME_CONFIG = {
   mouseSensitivity: 0.001, // Reducido para menos sensibilidad
   enemyHealth: 50,
   maxWallDepth: 3,
-  verticalLookSensitivity: 0.02 // Nueva configuración para mirar arriba/abajo
+  verticalLookSensitivity: 0.02, // Nueva configuración para mirar arriba/abajo
+  enemyMinDistanceFromPlayer: 240 // Distancia mínima para que no se "pegue" al jugador
 };
 
 // Nuevo mapa tipo casa más espacioso
@@ -79,6 +80,7 @@ window.DoomGame = {
   // Enemies system
   enemies: [],
   enemySpawnTimer: 0,
+  nextEnemyTypeIndex: 0,
   
   // Bullets system
   bullets: [],
@@ -137,6 +139,8 @@ window.DoomGame = {
       this.setupControls();
       this.spawnInitialEnemies();
       this.spawnItems();
+  // Alinear FOV del jugador con configuración para sprites
+  this.player.fov = GAME_CONFIG.fov;
       
       // Hacer player global
       window.player = this.player;
@@ -292,19 +296,37 @@ window.DoomGame = {
       {x: 6 * 128, z: 9 * 128}
     ];
     
+    const types = ['casual', 'deportivo', 'presidencial'];
+    const speedByType = { casual: 0.9, deportivo: 1.4, presidencial: 1.1 };
     spawnPoints.forEach((point, index) => {
       if (this.isValidSpawnPoint(point.x, point.z)) {
-        this.enemies.push({
+        const type = types[index % types.length];
+        const enemy = {
           id: index,
           x: point.x,
           z: point.z,
           health: GAME_CONFIG.enemyHealth,
           angle: Math.random() * Math.PI * 2,
-          speed: GAME_CONFIG.enemySpeed,
+          speed: speedByType[type] || GAME_CONFIG.enemySpeed,
           lastMove: 0,
           target: null,
-          state: 'patrol'
-        });
+          state: 'target', // comportamiento "blanco de tiro"
+          type,
+          trackAxis: null,
+          trackMin: 0,
+          trackMax: 0,
+          trackDir: Math.random() < 0.5 ? -1 : 1,
+          // comportamiento de blanco de tiro
+          pauseAtEdge: true,
+          edgePauseRange: [250, 800],
+          nextResumeTime: 0,
+          hideAtEdges: Math.random() < 0.25,
+          hidden: false,
+          hideDuration: 300
+        };
+        // Configurar la pista de movimiento lateral en el pasillo
+        this.setupTargetTrack(enemy);
+        this.enemies.push(enemy);
       }
     });
     
@@ -374,7 +396,16 @@ window.DoomGame = {
     this.updatePlayer();
     
     // Update enemies
-    this.updateEnemies(currentTime);
+  this.updateEnemies(currentTime);
+
+    // Spawn gradual en pasillos
+    if (
+      this.enemies.length < GAME_CONFIG.maxEnemies &&
+      currentTime - this.enemySpawnTimer > GAME_CONFIG.spawnCooldown
+    ) {
+      this.spawnEnemyInCorridor();
+      this.enemySpawnTimer = currentTime;
+    }
     
     // Update bullets
     this.updateBullets();
@@ -461,46 +492,13 @@ window.DoomGame = {
   updateEnemies(currentTime) {
     this.enemies.forEach(enemy => {
       if (enemy.health <= 0) return;
-      
-      // Calcular distancia al jugador
-      const dx = this.player.x - enemy.x;
-      const dz = this.player.z - enemy.z;
-      const distanceToPlayer = Math.sqrt(dx * dx + dz * dz);
-      
-      // IA simple
-      if (distanceToPlayer < 200) {
-        // Chase player
-        enemy.state = 'chase';
-        enemy.angle = Math.atan2(dz, dx);
-        
-        const moveX = Math.cos(enemy.angle) * enemy.speed;
-        const moveZ = Math.sin(enemy.angle) * enemy.speed;
-        
-        if (this.canMoveTo(enemy.x + moveX, enemy.z + moveZ)) {
-          enemy.x += moveX;
-          enemy.z += moveZ;
-        }
-        
-        // Atacar si está muy cerca
-        if (distanceToPlayer < 50 && currentTime - enemy.lastAttack > 1000) {
-          this.enemyAttack(enemy);
-          enemy.lastAttack = currentTime;
-        }
+
+      // Movimiento lateral tipo "blanco de tiro" por pasillos
+      if (enemy.state === 'target' && enemy.trackAxis) {
+        this.updateTargetBehavior(enemy, currentTime);
       } else {
-        // Patrol
-        enemy.state = 'patrol';
-        if (currentTime - enemy.lastMove > 2000) {
-          enemy.angle = Math.random() * Math.PI * 2;
-          enemy.lastMove = currentTime;
-        }
-        
-        const moveX = Math.cos(enemy.angle) * enemy.speed * 0.5;
-        const moveZ = Math.sin(enemy.angle) * enemy.speed * 0.5;
-        
-        if (this.canMoveTo(enemy.x + moveX, enemy.z + moveZ)) {
-          enemy.x += moveX;
-          enemy.z += moveZ;
-        }
+        // Fallback: si no hay pista, configurar una e intentar de nuevo
+        this.setupTargetTrack(enemy);
       }
     });
   },
@@ -535,7 +533,7 @@ window.DoomGame = {
     // Bullet vs Enemy collisions
     this.bullets.forEach((bullet, bulletIndex) => {
       this.enemies.forEach((enemy, enemyIndex) => {
-        if (enemy.health <= 0) return;
+  if (enemy.health <= 0 || enemy.hidden) return;
         
         const dx = bullet.x - enemy.x;
         const dz = bullet.z - enemy.z;
@@ -967,27 +965,21 @@ window.DoomGame = {
   },
   
   renderSprites() {
-    // Renderizar enemigos
-    this.enemies.forEach(enemy => {
-      if (enemy.health <= 0) return;
-      
-      const dx = enemy.x - this.player.x;
-      const dz = enemy.z - this.player.z;
-      const distance = Math.sqrt(dx * dx + dz * dz);
-      
-      if (distance < 500) {
-        const angle = Math.atan2(dz, dx) - this.player.angle;
-        const screenX = (this.width / 2) + Math.tan(angle) * (this.width / 2);
-        
-        if (screenX >= 0 && screenX < this.width) {
-          const size = Math.max(10, 200 / distance);
-          const screenY = this.height / 2 - size / 2;
-          
-          this.ctx.fillStyle = '#FF0000';
-          this.ctx.fillRect(screenX - size/2, screenY, size, size);
+    // Renderizar enemigos con sprites PNG a escala humana si está disponible
+    if (window.EnemySpriteSystem && !window.EnemySpriteSystem.loading) {
+      this.enemies.forEach(enemy => {
+        if (enemy.health <= 0 || enemy.hidden) return;
+        try {
+          window.EnemySpriteSystem.renderEnemySprite(this.ctx, enemy, this.player);
+        } catch (_) {
+          // Fallback a marcador simple en caso de fallo puntual
+          this.renderEnemyFallbackMarker(enemy);
         }
-      }
-    });
+      });
+    } else {
+      // Fallback a marcadores simples si no hay sistema de sprites
+      this.enemies.forEach(enemy => this.renderEnemyFallbackMarker(enemy));
+    }
     
     // Renderizar items
     this.items.forEach(item => {
@@ -1011,6 +1003,264 @@ window.DoomGame = {
         }
       }
     });
+  },
+
+  // Dibuja un marcador simple si no hay sprite disponible
+  renderEnemyFallbackMarker(enemy) {
+  if (enemy.health <= 0 || enemy.hidden) return;
+    const dx = enemy.x - this.player.x;
+    const dz = enemy.z - this.player.z;
+    const distance = Math.sqrt(dx * dx + dz * dz);
+    if (distance >= 500) return;
+    const angle = Math.atan2(dz, dx) - this.player.angle;
+    const screenX = (this.width / 2) + Math.tan(angle) * (this.width / 2);
+    if (screenX < 0 || screenX >= this.width) return;
+    const size = Math.max(10, 200 / distance);
+    const screenY = this.height / 2 - size / 2;
+    this.ctx.fillStyle = '#FF0000';
+    this.ctx.fillRect(screenX - size/2, screenY, size, size);
+  },
+
+  // Configura una pista de movimiento lateral para un enemigo en función del laberinto
+  setupTargetTrack(enemy) {
+    if (!window.MAZE || !window.GAME_CONFIG) return;
+    const cell = window.GAME_CONFIG.cellSize;
+    const gx = Math.floor(enemy.x / cell);
+    const gz = Math.floor(enemy.z / cell);
+    const margin = Math.max(8, Math.floor(cell * 0.125));
+
+    const isFree = (x, z) => (
+      x >= 0 && x < window.GAME_CONFIG.gridCols &&
+      z >= 0 && z < window.GAME_CONFIG.gridRows &&
+      window.MAZE[z] && window.MAZE[z][x] === 0
+    );
+
+    // Explorar horizontalmente (a lo largo de X)
+    let minGX = gx, maxGX = gx;
+    while (isFree(minGX - 1, gz)) minGX--;
+    while (isFree(maxGX + 1, gz)) maxGX++;
+    const minX = minGX * cell + margin;
+    const maxX = (maxGX + 1) * cell - margin;
+    const lenX = Math.max(0, maxX - minX);
+
+    // Explorar verticalmente (a lo largo de Z)
+    let minGZ = gz, maxGZ = gz;
+    while (isFree(gx, minGZ - 1)) minGZ--;
+    while (isFree(gx, maxGZ + 1)) maxGZ++;
+    const minZ = minGZ * cell + margin;
+    const maxZ = (maxGZ + 1) * cell - margin;
+    const lenZ = Math.max(0, maxZ - minZ);
+
+    // Elegir el eje más largo para moverse de lado a lado
+    if (lenX >= lenZ && lenX > cell * 0.75) {
+      enemy.trackAxis = 'x';
+      enemy.trackMin = minX;
+      enemy.trackMax = maxX;
+      // Centrar al enemigo en el corredor sobre Z
+      enemy.z = (gz + 0.5) * cell;
+      // Ajustar posición a límites
+      enemy.x = Math.min(Math.max(enemy.x, enemy.trackMin), enemy.trackMax);
+    } else if (lenZ > cell * 0.75) {
+      enemy.trackAxis = 'z';
+      enemy.trackMin = minZ;
+      enemy.trackMax = maxZ;
+      // Centrar al enemigo en el corredor sobre X
+      enemy.x = (gx + 0.5) * cell;
+      enemy.z = Math.min(Math.max(enemy.z, enemy.trackMin), enemy.trackMax);
+    } else {
+      // Fallback: pequeña oscilación local en X
+      enemy.trackAxis = 'x';
+      enemy.trackMin = enemy.x - cell * 0.3;
+      enemy.trackMax = enemy.x + cell * 0.3;
+    }
+  },
+
+  // Actualiza el movimiento tipo "blanco de tiro" con pausas y posible ocultamiento en extremos
+  updateTargetBehavior(enemy, currentTime) {
+    // Si está en pausa/oculto, esperar
+    if (enemy.nextResumeTime && currentTime < enemy.nextResumeTime) {
+      return;
+    }
+    if (enemy.hidden && currentTime >= enemy.nextResumeTime) {
+      enemy.hidden = false;
+      enemy.nextResumeTime = 0;
+    }
+
+  const speed = Math.max(0.4, enemy.speed * 0.9); // velocidad base lateral, un poco más contenida
+  const slowAdvance = Math.max(0.15, enemy.speed * 0.3); // avance frontal más lento
+
+    // Mantener distancia del jugador: no cruzar un radio mínimo
+    const dxP = enemy.x - this.player.x;
+    const dzP = enemy.z - this.player.z;
+    const distP = Math.hypot(dxP, dzP);
+    const minDist = GAME_CONFIG.enemyMinDistanceFromPlayer || 240;
+
+    if (enemy.trackAxis === 'x') {
+      enemy.x += enemy.trackDir * speed;
+      if (enemy.x <= enemy.trackMin) {
+        enemy.x = enemy.trackMin; enemy.trackDir = 1; this.scheduleEdgePause(enemy, currentTime);
+      }
+      if (enemy.x >= enemy.trackMax) {
+        enemy.x = enemy.trackMax; enemy.trackDir = -1; this.scheduleEdgePause(enemy, currentTime);
+      }
+      // Avance frontal ocasional lento si está lejos del jugador
+      if (distP > minDist * 1.2 && Math.random() < 0.02) {
+        const step = slowAdvance;
+        const nextZ = enemy.z + (Math.random() < 0.5 ? step : -step);
+        const cell = GAME_CONFIG.cellSize;
+        const centerZ = Math.floor(enemy.z / cell) * cell + cell / 2;
+        enemy.z = Math.max(centerZ - cell * 0.3, Math.min(centerZ + cell * 0.3, nextZ));
+      }
+      // Mantener distancia mínima: si está demasiado cerca, retroceder un poco en Z
+      if (distP < minDist) {
+        const angAway = Math.atan2(enemy.z - this.player.z, enemy.x - this.player.x);
+        const backStepZ = Math.sin(angAway) * slowAdvance;
+        const cell = GAME_CONFIG.cellSize;
+        const centerZ = Math.floor(enemy.z / cell) * cell + cell / 2;
+        enemy.z = Math.max(centerZ - cell * 0.3, Math.min(centerZ + cell * 0.3, enemy.z + backStepZ));
+      }
+      enemy.angle = enemy.trackDir > 0 ? 0 : Math.PI;
+    } else {
+      enemy.z += enemy.trackDir * speed;
+      if (enemy.z <= enemy.trackMin) {
+        enemy.z = enemy.trackMin; enemy.trackDir = 1; this.scheduleEdgePause(enemy, currentTime);
+      }
+      if (enemy.z >= enemy.trackMax) {
+        enemy.z = enemy.trackMax; enemy.trackDir = -1; this.scheduleEdgePause(enemy, currentTime);
+      }
+      // Avance frontal ocasional lento si está lejos del jugador (eje X)
+      if (distP > minDist * 1.2 && Math.random() < 0.02) {
+        const step = slowAdvance;
+        const nextX = enemy.x + (Math.random() < 0.5 ? step : -step);
+        const cell = GAME_CONFIG.cellSize;
+        const centerX = Math.floor(enemy.x / cell) * cell + cell / 2;
+        enemy.x = Math.max(centerX - cell * 0.3, Math.min(centerX + cell * 0.3, nextX));
+      }
+      // Mantener distancia mínima: si está demasiado cerca, retroceder un poco en X
+      if (distP < minDist) {
+        const angAway = Math.atan2(enemy.z - this.player.z, enemy.x - this.player.x);
+        const backStepX = Math.cos(angAway) * slowAdvance;
+        const cell = GAME_CONFIG.cellSize;
+        const centerX = Math.floor(enemy.x / cell) * cell + cell / 2;
+        enemy.x = Math.max(centerX - cell * 0.3, Math.min(centerX + cell * 0.3, enemy.x + backStepX));
+      }
+      enemy.angle = enemy.trackDir > 0 ? Math.PI/2 : -Math.PI/2;
+    }
+  },
+
+  scheduleEdgePause(enemy, currentTime) {
+    if (!enemy.pauseAtEdge) return;
+    const [minP, maxP] = enemy.edgePauseRange || [250, 800];
+    const pause = Math.floor(minP + Math.random() * (maxP - minP));
+    if (enemy.trackAxis === 'x') {
+      // Si está demasiado cerca, preferir moverse en la dirección que aumenta distancia
+      if (distP <= minDist + 20) {
+        const dPlus = Math.hypot((enemy.x + speed) - this.player.x, enemy.z - this.player.z);
+        const dMinus = Math.hypot((enemy.x - speed) - this.player.x, enemy.z - this.player.z);
+        enemy.trackDir = dPlus >= dMinus ? 1 : -1;
+      }
+      const nextX = enemy.x + enemy.trackDir * speed;
+      const dNext = Math.hypot(nextX - this.player.x, enemy.z - this.player.z);
+      if (dNext >= minDist) {
+        enemy.x = nextX;
+      }
+    }
+    enemy.nextResumeTime = currentTime + (enemy.hidden ? Math.max(200, Math.floor(pause * 0.6)) : pause);
+  },
+
+  // Spawnea un enemigo en una celda que califique como pasillo
+  spawnEnemyInCorridor() {
+      // Avance frontal ocasional lento si está lejos del jugador (más raro, y sin violar minDist)
+      if (distP > minDist * 1.25 && Math.random() < 0.008) {
+        // Empujar en dirección perpendicular alejándose del jugador
+        const dirAwayZ = Math.sign(enemy.z - this.player.z) || (Math.random() < 0.5 ? 1 : -1);
+        const step = slowAdvance * dirAwayZ;
+        const nextZ = enemy.z + step;
+        const dNextZ = Math.hypot(enemy.x - this.player.x, nextZ - this.player.z);
+        if (dNextZ >= minDist * 1.05) {
+          // Mantenerse dentro de la franja del pasillo sobre Z
+          const cell = GAME_CONFIG.cellSize;
+          const centerZ = Math.floor(enemy.z / cell) * cell + cell / 2;
+          enemy.z = Math.max(centerZ - cell * 0.3, Math.min(centerZ + cell * 0.3, nextZ));
+        }
+      }
+    const types = ['casual', 'deportivo', 'presidencial'];
+    const type = types[this.nextEnemyTypeIndex++ % types.length];
+        const dirAwayZ = Math.sign(enemy.z - this.player.z) || 1;
+        const backStepZ = dirAwayZ * slowAdvance;
+    const enemy = {
+      id: Date.now(),
+      x: spot.x * cell + cell / 2,
+      z: spot.z * cell + cell / 2,
+      health: GAME_CONFIG.enemyHealth,
+      angle: 0,
+      // Si está demasiado cerca, preferir moverse en la dirección que aumenta distancia
+      if (distP <= minDist + 20) {
+        const dPlus = Math.hypot(enemy.x - this.player.x, (enemy.z + speed) - this.player.z);
+        const dMinus = Math.hypot(enemy.x - this.player.x, (enemy.z - speed) - this.player.z);
+        enemy.trackDir = dPlus >= dMinus ? 1 : -1;
+      }
+      const nextZ = enemy.z + enemy.trackDir * speed;
+      const dNext = Math.hypot(enemy.x - this.player.x, nextZ - this.player.z);
+      if (dNext >= minDist) {
+        enemy.z = nextZ;
+      }
+      lastMove: 0,
+      target: null,
+      state: 'target',
+      type,
+      trackAxis: null,
+      trackMin: 0,
+      // Avance frontal ocasional lento si está lejos del jugador (más raro) sobre X
+      if (distP > minDist * 1.25 && Math.random() < 0.008) {
+        const dirAwayX = Math.sign(enemy.x - this.player.x) || (Math.random() < 0.5 ? 1 : -1);
+        const step = slowAdvance * dirAwayX;
+        const nextX = enemy.x + step;
+        const dNextX = Math.hypot(nextX - this.player.x, enemy.z - this.player.z);
+      edgePauseRange: [250, 800],
+      nextResumeTime: 0,
+        if (dNextX >= minDist * 1.05) {
+          enemy.x = Math.max(centerX - cell * 0.3, Math.min(centerX + cell * 0.3, nextX));
+        }
+      hidden: false,
+      hideDuration: 300
+    };
+        const dirAwayX = Math.sign(enemy.x - this.player.x) || 1;
+        const backStepX = dirAwayX * slowAdvance;
+  },
+
+  // Busca aleatoriamente una celda pasillo (horizontal o vertical)
+  findRandomCorridorCell(attempts = 40) {
+    const cols = GAME_CONFIG.gridCols;
+    const rows = GAME_CONFIG.gridRows;
+    const isFree = (x, z) => (
+      x >= 0 && x < cols && z >= 0 && z < rows && MAZE[z] && MAZE[z][x] === 0
+    );
+    const farFromPlayer = (x, z) => {
+      const px = Math.floor(this.player.x / GAME_CONFIG.cellSize);
+      const pz = Math.floor(this.player.z / GAME_CONFIG.cellSize);
+      const dx = x - px, dz = z - pz;
+      return (dx*dx + dz*dz) >= 25; // al menos ~5 celdas de distancia
+    };
+
+    for (let i = 0; i < attempts; i++) {
+      const x = 1 + Math.floor(Math.random() * (cols - 2));
+      const z = 1 + Math.floor(Math.random() * (rows - 2));
+      if (!isFree(x, z) || !farFromPlayer(x, z)) continue;
+
+      const freeL = isFree(x - 1, z);
+      const freeR = isFree(x + 1, z);
+      const freeU = isFree(x, z - 1);
+      const freeD = isFree(x, z + 1);
+
+      const horizontalCorridor = (freeL || freeR) && !(freeU || freeD);
+      const verticalCorridor = (freeU || freeD) && !(freeL || freeR);
+
+      if (horizontalCorridor || verticalCorridor) {
+        return { x, z };
+      }
+    }
+    return null;
   },
   
   renderCrosshair() {

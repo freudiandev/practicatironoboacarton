@@ -23,15 +23,19 @@
   <meta property="og:image" content="game-preview.png">
   
   <!-- Estilos separados por funcionalidad -->
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/menus.css">
-  <link rel="stylesheet" href="css/game-ui.css">
-  <link rel="stylesheet" href="css/effects.css">
+  <link rel="stylesheet" href="styles.css?v=20250815">
+  <link rel="stylesheet" href="css/layout.css?v=20250815">
+  <link rel="stylesheet" href="css/menus.css?v=20250815">
+  <link rel="stylesheet" href="css/game-ui.css?v=20250815">
+  <link rel="stylesheet" href="css/effects.css?v=20250815">
 </head>
 <body>
   <!-- Menú de inicio -->
   <div id="main-menu" class="menu-screen">
+    <div class="menu-bunting" aria-hidden="true"></div>
+    <div class="menu-backdrop-texture" aria-hidden="true"></div>
     <div class="menu-container">
+      <div class="pins" aria-hidden="true"></div>
       <h1 class="game-title">DOOM: Noboa de Cartón</h1>
       <div class="menu-buttons">
         <button id="start-btn" class="menu-btn">INICIAR PARTIDA</button>
@@ -117,32 +121,289 @@
     </div>
   </div>
 
+  <!-- Precarga de sprites antes de iniciar el juego -->
+  <div id="sprite-preload" style="position: fixed; left: -9999px; top: -9999px; visibility: hidden;">
+    <!-- Intentar diferentes rutas para mayor cobertura -->
+    <img src="noboa-casual.png" alt="Sprite casual" id="preload-casual">
+    <img src="assets/images/noboa-casual.png" alt="Sprite casual" id="preload-casual-2">
+    <img src="images/noboa-casual.png" alt="Sprite casual" id="preload-casual-3">
+    
+    <img src="noboa-deportivo.png" alt="Sprite deportivo" id="preload-deportivo">
+    <img src="assets/images/noboa-deportivo.png" alt="Sprite deportivo" id="preload-deportivo-2">
+    <img src="images/noboa-deportivo.png" alt="Sprite deportivo" id="preload-deportivo-3">
+    
+    <img src="noboa-presidencial.png" alt="Sprite presidencial" id="preload-presidencial">
+    <img src="assets/images/noboa-presidencial.png" alt="Sprite presidencial" id="preload-presidencial-2">
+    <img src="images/noboa-presidencial.png" alt="Sprite presidencial" id="preload-presidencial-3">
+  </div>
+
   <!-- SCRIPTS - ORDEN CRÍTICO CON DEBUG -->
+  <!-- Primero cargar los sprites y herramientas de diagnóstico -->
+  <script src="sprite-loader.js"></script>
   <script src="debug-system.js"></script>
+  <script src="enemy-sprites.js"></script>
+  <script src="sprite-fixer.js"></script>
+  <script src="sprite-tester.js"></script>
+  <script src="doom-inspector.js"></script>
+  <script src="force-render.js"></script>
+  <!-- Luego cargar el juego y sus componentes -->
   <script src="game-all-in-one.js"></script>
   <script src="menu-manager.js"></script>
 
   <!-- Verificación mejorada -->
   <script>
     console.log('🔍 === VERIFICACIÓN DE SISTEMAS ===');
+    
+    // Verificación de componentes críticos
     console.log('- DoomGame disponible:', !!window.DoomGame ? '✅' : '❌');
     console.log('- MenuManager disponible:', !!window.MenuManager ? '✅' : '❌');
+    console.log('- EnemySpriteSystem disponible:', !!window.EnemySpriteSystem ? '✅' : '❌');
+    console.log('- Precarga de sprites:', !!document.getElementById('sprite-preload') ? '✅' : '❌');
+    
+    // Verificar si los elementos precargados se cargaron correctamente
+    const preloadedImages = document.querySelectorAll('#sprite-preload img');
+    console.log(`- Imágenes precargadas: ${preloadedImages.length}`);
+    
+    preloadedImages.forEach(img => {
+      console.log(`  - ${img.id}: ${img.complete ? '✅' : '⏳'}`);
+      
+      // Si ya está cargada, usarla directamente
+      if (img.complete && img.naturalWidth > 0) {
+        const type = img.id.replace('preload-', '');
+        console.log(`    ✅ Imagen ${type} precargada disponible (${img.naturalWidth}x${img.naturalHeight})`);
+        
+        // Almacenar globalmente para que esté disponible
+        window[`preloaded_${type}`] = img;
+        
+        // Mostrar mensaje destacado en consola
+        console.log(`%c ✅ SPRITE PRECARGADO DISPONIBLE: ${type} `, 'background: #080; color: white; font-size: 14px; padding: 5px;');
+      }
+    });
     
     if (!window.DoomGame) {
       console.error('❌ CRÍTICO: DoomGame no se cargó correctamente');
       console.log('Verificando si game-all-in-one.js se cargó...');
     }
     
+    // Función para comprobar el estado de los sprites
+    function checkSpriteStatus() {
+      if (!window.EnemySpriteSystem) return false;
+      
+      // Verificar si todos los sprites están cargados
+      const allLoaded = !window.EnemySpriteSystem.loading && 
+                        window.EnemySpriteSystem.loadedCount === window.EnemySpriteSystem.totalSprites;
+      
+      // Verificar cada sprite individual
+      const sprites = window.EnemySpriteSystem.sprites || {};
+      const spriteTypes = Object.keys(sprites);
+      const loadedSprites = spriteTypes.filter(type => sprites[type] !== null);
+      
+      console.log(`Estado de sprites: ${allLoaded ? '✅ Todos cargados' : '⏳ Cargando...'} (${loadedSprites.length}/${spriteTypes.length})`);
+      
+      // Mostrar información detallada de cada sprite
+      spriteTypes.forEach(type => {
+        const sprite = sprites[type];
+        if (sprite) {
+          console.log(`  ✅ Sprite ${type}: Cargado correctamente`);
+          // Añadir a variables globales para debug
+          window[`debug_sprite_${type}`] = sprite;
+        } else {
+          console.log(`  ❌ Sprite ${type}: No disponible`);
+        }
+      });
+      
+      // Intentar usar las imágenes precargadas si hay alguna fallida
+      if (loadedSprites.length < spriteTypes.length && window.EnemySpriteSystem.processSprite) {
+        const preloadElements = document.querySelectorAll('#sprite-preload img');
+        console.log(`Intentando usar ${preloadElements.length} imágenes precargadas...`);
+        
+        // Verificar cada imagen precargada
+        preloadElements.forEach(img => {
+          if (img.complete && img.naturalWidth > 0) {
+            const imgId = img.id.replace(/-\d+$/, '').replace('preload-', '');
+            if (spriteTypes.includes(imgId) && !sprites[imgId]) {
+              console.log(`🔄 Utilizando imagen precargada para ${imgId}: ${img.src}`);
+              sprites[imgId] = window.EnemySpriteSystem.processSprite(img, imgId);
+              window.EnemySpriteSystem.loadedCount++;
+              window[`preloaded_${imgId}`] = img;
+            }
+          }
+        });
+        
+        // Actualizar estado de carga
+        if (window.EnemySpriteSystem.loadedCount === window.EnemySpriteSystem.totalSprites) {
+          window.EnemySpriteSystem.loading = false;
+          console.log('✅ Todos los sprites cargados (usando imágenes precargadas)');
+        }
+      }
+      
+      // Si DoomGame está disponible, forzar renderizado
+      if (window.DoomGame && typeof window.DoomGame.render === 'function') {
+        console.log('🔄 Forzando renderizado del juego...');
+        window.DoomGame.render();
+      }
+      
+      return allLoaded;
+    }
+    
+    // Verificación continua del estado de los sprites
+    const spriteCheckInterval = setInterval(() => {
+      const allLoaded = checkSpriteStatus();
+      if (allLoaded) {
+        console.log('%c ✅ VERIFICACIÓN COMPLETA: TODOS LOS SPRITES CARGADOS ', 'background: #080; color: white; font-size: 14px; padding: 5px;');
+        clearInterval(spriteCheckInterval);
+      }
+    }, 2000);
+    
+    // Inspeccionar la estructura del juego
+    if (window.DoomGame) {
+      console.log('🔍 Estructura DoomGame:');
+      console.log('- Método renderSprites:', typeof window.DoomGame.renderSprites === 'function' ? '✅' : '❌');
+      console.log('- Enemigos:', window.DoomGame.enemies ? `✅ (${window.DoomGame.enemies.length})` : '❌');
+      
+      // Verificar si hay enemigos
+      if (window.DoomGame.enemies && window.DoomGame.enemies.length > 0) {
+        console.log('📊 Primer enemigo:', window.DoomGame.enemies[0]);
+      }
+    }
+    
     // Asegurar que MenuManager se inicialice correctamente
     window.addEventListener('load', () => {
+      console.log('%c 🎮 JUEGO CARGADO COMPLETAMENTE ', 'background: #00a; color: white; font-size: 16px; padding: 5px;');
       console.log('🔍 === VERIFICACIÓN FINAL ===');
       console.log('- DoomGame:', !!window.DoomGame ? '✅ DISPONIBLE' : '❌ NO DISPONIBLE');
+      console.log('- EnemySpriteSystem:', !!window.EnemySpriteSystem ? '✅ DISPONIBLE' : '❌ NO DISPONIBLE');
       
+      // Verificación final de sprites
+      checkSpriteStatus();
+      
+      // Intentar obtener las imágenes desde la preload
+      const transferPreloadedImages = () => {
+        if (!window.EnemySpriteSystem || !window.EnemySpriteSystem.sprites) return;
+        
+        const preloadElements = document.querySelectorAll('#sprite-preload img');
+        preloadElements.forEach(img => {
+          if (img.complete && img.naturalWidth > 0) {
+            // Extraer el tipo de sprite del ID (quitando posibles números)
+            const imgId = img.id.replace(/-\d+$/, '').replace('preload-', '');
+            if (!window.EnemySpriteSystem.sprites[imgId]) {
+              console.log(`🔄 Transfiriendo imagen precargada para ${imgId}: ${img.src}`);
+              try {
+                if (window.EnemySpriteSystem.processSprite) {
+                  window.EnemySpriteSystem.sprites[imgId] = window.EnemySpriteSystem.processSprite(img, imgId);
+                  window.EnemySpriteSystem.loadedCount++;
+                }
+              } catch (e) {
+                console.error(`Error al procesar sprite ${imgId}:`, e);
+              }
+            }
+          }
+        });
+        
+        // Actualizar estado
+        if (window.EnemySpriteSystem.loadedCount === window.EnemySpriteSystem.totalSprites) {
+          window.EnemySpriteSystem.loading = false;
+        }
+        
+        // Forzar renderizado
+        if (window.DoomGame && typeof window.DoomGame.render === 'function') {
+          window.DoomGame.render();
+        }
+      };
+      
+      // Transferir imágenes precargadas al sistema de sprites
+      transferPreloadedImages();
+      
+      // Programar verificaciones y renderizados adicionales
+      setTimeout(transferPreloadedImages, 1000);
+      setTimeout(transferPreloadedImages, 3000);
+      
+      // Inicializar menú si es necesario
       if (window.MenuManager && !window.MenuManager.initialized) {
         console.log('🔄 Inicializando MenuManager...');
         window.MenuManager.init();
         window.MenuManager.initialized = true;
       }
+      
+      // Crear un panel de depuración/control
+      const debugPanel = document.createElement('div');
+      debugPanel.style.position = 'fixed';
+      debugPanel.style.bottom = '10px';
+      debugPanel.style.right = '10px';
+      debugPanel.style.zIndex = '9999';
+      debugPanel.style.backgroundColor = 'rgba(0,0,0,0.8)';
+      debugPanel.style.color = 'white';
+      debugPanel.style.padding = '10px';
+      debugPanel.style.borderRadius = '5px';
+      debugPanel.style.display = 'flex';
+      debugPanel.style.flexDirection = 'column';
+      debugPanel.style.gap = '5px';
+      
+      // Botón para recargar sprites
+      const reloadBtn = document.createElement('button');
+      reloadBtn.textContent = '🔄 Recargar Sprites';
+      reloadBtn.style.padding = '8px 12px';
+      reloadBtn.style.backgroundColor = '#007bff';
+      reloadBtn.style.color = 'white';
+      reloadBtn.style.border = 'none';
+      reloadBtn.style.borderRadius = '4px';
+      reloadBtn.style.cursor = 'pointer';
+      reloadBtn.onclick = function() {
+        if (window.EnemySpriteSystem) {
+          window.EnemySpriteSystem.loading = true;
+          window.EnemySpriteSystem.loadedCount = 0;
+          window.EnemySpriteSystem.errors = [];
+          window.EnemySpriteSystem.init(() => {
+            checkSpriteStatus();
+          });
+        }
+        
+        // También transferir imágenes precargadas
+        transferPreloadedImages();
+      };
+      debugPanel.appendChild(reloadBtn);
+      
+      // Botón para forzar renderizado
+      const renderBtn = document.createElement('button');
+      renderBtn.textContent = '🎮 Forzar Renderizado';
+      renderBtn.style.padding = '8px 12px';
+      renderBtn.style.backgroundColor = '#28a745';
+      renderBtn.style.color = 'white';
+      renderBtn.style.border = 'none';
+      renderBtn.style.borderRadius = '4px';
+      renderBtn.style.cursor = 'pointer';
+      renderBtn.onclick = function() {
+        if (window.DoomGame && typeof window.DoomGame.render === 'function') {
+          console.log('🔄 Forzando renderizado...');
+          window.DoomGame.render();
+        }
+      };
+      debugPanel.appendChild(renderBtn);
+      
+      // Botón para mostrar estado
+      const statusBtn = document.createElement('button');
+      statusBtn.textContent = '📊 Mostrar Estado';
+      statusBtn.style.padding = '8px 12px';
+      statusBtn.style.backgroundColor = '#ffc107';
+      statusBtn.style.color = 'black';
+      statusBtn.style.border = 'none';
+      statusBtn.style.borderRadius = '4px';
+      statusBtn.style.cursor = 'pointer';
+      statusBtn.onclick = function() {
+        checkSpriteStatus();
+        
+        if (window.DoomGame) {
+          console.log('📊 Estado del juego:');
+          console.log('- Enemigos:', window.DoomGame.enemies ? window.DoomGame.enemies.length : 'N/A');
+          if (window.DoomGame.enemies && window.DoomGame.enemies.length > 0) {
+            console.log('- Primer enemigo:', window.DoomGame.enemies[0]);
+          }
+        }
+      };
+      debugPanel.appendChild(statusBtn);
+      
+      // Añadir al documento
+      document.body.appendChild(debugPanel);
     });
   </script>
 
