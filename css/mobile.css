@@ -1,0 +1,134 @@
+/* Estilos responsive y controles móviles */
+:root {
+  --mc-size: clamp(48px, 7.5vw, 76px);
+  --mc-gap: clamp(8px, 1.2vw, 16px);
+  --mc-font: clamp(14px, 2.2vw, 22px);
+}
+
+/* Layout base responsive para el contenedor del juego */
+#game-container {
+  width: 100%;
+  height: auto;
+  display: block;
+  aspect-ratio: 16 / 9; /* mantener proporción en responsive */
+  position: relative;
+}
+
+#game-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Oculta panel derecho en pantallas estrechas */
+@media (max-width: 1024px) {
+  .right-panel-improved { display: none !important; }
+}
+
+/* Mobile controls overlay */
+#mobile-controls {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* botones habilitan pointer-events */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  padding: 2.5vh 2.5vw;
+  gap: 2vw;
+  z-index: 9998;
+}
+
+#mobile-controls.hidden { display: none; }
+
+#mobile-controls .mc-left,
+#mobile-controls .mc-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mc-gap);
+}
+
+#mobile-controls .mc-row {
+  display: flex;
+  gap: var(--mc-gap);
+}
+
+#mobile-controls .mc-btn {
+  pointer-events: auto;
+  width: var(--mc-size);
+  height: var(--mc-size);
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--mc-font);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+#mobile-controls .mc-btn:active,
+#mobile-controls .mc-btn.is-active {
+  transform: scale(0.96);
+  background: rgba(0,0,0,0.6);
+  border-color: rgba(255,255,255,0.6);
+}
+
+#mc-shot.mc-shot {
+  position: fixed;
+  right: 2.5vw;
+  bottom: 2.5vh;
+  pointer-events: auto;
+  width: calc(var(--mc-size) * 1.5);
+  height: calc(var(--mc-size) * 1.5);
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  background: radial-gradient(circle at 30% 30%, rgba(255,0,0,0.85), rgba(180,0,0,0.85));
+  color: #fff;
+  font-weight: 800;
+  font-size: clamp(14px, 2vw, 20px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.55);
+}
+
+/* Overlay de rotación */
+#rotate-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+#rotate-overlay.hidden { display: none; }
+
+#rotate-overlay .rotate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 28px;
+  border-radius: 14px;
+  background: rgba(20,20,20,0.8);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+#rotate-overlay .rotate-icon { font-size: 48px; }
+#rotate-overlay .rotate-text { font-size: 18px; opacity: 0.9; }
+
+/* Ajustes por categorías (solo ejemplo principal; escalas ya usan clamp) */
+@media (min-width: 1921px) {
+  :root { --mc-size: 90px; }
+}
+
+@media (max-width: 480px) {
+  :root { --mc-size: 56px; }
+}

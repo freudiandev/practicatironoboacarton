@@ -250,6 +250,7 @@ window.DoomGame = {
   },
   
   setupControls() {
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     document.addEventListener('keydown', (e) => {
       if (!this.player.keysPressTime[e.code]) {
         this.player.keysPressTime[e.code] = Date.now();
@@ -278,6 +279,15 @@ window.DoomGame = {
     });
     
     document.addEventListener('click', (e) => {
+      // Si es dispositivo táctil, no solicitar pointer lock y permitir que el botón táctil dispare
+      if (isTouch) {
+        // Evita que clicks de botones táctiles burbujeen y cambien estado de pointer lock
+        if (e.target && (e.target.closest && e.target.closest('#mobile-controls')))
+          return;
+        // En móvil, un tap en el canvas puede disparar directamente
+        this.shoot();
+        return;
+      }
       if (!document.pointerLockElement) {
         this.canvas.requestPointerLock();
       } else {
@@ -965,19 +975,21 @@ window.DoomGame = {
   },
   
   renderSprites() {
-    // Renderizar enemigos con sprites PNG a escala humana si está disponible
-    if (window.EnemySpriteSystem && !window.EnemySpriteSystem.loading) {
+    // Renderizar enemigos con sprites PNG a escala humana si el sistema existe
+    if (window.EnemySpriteSystem) {
       this.enemies.forEach(enemy => {
         if (enemy.health <= 0 || enemy.hidden) return;
         try {
           window.EnemySpriteSystem.renderEnemySprite(this.ctx, enemy, this.player);
-        } catch (_) {
-          // Fallback a marcador simple en caso de fallo puntual
-          this.renderEnemyFallbackMarker(enemy);
+        } catch (err) {
+          // No dibujar fallback rojo si existe el sistema de sprites; solo registrar
+          if (window.console && console.warn) {
+            console.warn('Sprite render falló, se omite fallback para evitar cuadros rojos:', err);
+          }
         }
       });
     } else {
-      // Fallback a marcadores simples si no hay sistema de sprites
+      // Fallback a marcadores simples solo si no hay sistema de sprites
       this.enemies.forEach(enemy => this.renderEnemyFallbackMarker(enemy));
     }
     
@@ -1087,7 +1099,7 @@ window.DoomGame = {
     }
 
   const speed = Math.max(0.4, enemy.speed * 0.9); // velocidad base lateral, un poco más contenida
-  const slowAdvance = Math.max(0.15, enemy.speed * 0.3); // avance frontal más lento
+  const slowAdvance = Math.max(0.1, enemy.speed * 0.25); // avance frontal aún más lento
 
     // Mantener distancia del jugador: no cruzar un radio mínimo
     const dxP = enemy.x - this.player.x;
@@ -1096,7 +1108,17 @@ window.DoomGame = {
     const minDist = GAME_CONFIG.enemyMinDistanceFromPlayer || 240;
 
     if (enemy.trackAxis === 'x') {
-      enemy.x += enemy.trackDir * speed;
+      // elegir dirección que aumenta distancia si estamos cerca
+      if (distP <= minDist + 10) {
+        const dPlus = Math.hypot((enemy.x + speed) - this.player.x, enemy.z - this.player.z);
+        const dMinus = Math.hypot((enemy.x - speed) - this.player.x, enemy.z - this.player.z);
+        enemy.trackDir = dPlus >= dMinus ? 1 : -1;
+      }
+      const nextX = enemy.x + enemy.trackDir * speed;
+      const dNext = Math.hypot(nextX - this.player.x, enemy.z - this.player.z);
+      if (dNext >= minDist) {
+        enemy.x = nextX;
+      }
       if (enemy.x <= enemy.trackMin) {
         enemy.x = enemy.trackMin; enemy.trackDir = 1; this.scheduleEdgePause(enemy, currentTime);
       }
@@ -1104,12 +1126,15 @@ window.DoomGame = {
         enemy.x = enemy.trackMax; enemy.trackDir = -1; this.scheduleEdgePause(enemy, currentTime);
       }
       // Avance frontal ocasional lento si está lejos del jugador
-      if (distP > minDist * 1.2 && Math.random() < 0.02) {
+      if (distP > minDist * 1.3 && Math.random() < 0.006) {
         const step = slowAdvance;
         const nextZ = enemy.z + (Math.random() < 0.5 ? step : -step);
         const cell = GAME_CONFIG.cellSize;
         const centerZ = Math.floor(enemy.z / cell) * cell + cell / 2;
-        enemy.z = Math.max(centerZ - cell * 0.3, Math.min(centerZ + cell * 0.3, nextZ));
+        const dNextZ = Math.hypot(enemy.x - this.player.x, nextZ - this.player.z);
+        if (dNextZ >= minDist * 1.05) {
+          enemy.z = Math.max(centerZ - cell * 0.3, Math.min(centerZ + cell * 0.3, nextZ));
+        }
       }
       // Mantener distancia mínima: si está demasiado cerca, retroceder un poco en Z
       if (distP < minDist) {
@@ -1121,7 +1146,16 @@ window.DoomGame = {
       }
       enemy.angle = enemy.trackDir > 0 ? 0 : Math.PI;
     } else {
-      enemy.z += enemy.trackDir * speed;
+      if (distP <= minDist + 10) {
+        const dPlus = Math.hypot(enemy.x - this.player.x, (enemy.z + speed) - this.player.z);
+        const dMinus = Math.hypot(enemy.x - this.player.x, (enemy.z - speed) - this.player.z);
+        enemy.trackDir = dPlus >= dMinus ? 1 : -1;
+      }
+      const nextZ = enemy.z + enemy.trackDir * speed;
+      const dNext = Math.hypot(enemy.x - this.player.x, nextZ - this.player.z);
+      if (dNext >= minDist) {
+        enemy.z = nextZ;
+      }
       if (enemy.z <= enemy.trackMin) {
         enemy.z = enemy.trackMin; enemy.trackDir = 1; this.scheduleEdgePause(enemy, currentTime);
       }
@@ -1129,12 +1163,15 @@ window.DoomGame = {
         enemy.z = enemy.trackMax; enemy.trackDir = -1; this.scheduleEdgePause(enemy, currentTime);
       }
       // Avance frontal ocasional lento si está lejos del jugador (eje X)
-      if (distP > minDist * 1.2 && Math.random() < 0.02) {
+      if (distP > minDist * 1.3 && Math.random() < 0.006) {
         const step = slowAdvance;
         const nextX = enemy.x + (Math.random() < 0.5 ? step : -step);
         const cell = GAME_CONFIG.cellSize;
         const centerX = Math.floor(enemy.x / cell) * cell + cell / 2;
-        enemy.x = Math.max(centerX - cell * 0.3, Math.min(centerX + cell * 0.3, nextX));
+        const dNextX = Math.hypot(nextX - this.player.x, enemy.z - this.player.z);
+        if (dNextX >= minDist * 1.05) {
+          enemy.x = Math.max(centerX - cell * 0.3, Math.min(centerX + cell * 0.3, nextX));
+        }
       }
       // Mantener distancia mínima: si está demasiado cerca, retroceder un poco en X
       if (distP < minDist) {

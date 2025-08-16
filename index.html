@@ -14,7 +14,7 @@
   <!-- Meta tags para SEO y redes sociales -->
   <meta name="description" content="Juego estilo DOOM con laberintos, enemigos y combate en primera persona. ¡Explora, dispara y sobrevive!">
   <meta name="keywords" content="doom, juego, fps, laberinto, disparos, javascript, canvas">
-  <meta name="author" content="DOOM Game Team">
+  <meta name="author" content="Alex Rafael Almeida Orellana freudianDev">
   
   <!-- Open Graph para redes sociales -->
   <meta property="og:title" content="DOOM: Noboa de Cartón">
@@ -28,6 +28,8 @@
   <link rel="stylesheet" href="css/menus.css?v=20250815">
   <link rel="stylesheet" href="css/game-ui.css?v=20250815">
   <link rel="stylesheet" href="css/effects.css?v=20250815">
+  <!-- Estilos para móvil y responsive avanzado -->
+  <link rel="stylesheet" href="css/mobile.css?v=20250815">
 </head>
 <body>
   <!-- Menú de inicio -->
@@ -119,6 +121,39 @@
         </div>
       </aside>
     </div>
+
+    <!-- Controles móviles (aparecen solo en dispositivos táctiles) -->
+    <div id="mobile-controls" aria-label="Controles táctiles" class="hidden" role="group">
+      <div class="mc-left">
+        <button class="mc-btn mc-w" data-key="KeyW" aria-label="Avanzar">W</button>
+        <div class="mc-row">
+          <button class="mc-btn mc-a" data-key="KeyA" aria-label="Izquierda">A</button>
+          <button class="mc-btn mc-s" data-key="KeyS" aria-label="Atrás">S</button>
+          <button class="mc-btn mc-d" data-key="KeyD" aria-label="Derecha">D</button>
+        </div>
+      </div>
+      <div class="mc-right">
+        <div class="mc-row">
+          <button class="mc-btn mc-up" data-key="ArrowUp" aria-label="Cabeza arriba">↑</button>
+        </div>
+        <div class="mc-row">
+          <button class="mc-btn mc-left" data-key="ArrowLeft" aria-label="Cabeza izquierda">←</button>
+          <button class="mc-btn mc-right" data-key="ArrowRight" aria-label="Cabeza derecha">→</button>
+        </div>
+        <div class="mc-row">
+          <button class="mc-btn mc-down" data-key="ArrowDown" aria-label="Cabeza abajo">↓</button>
+        </div>
+      </div>
+      <button id="mc-shot" class="mc-shot" aria-label="Disparar">SHOT</button>
+    </div>
+
+    <!-- Overlay para rotar dispositivo a horizontal -->
+    <div id="rotate-overlay" class="hidden" aria-live="assertive">
+      <div class="rotate-card">
+        <div class="rotate-icon">📱↻</div>
+        <div class="rotate-text">Gira tu dispositivo a horizontal para jugar</div>
+      </div>
+    </div>
   </div>
 
   <!-- Precarga de sprites antes de iniciar el juego -->
@@ -149,6 +184,9 @@
   <!-- Luego cargar el juego y sus componentes -->
   <script src="game-all-in-one.js"></script>
   <script src="menu-manager.js"></script>
+  <!-- Responsive y controles móviles -->
+  <script src="responsive.js"></script>
+  <script src="mobile-controls.js"></script>
 
   <!-- Verificación mejorada -->
   <script>

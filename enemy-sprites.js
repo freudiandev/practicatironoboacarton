@@ -72,6 +72,37 @@ const SpriteSystem = {
     'assets/',
     './'                   // Directorio actual
   ],
+
+  // Intenta reemplazar cualquier sprite de respaldo con PNG real desde preload
+  hydrateFromPreloads() {
+    try {
+      const tryOne = (type) => {
+        if (this.sprites[type] && !this.sprites[type].__isFallback) return false;
+        // Preferir variable global creada por index.html
+        const g = window[`preloaded_${type}`];
+        const byId = document.getElementById(`preload-${type}`);
+        const byId2 = document.getElementById(`preload-${type}-2`);
+        const byId3 = document.getElementById(`preload-${type}-3`);
+        const candidate = (g && g.naturalWidth > 0 && g) || (byId && byId.complete && byId.naturalWidth > 0 && byId) || (byId2 && byId2.complete && byId2.naturalWidth > 0 && byId2) || (byId3 && byId3.complete && byId3.naturalWidth > 0 && byId3) || null;
+        if (candidate) {
+          this.sprites[type] = this.processSprite(candidate, type);
+          this.loadedCount = Math.max(this.loadedCount, Object.values(this.sprites).filter(s=>s).length);
+          this.logSuccess(`Reemplazado fallback de '${type}' con PNG precargado`);
+          return true;
+        }
+        return false;
+      };
+      let replaced = false;
+      Object.keys(SPRITE_CONFIG.ENEMY_TYPES).forEach(t => { replaced = tryOne(t) || replaced; });
+      if (replaced) {
+        this.loading = Object.values(this.sprites).filter(s=>s && !s.__isFallback).length < this.totalSprites;
+      }
+      return replaced;
+    } catch (e) {
+      this.logWarning('hydrateFromPreloads error: ' + e.message);
+      return false;
+    }
+  },
   
   /**
    * Precarga imágenes y encuentra la ruta correcta antes de inicializar
@@ -202,6 +233,8 @@ const SpriteSystem = {
     
     // Primero intentar precargar imágenes para encontrar la ruta correcta
     this.preloadImages(() => {
+  // Hidratar desde preloads por si ya están listos
+  this.hydrateFromPreloads();
       // Si ya encontramos todos los sprites durante la precarga, llamar al callback
       if (!this.loading) {
         this.logSuccess('✅ Sprites completamente cargados en precarga');
@@ -425,6 +458,7 @@ const SpriteSystem = {
         this.addImageToDOM(img, type);
         
         if (this.loadedCount === this.totalSprites) {
+          this.aliasFallbacks();
           this.logSuccess('✅ Todos los sprites cargados y procesados');
           this.loading = false;
           
@@ -447,6 +481,7 @@ const SpriteSystem = {
         this.tryAlternativePaths(type, config, callback);
         
         if (this.loadedCount === this.totalSprites) {
+          this.aliasFallbacks();
           this.logWarning('⚠️ Sistema de sprites inicializado con errores');
           this.loading = false;
           if (typeof callback === 'function') callback();
@@ -499,6 +534,7 @@ const SpriteSystem = {
         
         // Completar la carga
         if (this.loadedCount === this.totalSprites) {
+          this.aliasFallbacks();
           this.loading = false;
           this.logWarning('Sistema de sprites inicializado con sprites de respaldo');
           if (typeof callback === 'function') callback();
@@ -757,8 +793,10 @@ const SpriteSystem = {
         ctx.fillText(type, 5, 15);
       }
       
-      this.logInfo(`Sprite '${type}' procesado: ${canvas.width}x${canvas.height}`);
-      return canvas;
+  // Marcar como sprite real (no respaldo)
+  canvas.__isFallback = false;
+  this.logInfo(`Sprite '${type}' procesado: ${canvas.width}x${canvas.height}`);
+  return canvas;
     } catch (e) {
       this.logError(`Error al procesar sprite '${type}': ${e.message}`);
       return this.createFallbackSprite(type);
@@ -843,8 +881,23 @@ const SpriteSystem = {
     ctx.font = 'bold 14px Arial';
     ctx.fillText('RESPALDO', canvas.width/2, canvas.height*0.05);
     
+    // Marcar como respaldo para poder sustituirlo luego si hay uno real
+    canvas.__isFallback = true;
     this.logWarning(`Creado sprite de respaldo para '${type}'`);
     return canvas;
+  },
+  
+  // Reemplaza sprites de respaldo por cualquier sprite real disponible para evitar marcadores rojos
+  aliasFallbacks() {
+    const anyReal = Object.values(this.sprites).find(s => s && !s.__isFallback);
+    if (!anyReal) return;
+    Object.keys(this.sprites).forEach(type => {
+      const s = this.sprites[type];
+      if (!s || s.__isFallback) {
+        this.logWarning(`Sustituyendo sprite de respaldo '${type}' por uno real disponible`);
+        this.sprites[type] = anyReal;
+      }
+    });
   },
   
   /**
@@ -859,28 +912,18 @@ const SpriteSystem = {
     }
     
     if (this.loading) {
-      if (this.debug) {
-        // Renderizar un marcador mientras se cargan los sprites
-        ctx.fillStyle = 'rgba(255,0,0,0.5)';
-        ctx.fillRect(
-          (ctx.canvas.width/2) - 10, 
-          (ctx.canvas.height/2) - 10, 
-          20, 
-          20
-        );
-      }
+      // No dibujar marcador rojo; mejor no mostrar nada para evitar cuadros rojos
       return;
     }
     
-    // Asegurarse de que el enemigo tenga un tipo válido
+  // Reemplazar posibles fallbacks con preloads si están listos
+  this.hydrateFromPreloads();
+
+  // Asegurarse de que el enemigo tenga un tipo con sprite disponible
+    const pickLoadedType = () => (Object.keys(this.sprites).find(t => this.sprites[t]) || 'casual');
     if (!enemy.type || !this.sprites[enemy.type]) {
-      // Asignar un tipo si no tiene uno
-      enemy.type = Object.keys(this.sprites)[0];
-      
-      if (!this.sprites[enemy.type]) {
-        // Si no hay sprites disponibles, no podemos renderizar
-        return;
-      }
+      enemy.type = pickLoadedType();
+      if (!this.sprites[enemy.type]) return; // nada que dibujar
     }
     
     // Calcular vector relativo al jugador
@@ -919,7 +962,12 @@ const SpriteSystem = {
     const spriteWidth = spriteHeight / SPRITE_CONFIG.HUMAN_RATIO;
     
     // Seleccionar imagen según tipo
-    const sprite = this.sprites[enemy.type];
+    let sprite = this.sprites[enemy.type];
+    // Si es respaldo o inexistente, usar cualquier sprite real disponible
+    if (!sprite || sprite.__isFallback) {
+      const anyReal = Object.values(this.sprites).find(s => s && !s.__isFallback);
+      if (anyReal) sprite = anyReal; else return;
+    }
     
     // Calcular posición Y para que el sprite esté de pie sobre el suelo
     // Tomar en cuenta la mirada vertical del jugador si existe
@@ -933,18 +981,24 @@ const SpriteSystem = {
       // Guardar contexto
       ctx.save();
       
-      // Ajustar transparencia según distancia
-      const alpha = Math.max(0.4, Math.min(1.0, 1.2 - distance/SPRITE_CONFIG.MAX_RENDER_DISTANCE));
+  // Ajustar transparencia según distancia en tiles
+  const alpha = Math.max(0.4, Math.min(1.0, 1.2 - (distanceTiles/SPRITE_CONFIG.MAX_RENDER_DISTANCE)));
       ctx.globalAlpha = alpha;
       
-      // Dibujar sprite con las proporciones calculadas
-      ctx.drawImage(
-        sprite,
-        screenX - spriteWidth/2,
-        screenY,
-        spriteWidth,
-        spriteHeight
-      );
+      // Dibujar sprite con las proporciones calculadas (protegido)
+      try {
+        ctx.drawImage(
+          sprite,
+          screenX - spriteWidth/2,
+          screenY,
+          spriteWidth,
+          spriteHeight
+        );
+      } catch (e) {
+        this.logError(`drawImage falló para '${enemy.type}': ${e.message}`);
+        ctx.restore();
+        return;
+      }
       
       // Para debug, dibujar un marco alrededor del sprite
       if (this.debug) {
