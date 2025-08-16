@@ -1152,81 +1152,47 @@ window.DoomGame = {
     if (!enemy.pauseAtEdge) return;
     const [minP, maxP] = enemy.edgePauseRange || [250, 800];
     const pause = Math.floor(minP + Math.random() * (maxP - minP));
-    if (enemy.trackAxis === 'x') {
-      // Si está demasiado cerca, preferir moverse en la dirección que aumenta distancia
-      if (distP <= minDist + 20) {
-        const dPlus = Math.hypot((enemy.x + speed) - this.player.x, enemy.z - this.player.z);
-        const dMinus = Math.hypot((enemy.x - speed) - this.player.x, enemy.z - this.player.z);
-        enemy.trackDir = dPlus >= dMinus ? 1 : -1;
-      }
-      const nextX = enemy.x + enemy.trackDir * speed;
-      const dNext = Math.hypot(nextX - this.player.x, enemy.z - this.player.z);
-      if (dNext >= minDist) {
-        enemy.x = nextX;
-      }
+    if (enemy.hideAtEdges) {
+      enemy.hidden = true;
     }
     enemy.nextResumeTime = currentTime + (enemy.hidden ? Math.max(200, Math.floor(pause * 0.6)) : pause);
   },
 
   // Spawnea un enemigo en una celda que califique como pasillo
   spawnEnemyInCorridor() {
-      // Avance frontal ocasional lento si está lejos del jugador (más raro, y sin violar minDist)
-      if (distP > minDist * 1.25 && Math.random() < 0.008) {
-        // Empujar en dirección perpendicular alejándose del jugador
-        const dirAwayZ = Math.sign(enemy.z - this.player.z) || (Math.random() < 0.5 ? 1 : -1);
-        const step = slowAdvance * dirAwayZ;
-        const nextZ = enemy.z + step;
-        const dNextZ = Math.hypot(enemy.x - this.player.x, nextZ - this.player.z);
-        if (dNextZ >= minDist * 1.05) {
-          // Mantenerse dentro de la franja del pasillo sobre Z
-          const cell = GAME_CONFIG.cellSize;
-          const centerZ = Math.floor(enemy.z / cell) * cell + cell / 2;
-          enemy.z = Math.max(centerZ - cell * 0.3, Math.min(centerZ + cell * 0.3, nextZ));
-        }
-      }
+    const cell = GAME_CONFIG.cellSize;
+    const spot = this.findRandomCorridorCell(50);
+    if (!spot) return;
+
     const types = ['casual', 'deportivo', 'presidencial'];
     const type = types[this.nextEnemyTypeIndex++ % types.length];
-        const dirAwayZ = Math.sign(enemy.z - this.player.z) || 1;
-        const backStepZ = dirAwayZ * slowAdvance;
+    const speedByType = { casual: 0.9, deportivo: 1.4, presidencial: 1.1 };
+
     const enemy = {
       id: Date.now(),
       x: spot.x * cell + cell / 2,
       z: spot.z * cell + cell / 2,
       health: GAME_CONFIG.enemyHealth,
       angle: 0,
-      // Si está demasiado cerca, preferir moverse en la dirección que aumenta distancia
-      if (distP <= minDist + 20) {
-        const dPlus = Math.hypot(enemy.x - this.player.x, (enemy.z + speed) - this.player.z);
-        const dMinus = Math.hypot(enemy.x - this.player.x, (enemy.z - speed) - this.player.z);
-        enemy.trackDir = dPlus >= dMinus ? 1 : -1;
-      }
-      const nextZ = enemy.z + enemy.trackDir * speed;
-      const dNext = Math.hypot(enemy.x - this.player.x, nextZ - this.player.z);
-      if (dNext >= minDist) {
-        enemy.z = nextZ;
-      }
+      speed: speedByType[type] || GAME_CONFIG.enemySpeed,
       lastMove: 0,
       target: null,
       state: 'target',
       type,
       trackAxis: null,
       trackMin: 0,
-      // Avance frontal ocasional lento si está lejos del jugador (más raro) sobre X
-      if (distP > minDist * 1.25 && Math.random() < 0.008) {
-        const dirAwayX = Math.sign(enemy.x - this.player.x) || (Math.random() < 0.5 ? 1 : -1);
-        const step = slowAdvance * dirAwayX;
-        const nextX = enemy.x + step;
-        const dNextX = Math.hypot(nextX - this.player.x, enemy.z - this.player.z);
+      trackMax: 0,
+      trackDir: Math.random() < 0.5 ? -1 : 1,
+      // comportamiento de blanco de tiro
+      pauseAtEdge: true,
       edgePauseRange: [250, 800],
       nextResumeTime: 0,
-        if (dNextX >= minDist * 1.05) {
-          enemy.x = Math.max(centerX - cell * 0.3, Math.min(centerX + cell * 0.3, nextX));
-        }
+      hideAtEdges: Math.random() < 0.25,
       hidden: false,
       hideDuration: 300
     };
-        const dirAwayX = Math.sign(enemy.x - this.player.x) || 1;
-        const backStepX = dirAwayX * slowAdvance;
+    this.setupTargetTrack(enemy);
+    this.enemies.push(enemy);
   },
 
   // Busca aleatoriamente una celda pasillo (horizontal o vertical)
