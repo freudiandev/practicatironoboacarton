@@ -15,6 +15,10 @@
   <meta name="description" content="Juego estilo DOOM con laberintos, enemigos y combate en primera persona. ¡Explora, dispara y sobrevive!">
   <meta name="keywords" content="doom, juego, fps, laberinto, disparos, javascript, canvas">
   <meta name="author" content="Alex Rafael Almeida Orellana freudianDev">
+  <!-- Sugerencia de no-cache para el documento HTML (los recursos externos se versionan con ?v=) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   
   <!-- Open Graph para redes sociales -->
   <meta property="og:title" content="DOOM: Noboa de Cartón">
@@ -23,13 +27,13 @@
   <meta property="og:image" content="game-preview.png">
   
   <!-- Estilos separados por funcionalidad -->
-  <link rel="stylesheet" href="styles.css?v=20250815">
-  <link rel="stylesheet" href="css/layout.css?v=20250815">
-  <link rel="stylesheet" href="css/menus.css?v=20250815">
-  <link rel="stylesheet" href="css/game-ui.css?v=20250815">
-  <link rel="stylesheet" href="css/effects.css?v=20250815">
+  <link rel="stylesheet" href="styles.css?v=20250818">
+  <link rel="stylesheet" href="css/layout.css?v=20250818">
+  <link rel="stylesheet" href="css/menus.css?v=20250818">
+  <link rel="stylesheet" href="css/game-ui.css?v=20250818">
+  <link rel="stylesheet" href="css/effects.css?v=20250818">
   <!-- Estilos para móvil y responsive avanzado -->
-  <link rel="stylesheet" href="css/mobile.css?v=20250815">
+  <link rel="stylesheet" href="css/mobile.css?v=20250818">
 </head>
 <body>
   <!-- Menú de inicio -->
@@ -159,33 +163,47 @@
   <!-- Precarga de sprites antes de iniciar el juego -->
   <div id="sprite-preload" style="position: fixed; left: -9999px; top: -9999px; visibility: hidden;">
     <!-- Intentar diferentes rutas para mayor cobertura -->
-    <img src="noboa-casual.png" alt="Sprite casual" id="preload-casual">
-    <img src="assets/images/noboa-casual.png" alt="Sprite casual" id="preload-casual-2">
-    <img src="images/noboa-casual.png" alt="Sprite casual" id="preload-casual-3">
+  <img src="noboa-casual.png?v=20250818" alt="Sprite casual" id="preload-casual">
+  <img src="assets/images/noboa-casual.png?v=20250818" alt="Sprite casual" id="preload-casual-2">
+  <img src="images/noboa-casual.png?v=20250818" alt="Sprite casual" id="preload-casual-3">
     
-    <img src="noboa-deportivo.png" alt="Sprite deportivo" id="preload-deportivo">
-    <img src="assets/images/noboa-deportivo.png" alt="Sprite deportivo" id="preload-deportivo-2">
-    <img src="images/noboa-deportivo.png" alt="Sprite deportivo" id="preload-deportivo-3">
+  <img src="noboa-deportivo.png?v=20250818" alt="Sprite deportivo" id="preload-deportivo">
+  <img src="assets/images/noboa-deportivo.png?v=20250818" alt="Sprite deportivo" id="preload-deportivo-2">
+  <img src="images/noboa-deportivo.png?v=20250818" alt="Sprite deportivo" id="preload-deportivo-3">
     
-    <img src="noboa-presidencial.png" alt="Sprite presidencial" id="preload-presidencial">
-    <img src="assets/images/noboa-presidencial.png" alt="Sprite presidencial" id="preload-presidencial-2">
-    <img src="images/noboa-presidencial.png" alt="Sprite presidencial" id="preload-presidencial-3">
+  <img src="noboa-presidencial.png?v=20250818" alt="Sprite presidencial" id="preload-presidencial">
+  <img src="assets/images/noboa-presidencial.png?v=20250818" alt="Sprite presidencial" id="preload-presidencial-2">
+  <img src="images/noboa-presidencial.png?v=20250818" alt="Sprite presidencial" id="preload-presidencial-3">
   </div>
 
   <!-- SCRIPTS - ORDEN CRÍTICO CON DEBUG -->
-  <!-- Primero cargar los sprites y herramientas de diagnóstico -->
-  <script src="sprite-loader.js"></script>
-  <script src="debug-system.js"></script>
-  <script src="enemy-sprites.js"></script>
-  <script src="sprite-fixer.js"></script>
-  <script src="sprite-tester.js"></script>
-  <script src="doom-inspector.js"></script>
+  <!-- Definir versión global de assets antes de cualquier script -->
+  <script>window.__ASSET_VERSION__ = '20250818';</script>
+  <!-- Solo cargar el sistema de sprites necesario en producción -->
+  <script src="enemy-sprites.js?v=20250818"></script>
+  <!-- Carga condicional de utilidades de debug (deshabilitado por defecto) -->
+  <script>
+  window.__DEBUG_MODE__ = false; // Cambiar a true solo para depurar localmente
+    if (window.__DEBUG_MODE__) {
+      [
+        'sprite-loader.js',
+        'debug-system.js',
+        'sprite-fixer.js',
+        'sprite-tester.js',
+        'doom-inspector.js'
+      ].forEach(function(src) {
+        var s = document.createElement('script');
+    s.src = src + '?v=' + window.__ASSET_VERSION__;
+        document.head.appendChild(s);
+      });
+    }
+  </script>
   <!-- Luego cargar el juego y sus componentes -->
-  <script src="game-all-in-one.js"></script>
-  <script src="menu-manager.js"></script>
+  <script src="game-all-in-one.js?v=20250818"></script>
+  <script src="menu-manager.js?v=20250818"></script>
   <!-- Responsive y controles móviles -->
-  <script src="responsive.js"></script>
-  <script src="mobile-controls.js"></script>
+  <script src="responsive.js?v=20250818"></script>
+  <script src="mobile-controls.js?v=20250818"></script>
 
   <!-- Verificación mejorada -->
   <script>

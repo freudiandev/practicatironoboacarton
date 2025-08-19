@@ -16,7 +16,7 @@ const SPRITE_CONFIG = {
   // Configuración visual
   // Distancia máxima de renderizado en "celdas" (tiles) del mapa
   // En este juego, las posiciones están en píxeles; convertiremos a tiles usando cellSize
-  MAX_RENDER_DISTANCE: 24,
+  MAX_RENDER_DISTANCE: 36,
   SPRITE_QUALITY: 'high',   // Calidad de renderizado (high/medium/low)
   
   // Tipos de enemigos y sus características
@@ -73,6 +73,17 @@ const SpriteSystem = {
     './'                   // Directorio actual
   ],
 
+  // Añade parámetro de versión para bustear caché de forma consistente
+  appendVersion(url) {
+    try {
+      const v = (window && window.__ASSET_VERSION__) ? window.__ASSET_VERSION__ : (Date.now() + '');
+      const sep = url.includes('?') ? '&' : '?';
+      return url + sep + 'v=' + encodeURIComponent(v);
+    } catch (_) {
+      return url;
+    }
+  },
+
   // Asegura que cada tipo cargue su PNG propio desde la raíz (noboa-*.png)
   ensureAllSprites(maxRetries = 15, intervalMs = 800) {
     let attempts = 0;
@@ -105,7 +116,7 @@ const SpriteSystem = {
           img.onerror = () => {
             // seguir intentando en el próximo ciclo
           };
-          img.src = `/noboa-${type}.png?v=${Date.now()}`;
+          img.src = this.appendVersion(`/noboa-${type}.png`);
         } catch (_) {}
       });
       setTimeout(tryLoad, intervalMs);
@@ -530,7 +541,7 @@ const SpriteSystem = {
       
       // Evitar la caché del navegador
       const cacheBuster = '?v=' + new Date().getTime();
-      const imgUrl = config.spriteUrl + cacheBuster;
+  const imgUrl = this.appendVersion(config.spriteUrl);
       
       // Mostrar la URL que se está cargando
       this.logInfo(`Cargando sprite '${type}' desde '${config.spriteUrl}'...`);
@@ -633,7 +644,7 @@ const SpriteSystem = {
       
       this.logInfo(`Intentando ruta alternativa (${tried}/${alternativePaths.length}): '${path}'`);
       
-      const img = new Image();
+  const img = new Image();
       img.onload = () => {
         success = true;
         this.logSuccess(`✅ ÉXITO: Sprite '${type}' cargado desde '${path}'`);
@@ -657,7 +668,7 @@ const SpriteSystem = {
         setTimeout(tryNextPath, 50); // Reducir tiempo de espera para probar más rápido
       };
       
-      img.src = path;
+  img.src = this.appendVersion(path);
     };
     
     // Iniciar el proceso
@@ -722,9 +733,9 @@ const SpriteSystem = {
     // URLs potenciales (incluyendo URLs absolutas como último recurso)
     const potentialURLs = [
       // URLs relativas al origen
-      `/noboa-${type}.png`,
-      `/assets/images/noboa-${type}.png`,
-      `/images/noboa-${type}.png`,
+  `/noboa-${type}.png`,
+  `/assets/images/noboa-${type}.png`,
+  `/images/noboa-${type}.png`,
       // URLs absolutas (solo para pruebas, no para producción)
       `https://raw.githubusercontent.com/freudiandev/practicatironoboacarton/master/noboa-${type}.png`,
       window.location.origin + `/noboa-${type}.png`
@@ -751,7 +762,7 @@ const SpriteSystem = {
         setTimeout(tryNextURL, 50);
       };
       
-      img.src = url;
+  img.src = this.appendVersion(url);
     };
     
     tryNextURL();
@@ -877,10 +888,8 @@ const SpriteSystem = {
       return; // Salir si faltan datos esenciales
     }
     
-    if (this.loading) {
-      // Evitar cualquier render sin sprite real
-      return;
-    }
+  // Si el sprite específico ya está disponible (no fallback), podemos dibujar aunque el estado global siga "loading"
+  // Evita flicker de "marcadores" lejanos o rutas alternas cuando aún se están resolviendo otros tipos
     
   // Reemplazar posibles fallbacks con preloads si están listos
   this.hydrateFromPreloads();
@@ -929,7 +938,7 @@ const SpriteSystem = {
     const spriteWidth = spriteHeight / SPRITE_CONFIG.HUMAN_RATIO;
     
     // Seleccionar imagen según tipo
-    let sprite = this.sprites[enemy.type];
+  let sprite = this.sprites[enemy.type];
     // En ningún caso dibujar sprites de respaldo
     if (!sprite || sprite.__isFallback) {
       return;
