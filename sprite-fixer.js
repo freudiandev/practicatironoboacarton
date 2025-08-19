@@ -371,7 +371,7 @@
     /**
      * Carga sprites manualmente cuando no hay sistema de sprites
      */
-    function loadSpritesManually() {
+  function loadSpritesManually() {
       console.log('🔄 Cargando sprites manualmente...');
       
       const spriteSystem = window.EnemySpriteSystem || window.SpriteSystem;
@@ -390,67 +390,32 @@
         return;
       }
       
-      // Si no encontramos todos, crear respaldos
+      // Si no encontramos todos, crear respaldos SIN dibujo (totalmente transparentes)
       SPRITE_TYPES.forEach(type => {
         if (!spriteSystem.sprites[type]) {
-          console.log(`🔧 Creando respaldo para '${type}'`);
-          
-          // Crear un canvas como respaldo
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          // Configurar canvas
-          canvas.width = 256;
-          canvas.height = 640;
-          
-          // Color según tipo
-          let color;
-          switch(type) {
-            case 'casual': color = '#ff6b6b'; break;
-            case 'deportivo': color = '#4ecdc4'; break;
-            case 'presidencial': 
-            default: color = '#ffe66d'; break;
+          console.log(`🔧 Creando respaldo TRANSPARENTE para '${type}'`);
+
+          // Si existe el creador oficial de respaldos, usarlo (ya es transparente)
+          if (typeof spriteSystem.createFallbackSprite === 'function') {
+            spriteSystem.sprites[type] = spriteSystem.createFallbackSprite(type);
+          } else {
+            // Crear un canvas transparente como respaldo neutral
+            const canvas = document.createElement('canvas');
+            // Mantener proporciones humanas aproximadas si hay config global
+            const baseW = 256;
+            const humanRatio = (window.SPRITE_CONFIG && window.SPRITE_CONFIG.HUMAN_RATIO) || 2.5;
+            canvas.width = baseW;
+            canvas.height = Math.floor(baseW * humanRatio);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Marcar bandera para reconocerlo como fallback
+            canvas.__isFallback = true;
+            spriteSystem.sprites[type] = canvas;
           }
-          
-          // Dibujar silueta humana
-          ctx.fillStyle = color;
-          
-          // Cabeza
-          ctx.beginPath();
-          ctx.arc(canvas.width/2, canvas.height*0.15, canvas.width*0.12, 0, Math.PI * 2);
-          ctx.fill();
-          
-          // Torso
-          ctx.fillRect(
-            canvas.width/2 - canvas.width*0.15,
-            canvas.height*0.25,
-            canvas.width*0.3,
-            canvas.height*0.35
-          );
-          
-          // Piernas
-          ctx.fillRect(
-            canvas.width/2 - canvas.width*0.15,
-            canvas.height*0.6,
-            canvas.width*0.12,
-            canvas.height*0.4
-          );
-          ctx.fillRect(
-            canvas.width/2 + canvas.width*0.03,
-            canvas.height*0.6,
-            canvas.width*0.12,
-            canvas.height*0.4
-          );
-          
-          // Etiqueta
-          ctx.fillStyle = '#000';
-          ctx.font = 'bold 16px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText(type.toUpperCase(), canvas.width/2, canvas.height*0.95);
-          
-          // Asignar al sistema
-          spriteSystem.sprites[type] = canvas;
-          spriteSystem.loadedCount++;
+
+          if (typeof spriteSystem.loadedCount === 'number') {
+            spriteSystem.loadedCount++;
+          }
         }
       });
       

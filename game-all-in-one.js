@@ -24,7 +24,23 @@ window.GAME_CONFIG = {
   enemyHealth: 50,
   maxWallDepth: 3,
   verticalLookSensitivity: 0.02, // Nueva configuración para mirar arriba/abajo
-  enemyMinDistanceFromPlayer: 240 // Distancia mínima para que no se "pegue" al jugador
+  enemyMinDistanceFromPlayer: 240, // Distancia mínima para que no se "pegue" al jugador
+  showEnemyFallbackMarkers: false, // No mostrar marcadores de cuadrados rojos
+  // Ajustes de movimiento tipo "blanco de tiro"
+  targetTrack: {
+    amplitudeMinCells: 0.8,     // amplitud mínima en múltiplos de cellSize
+    amplitudeFallbackCells: 0.6, // amplitud fallback para pasillos cortos
+    lateralSpeed: 1.0,          // factor de velocidad lateral base (multiplica enemy.speed)
+    advanceSpeed: 0.22,         // factor de avance frontal base (multiplica enemy.speed)
+    edgePauseMs: [260, 780],    // rango de pausa en borde
+    hideAtEdgesChance: 0.25     // probabilidad de ocultarse en bordes
+  },
+  // Push-back suave para mantener distancia
+  separation: {
+    minDistance: 240,           // distancia objetivo mínima (px)
+    pushSpeed: 0.32,            // velocidad base de separación (px por tick aprox)
+    damping: 0.85               // amortiguación para suavizar
+  }
 };
 
 // Nuevo mapa tipo casa más espacioso
@@ -134,11 +150,12 @@ window.DoomGame = {
       }
       
       // Inicializar sistemas
-      this.initSounds();
-      this.initTextures();
-      this.setupControls();
-      this.spawnInitialEnemies();
-      this.spawnItems();
+  this.initSounds();
+  this.initTextures();
+  this.setupControls();
+  // Spawnear enemigos SOLO cuando los sprites PNG estén listos
+  this.spawnInitialEnemies();
+  this.spawnItems();
   // Alinear FOV del jugador con configuración para sprites
   this.player.fov = GAME_CONFIG.fov;
       
@@ -307,9 +324,16 @@ window.DoomGame = {
     ];
     
     const types = ['casual', 'deportivo', 'presidencial'];
+    const minSpawnDist = GAME_CONFIG.enemyMinDistanceFromPlayer || 240;
     const speedByType = { casual: 0.9, deportivo: 1.4, presidencial: 1.1 };
     spawnPoints.forEach((point, index) => {
       if (this.isValidSpawnPoint(point.x, point.z)) {
+        // Saltar puntos demasiado cercanos al jugador
+        const dxp = point.x - this.player.x;
+        const dzp = point.z - this.player.z;
+        if (Math.hypot(dxp, dzp) < minSpawnDist * 1.1) {
+          return; // no spawnear tan cerca
+        }
         const type = types[index % types.length];
         const enemy = {
           id: index,
@@ -328,11 +352,14 @@ window.DoomGame = {
           trackDir: Math.random() < 0.5 ? -1 : 1,
           // comportamiento de blanco de tiro
           pauseAtEdge: true,
-          edgePauseRange: [250, 800],
+          edgePauseRange: GAME_CONFIG.targetTrack.edgePauseMs || [250, 800],
           nextResumeTime: 0,
-          hideAtEdges: Math.random() < 0.25,
+          hideAtEdges: Math.random() < (GAME_CONFIG.targetTrack.hideAtEdgesChance ?? 0.25),
           hidden: false,
-          hideDuration: 300
+          hideDuration: 300,
+          // variables para empuje/ separación suave
+          sepVX: 0,
+          sepVZ: 0
         };
         // Configurar la pista de movimiento lateral en el pasillo
         this.setupTargetTrack(enemy);
@@ -406,9 +433,9 @@ window.DoomGame = {
     this.updatePlayer();
     
     // Update enemies
-  this.updateEnemies(currentTime);
+    this.updateEnemies(currentTime);
 
-    // Spawn gradual en pasillos
+    // Spawn gradual en pasillos SOLO si los sprites están listos
     if (
       this.enemies.length < GAME_CONFIG.maxEnemies &&
       currentTime - this.enemySpawnTimer > GAME_CONFIG.spawnCooldown
@@ -503,13 +530,16 @@ window.DoomGame = {
     this.enemies.forEach(enemy => {
       if (enemy.health <= 0) return;
 
-      // Movimiento lateral tipo "blanco de tiro" por pasillos
-      if (enemy.state === 'target' && enemy.trackAxis) {
-        this.updateTargetBehavior(enemy, currentTime);
-      } else {
-        // Fallback: si no hay pista, configurar una e intentar de nuevo
+      // Asegurar SIEMPRE el modo "blanco de tiro" y una pista válida
+      if (enemy.state !== 'target') {
+        enemy.state = 'target';
+      }
+      if (!enemy.trackAxis) {
         this.setupTargetTrack(enemy);
       }
+
+      // Movimiento lateral por pasillos (target-track)
+      this.updateTargetBehavior(enemy, currentTime);
     });
   },
   
@@ -977,6 +1007,7 @@ window.DoomGame = {
   renderSprites() {
     // Renderizar enemigos con sprites PNG a escala humana si el sistema existe
     if (window.EnemySpriteSystem) {
+      // Dibujar usando el sistema de sprites; no ocultar por loading
       this.enemies.forEach(enemy => {
         if (enemy.health <= 0 || enemy.hidden) return;
         try {
@@ -993,25 +1024,70 @@ window.DoomGame = {
       this.enemies.forEach(enemy => this.renderEnemyFallbackMarker(enemy));
     }
     
-    // Renderizar items
+    // Renderizar items (distancia menor y formas sin confusión visual)
     this.items.forEach(item => {
       if (item.collected) return;
       
       const dx = item.x - this.player.x;
       const dz = item.z - this.player.z;
       const distance = Math.sqrt(dx * dx + dz * dz);
-      
-      if (distance < 300) {
+
+      // Reducir rango para evitar que se vean como píxeles lejanos
+      if (distance < 220) {
         const angle = Math.atan2(dz, dx) - this.player.angle;
         const screenX = (this.width / 2) + Math.tan(angle) * (this.width / 2);
         
         if (screenX >= 0 && screenX < this.width) {
-          const size = Math.max(5, 100 / distance);
+          const size = Math.max(8, 110 / distance);
           const bobHeight = Math.sin(item.bobOffset) * 5;
           const screenY = this.height / 2 - size / 2 + bobHeight;
-          
-          this.ctx.fillStyle = item.color;
-          this.ctx.fillRect(screenX - size/2, screenY, size, size);
+
+          // Dibujar ítems con formas claras para no confundir con enemigos
+          if (item.type === 'ammo') {
+            // Círculo dorado con borde
+            const grd = this.ctx.createRadialGradient(screenX - size*0.2, screenY + size*0.2, size*0.2, screenX, screenY + size*0.1, size*0.7);
+            grd.addColorStop(0, '#ffe680');
+            grd.addColorStop(1, '#d4a017');
+            this.ctx.fillStyle = grd;
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY + size/2, size/2, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+          } else if (item.type === 'health') {
+            // Ícono de corazón rojo estilizado (sin rectángulos)
+            const cx = screenX;
+            const cy = screenY + size*0.55;
+            const w = size * 0.9;
+            const h = size * 0.9;
+            this.ctx.save();
+            this.ctx.translate(cx, cy);
+            this.ctx.scale(w/100, h/100);
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, 20);
+            this.ctx.bezierCurveTo(0, 0, -30, 0, -30, 20);
+            this.ctx.bezierCurveTo(-30, 40, -10, 55, 0, 70);
+            this.ctx.bezierCurveTo(10, 55, 30, 40, 30, 20);
+            this.ctx.bezierCurveTo(30, 0, 0, 0, 0, 20);
+            this.ctx.closePath();
+            this.ctx.fillStyle = '#e53935';
+            this.ctx.fill();
+            this.ctx.lineWidth = 2.2;
+            this.ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+            this.ctx.stroke();
+            this.ctx.restore();
+          } else {
+            // Otros: pequeño rombo verde
+            this.ctx.fillStyle = '#66bb6a';
+            this.ctx.beginPath();
+            this.ctx.moveTo(screenX, screenY);
+            this.ctx.lineTo(screenX + size/2, screenY + size/2);
+            this.ctx.lineTo(screenX, screenY + size);
+            this.ctx.lineTo(screenX - size/2, screenY + size/2);
+            this.ctx.closePath();
+            this.ctx.fill();
+          }
         }
       }
     });
@@ -1019,7 +1095,8 @@ window.DoomGame = {
 
   // Dibuja un marcador simple si no hay sprite disponible
   renderEnemyFallbackMarker(enemy) {
-  if (enemy.health <= 0 || enemy.hidden) return;
+  if (!GAME_CONFIG.showEnemyFallbackMarkers) return; // Desactivado por configuración
+    if (enemy.health <= 0 || enemy.hidden) return;
     const dx = enemy.x - this.player.x;
     const dz = enemy.z - this.player.z;
     const distance = Math.sqrt(dx * dx + dz * dz);
@@ -1029,9 +1106,17 @@ window.DoomGame = {
     if (screenX < 0 || screenX >= this.width) return;
     const size = Math.max(10, 200 / distance);
     const screenY = this.height / 2 - size / 2;
-    this.ctx.fillStyle = '#FF0000';
-    this.ctx.fillRect(screenX - size/2, screenY, size, size);
+    // Marcador alternativo no rojo y no cuadrado (triángulo semitransparente)
+    this.ctx.fillStyle = 'rgba(0, 150, 255, 0.5)';
+    this.ctx.beginPath();
+    this.ctx.moveTo(screenX, screenY);
+    this.ctx.lineTo(screenX + size/2, screenY + size);
+    this.ctx.lineTo(screenX - size/2, screenY + size);
+    this.ctx.closePath();
+    this.ctx.fill();
   },
+
+  
 
   // Configura una pista de movimiento lateral para un enemigo en función del laberinto
   setupTargetTrack(enemy) {
@@ -1039,7 +1124,7 @@ window.DoomGame = {
     const cell = window.GAME_CONFIG.cellSize;
     const gx = Math.floor(enemy.x / cell);
     const gz = Math.floor(enemy.z / cell);
-    const margin = Math.max(8, Math.floor(cell * 0.125));
+  const margin = Math.max(12, Math.floor(cell * 0.15));
 
     const isFree = (x, z) => (
       x >= 0 && x < window.GAME_CONFIG.gridCols &&
@@ -1064,26 +1149,39 @@ window.DoomGame = {
     const lenZ = Math.max(0, maxZ - minZ);
 
     // Elegir el eje más largo para moverse de lado a lado
-    if (lenX >= lenZ && lenX > cell * 0.75) {
+    if (lenX >= lenZ && lenX > cell * 0.6) {
       enemy.trackAxis = 'x';
-      enemy.trackMin = minX;
-      enemy.trackMax = maxX;
+      // Forzar una amplitud mínima de oscilación configurable
+      const minAmp = Math.max(cell * (GAME_CONFIG.targetTrack?.amplitudeMinCells ?? 0.8), 160);
+      const center = (minX + maxX) / 2;
+      const half = Math.max(minAmp / 2, (maxX - minX) / 2);
+      enemy.trackMin = Math.max(minX, center - half);
+      enemy.trackMax = Math.min(maxX, center + half);
       // Centrar al enemigo en el corredor sobre Z
       enemy.z = (gz + 0.5) * cell;
       // Ajustar posición a límites
       enemy.x = Math.min(Math.max(enemy.x, enemy.trackMin), enemy.trackMax);
     } else if (lenZ > cell * 0.75) {
       enemy.trackAxis = 'z';
-      enemy.trackMin = minZ;
-      enemy.trackMax = maxZ;
+      const minAmp = Math.max(cell * (GAME_CONFIG.targetTrack?.amplitudeMinCells ?? 0.8), 160);
+      const center = (minZ + maxZ) / 2;
+      const half = Math.max(minAmp / 2, (maxZ - minZ) / 2);
+      enemy.trackMin = Math.max(minZ, center - half);
+      enemy.trackMax = Math.min(maxZ, center + half);
       // Centrar al enemigo en el corredor sobre X
       enemy.x = (gx + 0.5) * cell;
       enemy.z = Math.min(Math.max(enemy.z, enemy.trackMin), enemy.trackMax);
     } else {
       // Fallback: pequeña oscilación local en X
-      enemy.trackAxis = 'x';
-      enemy.trackMin = enemy.x - cell * 0.3;
-      enemy.trackMax = enemy.x + cell * 0.3;
+      enemy.trackAxis = (lenZ > lenX) ? 'z' : 'x';
+      const amp = Math.max(cell * (GAME_CONFIG.targetTrack?.amplitudeFallbackCells ?? 0.6), 140);
+      if (enemy.trackAxis === 'x') {
+        enemy.trackMin = enemy.x - amp / 2;
+        enemy.trackMax = enemy.x + amp / 2;
+      } else {
+        enemy.trackMin = enemy.z - amp / 2;
+        enemy.trackMax = enemy.z + amp / 2;
+      }
     }
   },
 
@@ -1098,16 +1196,16 @@ window.DoomGame = {
       enemy.nextResumeTime = 0;
     }
 
-  const speed = Math.max(0.4, enemy.speed * 0.9); // velocidad base lateral, un poco más contenida
-  const slowAdvance = Math.max(0.1, enemy.speed * 0.25); // avance frontal aún más lento
+  const speed = Math.max(0.5, enemy.speed * (GAME_CONFIG.targetTrack?.lateralSpeed ?? 1.0));
+  const slowAdvance = Math.max(0.06, enemy.speed * (GAME_CONFIG.targetTrack?.advanceSpeed ?? 0.22));
 
     // Mantener distancia del jugador: no cruzar un radio mínimo
     const dxP = enemy.x - this.player.x;
     const dzP = enemy.z - this.player.z;
     const distP = Math.hypot(dxP, dzP);
-    const minDist = GAME_CONFIG.enemyMinDistanceFromPlayer || 240;
+  const minDist = (GAME_CONFIG.separation?.minDistance ?? GAME_CONFIG.enemyMinDistanceFromPlayer) || 240;
 
-    if (enemy.trackAxis === 'x') {
+  if (enemy.trackAxis === 'x') {
       // elegir dirección que aumenta distancia si estamos cerca
       if (distP <= minDist + 10) {
         const dPlus = Math.hypot((enemy.x + speed) - this.player.x, enemy.z - this.player.z);
@@ -1119,10 +1217,10 @@ window.DoomGame = {
       if (dNext >= minDist) {
         enemy.x = nextX;
       }
-      if (enemy.x <= enemy.trackMin) {
+  if (enemy.x <= enemy.trackMin) {
         enemy.x = enemy.trackMin; enemy.trackDir = 1; this.scheduleEdgePause(enemy, currentTime);
       }
-      if (enemy.x >= enemy.trackMax) {
+  if (enemy.x >= enemy.trackMax) {
         enemy.x = enemy.trackMax; enemy.trackDir = -1; this.scheduleEdgePause(enemy, currentTime);
       }
       // Avance frontal ocasional lento si está lejos del jugador
@@ -1136,16 +1234,25 @@ window.DoomGame = {
           enemy.z = Math.max(centerZ - cell * 0.3, Math.min(centerZ + cell * 0.3, nextZ));
         }
       }
-      // Mantener distancia mínima: si está demasiado cerca, retroceder un poco en Z
+      // Mantener distancia mínima: push-back suave con amortiguación
       if (distP < minDist) {
-        const angAway = Math.atan2(enemy.z - this.player.z, enemy.x - this.player.x);
-        const backStepZ = Math.sin(angAway) * slowAdvance;
+        const dirX = (enemy.x - this.player.x) / Math.max(0.0001, distP);
+        const dirZ = (enemy.z - this.player.z) / Math.max(0.0001, distP);
+        const push = (GAME_CONFIG.separation?.pushSpeed ?? 0.32);
+        enemy.sepVX = (enemy.sepVX || 0) * (GAME_CONFIG.separation?.damping ?? 0.85) + dirX * push;
+        enemy.sepVZ = (enemy.sepVZ || 0) * (GAME_CONFIG.separation?.damping ?? 0.85) + dirZ * push;
         const cell = GAME_CONFIG.cellSize;
         const centerZ = Math.floor(enemy.z / cell) * cell + cell / 2;
-        enemy.z = Math.max(centerZ - cell * 0.3, Math.min(centerZ + cell * 0.3, enemy.z + backStepZ));
+        enemy.x = Math.min(Math.max(enemy.x + enemy.sepVX, enemy.trackMin), enemy.trackMax);
+        const targetZ = enemy.z + enemy.sepVZ;
+        enemy.z = Math.max(centerZ - cell * 0.3, Math.min(centerZ + cell * 0.3, targetZ));
+      } else {
+        // Desacelerar la separación cuando ya no está cerca
+        enemy.sepVX = (enemy.sepVX || 0) * (GAME_CONFIG.separation?.damping ?? 0.85);
+        enemy.sepVZ = (enemy.sepVZ || 0) * (GAME_CONFIG.separation?.damping ?? 0.85);
       }
       enemy.angle = enemy.trackDir > 0 ? 0 : Math.PI;
-    } else {
+  } else {
       if (distP <= minDist + 10) {
         const dPlus = Math.hypot(enemy.x - this.player.x, (enemy.z + speed) - this.player.z);
         const dMinus = Math.hypot(enemy.x - this.player.x, (enemy.z - speed) - this.player.z);
@@ -1156,10 +1263,10 @@ window.DoomGame = {
       if (dNext >= minDist) {
         enemy.z = nextZ;
       }
-      if (enemy.z <= enemy.trackMin) {
+  if (enemy.z <= enemy.trackMin) {
         enemy.z = enemy.trackMin; enemy.trackDir = 1; this.scheduleEdgePause(enemy, currentTime);
       }
-      if (enemy.z >= enemy.trackMax) {
+  if (enemy.z >= enemy.trackMax) {
         enemy.z = enemy.trackMax; enemy.trackDir = -1; this.scheduleEdgePause(enemy, currentTime);
       }
       // Avance frontal ocasional lento si está lejos del jugador (eje X)
@@ -1173,13 +1280,21 @@ window.DoomGame = {
           enemy.x = Math.max(centerX - cell * 0.3, Math.min(centerX + cell * 0.3, nextX));
         }
       }
-      // Mantener distancia mínima: si está demasiado cerca, retroceder un poco en X
+      // Mantener distancia mínima: push-back suave con amortiguación
       if (distP < minDist) {
-        const angAway = Math.atan2(enemy.z - this.player.z, enemy.x - this.player.x);
-        const backStepX = Math.cos(angAway) * slowAdvance;
+        const dirX = (enemy.x - this.player.x) / Math.max(0.0001, distP);
+        const dirZ = (enemy.z - this.player.z) / Math.max(0.0001, distP);
+        const push = (GAME_CONFIG.separation?.pushSpeed ?? 0.32);
+        enemy.sepVX = (enemy.sepVX || 0) * (GAME_CONFIG.separation?.damping ?? 0.85) + dirX * push;
+        enemy.sepVZ = (enemy.sepVZ || 0) * (GAME_CONFIG.separation?.damping ?? 0.85) + dirZ * push;
         const cell = GAME_CONFIG.cellSize;
         const centerX = Math.floor(enemy.x / cell) * cell + cell / 2;
-        enemy.x = Math.max(centerX - cell * 0.3, Math.min(centerX + cell * 0.3, enemy.x + backStepX));
+        const targetX = enemy.x + enemy.sepVX;
+        enemy.x = Math.max(centerX - cell * 0.3, Math.min(centerX + cell * 0.3, targetX));
+        enemy.z = Math.min(Math.max(enemy.z + enemy.sepVZ, enemy.trackMin), enemy.trackMax);
+      } else {
+        enemy.sepVX = (enemy.sepVX || 0) * (GAME_CONFIG.separation?.damping ?? 0.85);
+        enemy.sepVZ = (enemy.sepVZ || 0) * (GAME_CONFIG.separation?.damping ?? 0.85);
       }
       enemy.angle = enemy.trackDir > 0 ? Math.PI/2 : -Math.PI/2;
     }
@@ -1187,12 +1302,13 @@ window.DoomGame = {
 
   scheduleEdgePause(enemy, currentTime) {
     if (!enemy.pauseAtEdge) return;
-    const [minP, maxP] = enemy.edgePauseRange || [250, 800];
+    const [minP, maxP] = enemy.edgePauseRange || [320, 900];
     const pause = Math.floor(minP + Math.random() * (maxP - minP));
     if (enemy.hideAtEdges) {
       enemy.hidden = true;
     }
-    enemy.nextResumeTime = currentTime + (enemy.hidden ? Math.max(200, Math.floor(pause * 0.6)) : pause);
+    // Limitar tiempo oculto para que el ritmo se sienta constante
+    enemy.nextResumeTime = currentTime + (enemy.hidden ? Math.max(220, Math.min(650, Math.floor(pause * 0.55))) : pause);
   },
 
   // Spawnea un enemigo en una celda que califique como pasillo
@@ -1221,10 +1337,10 @@ window.DoomGame = {
       trackMax: 0,
       trackDir: Math.random() < 0.5 ? -1 : 1,
       // comportamiento de blanco de tiro
-      pauseAtEdge: true,
-      edgePauseRange: [250, 800],
+  pauseAtEdge: true,
+  edgePauseRange: GAME_CONFIG.targetTrack.edgePauseMs || [250, 800],
       nextResumeTime: 0,
-      hideAtEdges: Math.random() < 0.25,
+  hideAtEdges: Math.random() < (GAME_CONFIG.targetTrack.hideAtEdgesChance ?? 0.25),
       hidden: false,
       hideDuration: 300
     };

@@ -67,8 +67,8 @@ const SpriteManager = {
         }
       };
       
-      // Ruta a la imagen
-      img.src = `assets/images/noboa-${type}.png`;
+  // Ruta a la imagen (desde la raíz del sitio)
+  img.src = `noboa-${type}.png`;
     });
   },
   
@@ -122,67 +122,10 @@ const SpriteManager = {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    canvas.width = 128;
-    canvas.height = 256;
-    
-    // Color según tipo
-    let color;
-    switch(type) {
-      case 'casual': color = '#ff6b6b'; break;
-      case 'deportivo': color = '#4ecdc4'; break;
-      case 'presidencial': 
-      default: color = '#ffe66d'; break;
-    }
-    
-    // Dibujar silueta humana básica
-    ctx.fillStyle = color;
-    
-    // Cabeza
-    ctx.beginPath();
-    ctx.arc(canvas.width/2, canvas.height*0.15, canvas.width*0.25, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Cuerpo
-    ctx.fillRect(
-      canvas.width * 0.3, 
-      canvas.height * 0.25, 
-      canvas.width * 0.4, 
-      canvas.height * 0.45
-    );
-    
-    // Piernas
-    ctx.fillRect(
-      canvas.width * 0.35, 
-      canvas.height * 0.7, 
-      canvas.width * 0.1, 
-      canvas.height * 0.3
-    );
-    ctx.fillRect(
-      canvas.width * 0.55, 
-      canvas.height * 0.7, 
-      canvas.width * 0.1, 
-      canvas.height * 0.3
-    );
-    
-    // Brazos
-    ctx.fillRect(
-      canvas.width * 0.15, 
-      canvas.height * 0.3, 
-      canvas.width * 0.15, 
-      canvas.height * 0.3
-    );
-    ctx.fillRect(
-      canvas.width * 0.7, 
-      canvas.height * 0.3, 
-      canvas.width * 0.15, 
-      canvas.height * 0.3
-    );
-    
-    // Texto de tipo
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(type.toUpperCase(), canvas.width/2, canvas.height*0.95);
+  canvas.width = 128;
+  canvas.height = 256;
+  // Fondo transparente (sin formas geométricas)
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     return canvas;
   },
@@ -200,9 +143,7 @@ const SpriteManager = {
     const sprite = this.sprites.enemies[type] || this.sprites.enemies.casual;
     
     if (!sprite) {
-      // Si no hay sprite, dibujamos un placeholder
-      ctx.fillStyle = '#ff0000';
-      ctx.fillRect(x, y, width, height);
+  // Si no hay sprite, no dibujar nada (evitar cuadrados)
       return;
     }
     

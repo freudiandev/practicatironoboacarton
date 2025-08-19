@@ -63,9 +63,9 @@ window.CanvasSystem = {
     this.ctx.fillStyle = '#222';
     this.ctx.fillRect(0, 0, this.width, this.height);
     
-    // Cuadrado rojo de prueba
-    this.ctx.fillStyle = '#ff6b6b';
-    this.ctx.fillRect(100, 100, 200, 200);
+  // Nota: Desactivado cualquier marcador de prueba rojo para evitar confusiones visuales
+  // this.ctx.fillStyle = '#ff6b6b';
+  // this.ctx.fillRect(100, 100, 200, 200);
     
     // Texto
     this.ctx.fillStyle = '#fff';

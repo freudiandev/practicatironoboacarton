@@ -211,26 +211,8 @@ window.DoomRenderer = {
     pop();
   },
 
-  drawEnemies() {
-    // VERIFICAR que existen enemigos
-    if (!window.enemies || window.enemies.length === 0) {
-      console.warn('⚠️ No hay enemigos para renderizar');
-      return;
-    }
-    
-    console.log(`🎨 Renderizando ${window.enemies.length} enemigos`);
-    
-    // Ordenar enemigos por distancia (más lejanos primero)
-    const sortedEnemies = window.enemies.slice().sort((a, b) => {
-      const distA = Math.sqrt((a.x - window.player.x) ** 2 + (a.z - window.player.z) ** 2);
-      const distB = Math.sqrt((b.x - window.player.x) ** 2 + (b.z - window.player.z) ** 2);
-      return distB - distA;
-    });
-    
-    sortedEnemies.forEach((enemy, index) => {
-      this.drawEnemy3D(enemy, index);
-    });
-  },
+  // Desactivado para evitar cualquier fallback rectangular si este renderer se inyecta por error
+  drawEnemies() { /* no-op */ },
   
   drawEnemy3D(enemy, index) {
     if (!window.player) return;

@@ -22,19 +22,19 @@ const SPRITE_CONFIG = {
   // Tipos de enemigos y sus características
   ENEMY_TYPES: {
     'casual': {
-      spriteUrl: 'noboa-casual.png',
+  spriteUrl: '/noboa-casual.png',
       width: 0.5,           // Ancho relativo (multiplicador)
       height: 1.0,          // Altura relativa (multiplicador)
       walkSpeed: 1.0        // Velocidad relativa
     },
     'deportivo': {
-      spriteUrl: 'noboa-deportivo.png',
+  spriteUrl: '/noboa-deportivo.png',
       width: 0.45,          // Más delgado por ser deportista
       height: 1.05,         // Ligeramente más alto
       walkSpeed: 1.2        // Más rápido
     },
     'presidencial': {
-      spriteUrl: 'noboa-presidencial.png',
+  spriteUrl: '/noboa-presidencial.png',
       width: 0.55,          // Más ancho por el traje
       height: 1.0,          // Altura estándar
       walkSpeed: 0.9        // Más lento por ser formal
@@ -52,7 +52,7 @@ const SpriteSystem = {
   },
   
   // Mensajes de debug
-  debug: true,              // Activar/desactivar mensajes de debug
+  debug: false,             // Desactivar overlay/etiquetas para evitar rectángulos visibles
   
   // Estado de carga
   loading: true,
@@ -72,6 +72,46 @@ const SpriteSystem = {
     'assets/',
     './'                   // Directorio actual
   ],
+
+  // Asegura que cada tipo cargue su PNG propio desde la raíz (noboa-*.png)
+  ensureAllSprites(maxRetries = 15, intervalMs = 800) {
+    let attempts = 0;
+    const tryLoad = () => {
+      this.hydrateFromPreloads();
+      let remaining = [];
+      Object.keys(SPRITE_CONFIG.ENEMY_TYPES).forEach(type => {
+        const s = this.sprites[type];
+        if (!s || s.__isFallback) remaining.push(type);
+      });
+      if (remaining.length === 0) {
+        this.loading = false;
+        this.loadedCount = this.totalSprites;
+        this.logSuccess('✅ Verificación estricta: los 3 PNGs están cargados');
+        return; 
+      }
+      if (attempts++ >= maxRetries) {
+        this.logWarning('⚠️ Verificación estricta: no se cargaron todos los PNGs tras reintentos: ' + remaining.join(', '));
+        return;
+      }
+      // Intentar carga directa desde raíz para los que faltan
+      remaining.forEach(type => {
+        try {
+          const img = new Image();
+          img.onload = () => {
+            this.sprites[type] = this.processSprite(img, type);
+            this.loadedCount = Math.max(this.loadedCount, Object.values(this.sprites).filter(s=>s).length);
+            this.logSuccess(`✅ Cargado desde raíz: noboa-${type}.png`);
+          };
+          img.onerror = () => {
+            // seguir intentando en el próximo ciclo
+          };
+          img.src = `/noboa-${type}.png?v=${Date.now()}`;
+        } catch (_) {}
+      });
+      setTimeout(tryLoad, intervalMs);
+    };
+    tryLoad();
+  },
 
   // Intenta reemplazar cualquier sprite de respaldo con PNG real desde preload
   hydrateFromPreloads() {
@@ -746,11 +786,7 @@ const SpriteSystem = {
     // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Añadir borde para debug
-    if (this.debug) {
-      ctx.strokeStyle = 'rgba(255,0,0,0.5)';
-      ctx.strokeRect(0, 0, canvas.width, canvas.height);
-    }
+  // Sin borde de debug para no crear rectángulos visibles
     
     try {
       // Ajustar según tipo de enemigo
@@ -784,14 +820,7 @@ const SpriteSystem = {
           break;
       }
       
-      // Añadir etiqueta para debug
-      if (this.debug) {
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(0, 0, 80, 20);
-        ctx.fillStyle = 'white';
-        ctx.font = '12px Arial';
-        ctx.fillText(type, 5, 15);
-      }
+  // No añadir etiquetas para evitar artefactos rectangulares
       
   // Marcar como sprite real (no respaldo)
   canvas.__isFallback = false;
@@ -815,71 +844,8 @@ const SpriteSystem = {
     // Usar las mismas dimensiones que los sprites reales
     canvas.width = 256;
     canvas.height = Math.floor(256 * SPRITE_CONFIG.HUMAN_RATIO);
-    
-    // Color según tipo
-    let color;
-    switch(type) {
-      case 'casual': color = '#ff6b6b'; break;
-      case 'deportivo': color = '#4ecdc4'; break;
-      case 'presidencial': 
-      default: color = '#ffe66d'; break;
-    }
-    
-    // Dibujar silueta humana
-    ctx.fillStyle = color;
-    
-    // Cabeza
-    ctx.beginPath();
-    ctx.arc(canvas.width/2, canvas.height*0.15, canvas.width*0.12, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Torso (trapecio)
-    ctx.beginPath();
-    ctx.moveTo(canvas.width/2 - canvas.width*0.15, canvas.height*0.25);
-    ctx.lineTo(canvas.width/2 + canvas.width*0.15, canvas.height*0.25);
-    ctx.lineTo(canvas.width/2 + canvas.width*0.2, canvas.height*0.6);
-    ctx.lineTo(canvas.width/2 - canvas.width*0.2, canvas.height*0.6);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Piernas
-    ctx.fillRect(
-      canvas.width/2 - canvas.width*0.15, 
-      canvas.height*0.6, 
-      canvas.width*0.12, 
-      canvas.height*0.4
-    );
-    ctx.fillRect(
-      canvas.width/2 + canvas.width*0.03, 
-      canvas.height*0.6, 
-      canvas.width*0.12, 
-      canvas.height*0.4
-    );
-    
-    // Brazos
-    ctx.fillRect(
-      canvas.width/2 - canvas.width*0.28, 
-      canvas.height*0.25, 
-      canvas.width*0.1, 
-      canvas.height*0.3
-    );
-    ctx.fillRect(
-      canvas.width/2 + canvas.width*0.18, 
-      canvas.height*0.25, 
-      canvas.width*0.1, 
-      canvas.height*0.3
-    );
-    
-    // Etiqueta con el tipo
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(type.toUpperCase(), canvas.width/2, canvas.height*0.95);
-    
-    // Mensaje indicando que es un respaldo
-    ctx.fillStyle = 'red';
-    ctx.font = 'bold 14px Arial';
-    ctx.fillText('RESPALDO', canvas.width/2, canvas.height*0.05);
+  // Fondo completamente transparente para que no se vea ningún cuadro
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Marcar como respaldo para poder sustituirlo luego si hay uno real
     canvas.__isFallback = true;
@@ -912,7 +878,7 @@ const SpriteSystem = {
     }
     
     if (this.loading) {
-      // No dibujar marcador rojo; mejor no mostrar nada para evitar cuadros rojos
+      // Evitar cualquier render sin sprite real
       return;
     }
     
@@ -920,10 +886,11 @@ const SpriteSystem = {
   this.hydrateFromPreloads();
 
   // Asegurarse de que el enemigo tenga un tipo con sprite disponible
-    const pickLoadedType = () => (Object.keys(this.sprites).find(t => this.sprites[t]) || 'casual');
-    if (!enemy.type || !this.sprites[enemy.type]) {
-      enemy.type = pickLoadedType();
-      if (!this.sprites[enemy.type]) return; // nada que dibujar
+    const pickLoadedType = () => (Object.keys(this.sprites).find(t => this.sprites[t] && !this.sprites[t].__isFallback) || null);
+    if (!enemy.type || !this.sprites[enemy.type] || this.sprites[enemy.type].__isFallback) {
+      const valid = pickLoadedType();
+      if (!valid) return; // no hay sprite real aún
+      enemy.type = valid;
     }
     
     // Calcular vector relativo al jugador
@@ -963,16 +930,16 @@ const SpriteSystem = {
     
     // Seleccionar imagen según tipo
     let sprite = this.sprites[enemy.type];
-    // Si es respaldo o inexistente, usar cualquier sprite real disponible
+    // En ningún caso dibujar sprites de respaldo
     if (!sprite || sprite.__isFallback) {
-      const anyReal = Object.values(this.sprites).find(s => s && !s.__isFallback);
-      if (anyReal) sprite = anyReal; else return;
+      return;
     }
     
-    // Calcular posición Y para que el sprite esté de pie sobre el suelo
-    // Tomar en cuenta la mirada vertical del jugador si existe
-    const verticalLook = player.verticalLook || 0;
-    const screenY = (canvasHeight/2) - (spriteHeight/2) + (verticalLook * canvasHeight/4);
+  // Calcular posición Y para que el sprite esté apoyado en el suelo del juego (no flotando)
+  // Usamos la misma fórmula de offset vertical que el render del suelo en DoomGame.renderFloor
+  const verticalLook = player.verticalLook || 0;
+  const floorTop = (canvasHeight / 2) + (verticalLook * canvasHeight * 0.6);
+  const screenY = floorTop - spriteHeight; // anclar la base del sprite al suelo
     
     // Verificar si hay una pared entre el jugador y el enemigo
     const isVisible = this.checkVisibility(player, enemy);
@@ -1000,24 +967,7 @@ const SpriteSystem = {
         return;
       }
       
-      // Para debug, dibujar un marco alrededor del sprite
-      if (this.debug) {
-        ctx.strokeStyle = 'rgba(0,255,0,0.5)';
-        ctx.strokeRect(
-          screenX - spriteWidth/2,
-          screenY,
-          spriteWidth,
-          spriteHeight
-        );
-        
-        // Mostrar distancia y tipo
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(screenX - 40, screenY - 30, 80, 20);
-        ctx.fillStyle = 'white';
-        ctx.font = '10px Arial';
-        ctx.textAlign = 'center';
-  ctx.fillText(`${enemy.type} (${distanceTiles.toFixed(1)}u)`, screenX, screenY - 15);
-      }
+  // Sin marcos/etiquetas de debug para evitar figuras rectangulares
       
       // Restaurar contexto
       ctx.restore();
@@ -1096,7 +1046,7 @@ const SpriteSystem = {
    * y realiza intentos adicionales para los que faltan
    */
   forceVisibility() {
-    console.log('%c 🔄 FORZANDO VISIBILIDAD DE SPRITES... ', 'background: #00a; color: white; font-size: 14px; padding: 5px;');
+  console.log('%c 🔄 FORZANDO VISIBILIDAD DE SPRITES... ', 'background: #00a; color: white; font-size: 14px; padding: 5px;');
     
     // Verificar cuáles sprites están cargados y cuáles no
     let spritesLoaded = 0;
@@ -1198,13 +1148,7 @@ const SpriteSystem = {
       ctx.filter = 'none';
     }
     
-    // Añadir etiqueta para identificar
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fillRect(0, 0, 80, 20);
-    ctx.fillStyle = 'white';
-    ctx.font = '12px Arial';
-    ctx.fillText(type, 5, 15);
+  // No añadir etiquetas ni rectángulos para evitar artefactos
     
     return canvas;
   },
@@ -1280,6 +1224,8 @@ function initSprites() {
     
     // Forzar visibilidad de los sprites después de la carga
     SpriteSystem.forceVisibility();
+  // Garantizar que los 3 PNGs propios terminen cargados
+  SpriteSystem.ensureAllSprites();
     
     // Verificar integración con DoomGame
     if (window.DoomGame) {

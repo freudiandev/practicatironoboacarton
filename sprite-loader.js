@@ -53,7 +53,7 @@
       img.dataset.path = path;
       img.alt = `Sprite ${sprite.name}`;
       
-      // Evento de carga exitosa
+  // Evento de carga exitosa
       img.onload = function() {
         if (!loadedImg) {
           loadedImg = this;
@@ -89,14 +89,14 @@
           document.dispatchEvent(event);
         }
         
-        // Estilizar para indicar que se cargó correctamente
-        this.style.border = '2px solid green';
+  // Estilizar para indicar que se cargó correctamente
+  this.style.border = '2px solid green';
       };
       
       // Evento de error
       img.onerror = function() {
         loadAttempts++;
-        this.style.border = '2px solid red';
+  this.style.border = '2px solid red';
         if (loadAttempts >= pathPrefixes.length) {
           console.warn(`❌ No se pudo cargar el sprite ${sprite.name} desde ninguna ruta`);
         }

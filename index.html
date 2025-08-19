@@ -180,7 +180,6 @@
   <script src="sprite-fixer.js"></script>
   <script src="sprite-tester.js"></script>
   <script src="doom-inspector.js"></script>
-  <script src="force-render.js"></script>
   <!-- Luego cargar el juego y sus componentes -->
   <script src="game-all-in-one.js"></script>
   <script src="menu-manager.js"></script>
@@ -191,6 +190,8 @@
   <!-- Verificación mejorada -->
   <script>
     console.log('🔍 === VERIFICACIÓN DE SISTEMAS ===');
+  // Flag global para UI de depuración (botones flotantes)
+  const ENABLE_DEBUG_PANELS = false;
     
     // Verificación de componentes críticos
     console.log('- DoomGame disponible:', !!window.DoomGame ? '✅' : '❌');
@@ -306,7 +307,7 @@
     }
     
     // Asegurar que MenuManager se inicialice correctamente
-    window.addEventListener('load', () => {
+  window.addEventListener('load', () => {
       console.log('%c 🎮 JUEGO CARGADO COMPLETAMENTE ', 'background: #00a; color: white; font-size: 16px; padding: 5px;');
       console.log('🔍 === VERIFICACIÓN FINAL ===');
       console.log('- DoomGame:', !!window.DoomGame ? '✅ DISPONIBLE' : '❌ NO DISPONIBLE');
@@ -363,85 +364,97 @@
         window.MenuManager.initialized = true;
       }
       
-      // Crear un panel de depuración/control
-      const debugPanel = document.createElement('div');
-      debugPanel.style.position = 'fixed';
-      debugPanel.style.bottom = '10px';
-      debugPanel.style.right = '10px';
-      debugPanel.style.zIndex = '9999';
-      debugPanel.style.backgroundColor = 'rgba(0,0,0,0.8)';
-      debugPanel.style.color = 'white';
-      debugPanel.style.padding = '10px';
-      debugPanel.style.borderRadius = '5px';
-      debugPanel.style.display = 'flex';
-      debugPanel.style.flexDirection = 'column';
-      debugPanel.style.gap = '5px';
-      
-      // Botón para recargar sprites
-      const reloadBtn = document.createElement('button');
-      reloadBtn.textContent = '🔄 Recargar Sprites';
-      reloadBtn.style.padding = '8px 12px';
-      reloadBtn.style.backgroundColor = '#007bff';
-      reloadBtn.style.color = 'white';
-      reloadBtn.style.border = 'none';
-      reloadBtn.style.borderRadius = '4px';
-      reloadBtn.style.cursor = 'pointer';
-      reloadBtn.onclick = function() {
-        if (window.EnemySpriteSystem) {
-          window.EnemySpriteSystem.loading = true;
-          window.EnemySpriteSystem.loadedCount = 0;
-          window.EnemySpriteSystem.errors = [];
-          window.EnemySpriteSystem.init(() => {
-            checkSpriteStatus();
-          });
-        }
-        
-        // También transferir imágenes precargadas
-        transferPreloadedImages();
-      };
-      debugPanel.appendChild(reloadBtn);
-      
-      // Botón para forzar renderizado
-      const renderBtn = document.createElement('button');
-      renderBtn.textContent = '🎮 Forzar Renderizado';
-      renderBtn.style.padding = '8px 12px';
-      renderBtn.style.backgroundColor = '#28a745';
-      renderBtn.style.color = 'white';
-      renderBtn.style.border = 'none';
-      renderBtn.style.borderRadius = '4px';
-      renderBtn.style.cursor = 'pointer';
-      renderBtn.onclick = function() {
-        if (window.DoomGame && typeof window.DoomGame.render === 'function') {
-          console.log('🔄 Forzando renderizado...');
-          window.DoomGame.render();
-        }
-      };
-      debugPanel.appendChild(renderBtn);
-      
-      // Botón para mostrar estado
-      const statusBtn = document.createElement('button');
-      statusBtn.textContent = '📊 Mostrar Estado';
-      statusBtn.style.padding = '8px 12px';
-      statusBtn.style.backgroundColor = '#ffc107';
-      statusBtn.style.color = 'black';
-      statusBtn.style.border = 'none';
-      statusBtn.style.borderRadius = '4px';
-      statusBtn.style.cursor = 'pointer';
-      statusBtn.onclick = function() {
-        checkSpriteStatus();
-        
-        if (window.DoomGame) {
-          console.log('📊 Estado del juego:');
-          console.log('- Enemigos:', window.DoomGame.enemies ? window.DoomGame.enemies.length : 'N/A');
-          if (window.DoomGame.enemies && window.DoomGame.enemies.length > 0) {
-            console.log('- Primer enemigo:', window.DoomGame.enemies[0]);
+      // UI de depuración opcional: crear solo si está habilitada
+      if (ENABLE_DEBUG_PANELS) {
+        const debugPanel = document.createElement('div');
+        debugPanel.style.position = 'fixed';
+        debugPanel.style.bottom = '10px';
+        debugPanel.style.right = '10px';
+        debugPanel.style.zIndex = '9999';
+        debugPanel.style.backgroundColor = 'rgba(0,0,0,0.8)';
+        debugPanel.style.color = 'white';
+        debugPanel.style.padding = '10px';
+        debugPanel.style.borderRadius = '5px';
+        debugPanel.style.display = 'flex';
+        debugPanel.style.flexDirection = 'column';
+        debugPanel.style.gap = '5px';
+
+        const reloadBtn = document.createElement('button');
+        reloadBtn.textContent = '🔄 Recargar Sprites';
+        reloadBtn.style.padding = '8px 12px';
+        reloadBtn.style.backgroundColor = '#007bff';
+        reloadBtn.style.color = 'white';
+        reloadBtn.style.border = 'none';
+        reloadBtn.style.borderRadius = '4px';
+        reloadBtn.style.cursor = 'pointer';
+        reloadBtn.onclick = function() {
+          if (window.EnemySpriteSystem) {
+            window.EnemySpriteSystem.loading = true;
+            window.EnemySpriteSystem.loadedCount = 0;
+            window.EnemySpriteSystem.errors = [];
+            window.EnemySpriteSystem.init(() => {
+              checkSpriteStatus();
+            });
           }
+          transferPreloadedImages();
+        };
+        debugPanel.appendChild(reloadBtn);
+
+        const renderBtn = document.createElement('button');
+        renderBtn.textContent = '🎮 Forzar Renderizado';
+        renderBtn.style.padding = '8px 12px';
+        renderBtn.style.backgroundColor = '#28a745';
+        renderBtn.style.color = 'white';
+        renderBtn.style.border = 'none';
+        renderBtn.style.borderRadius = '4px';
+        renderBtn.style.cursor = 'pointer';
+        renderBtn.onclick = function() {
+          if (window.DoomGame && typeof window.DoomGame.render === 'function') {
+            console.log('🔄 Forzando renderizado...');
+            window.DoomGame.render();
+          }
+        };
+        debugPanel.appendChild(renderBtn);
+
+        const statusBtn = document.createElement('button');
+        statusBtn.textContent = '📊 Mostrar Estado';
+        statusBtn.style.padding = '8px 12px';
+        statusBtn.style.backgroundColor = '#ffc107';
+        statusBtn.style.color = 'black';
+        statusBtn.style.border = 'none';
+        statusBtn.style.borderRadius = '4px';
+        statusBtn.style.cursor = 'pointer';
+        statusBtn.onclick = function() {
+          checkSpriteStatus();
+          if (window.DoomGame) {
+            console.log('📊 Estado del juego:');
+            console.log('- Enemigos:', window.DoomGame.enemies ? window.DoomGame.enemies.length : 'N/A');
+            if (window.DoomGame.enemies && window.DoomGame.enemies.length > 0) {
+              console.log('- Primer enemigo:', window.DoomGame.enemies[0]);
+            }
+          }
+        };
+        debugPanel.appendChild(statusBtn);
+
+        document.body.appendChild(debugPanel);
+      } else {
+        // Limpieza defensiva: eliminar botones/overlays de render forzado si algún script los añadió
+        try {
+          const demo = document.getElementById('sprite-demo-container');
+          if (demo) demo.remove();
+          const dbg = document.getElementById('sprite-debug-panel');
+          if (dbg) dbg.remove();
+          const buttons = Array.from(document.querySelectorAll('button'));
+          buttons.forEach(b => {
+            const t = (b.textContent || '').toLowerCase();
+            if (t.includes('forzar renderizado') || t.includes('forzar render') || t.includes('recargar sprites')) {
+              b.remove();
+            }
+          });
+        } catch (e) {
+          console.warn('Limpieza de botones de depuración falló:', e);
         }
-      };
-      debugPanel.appendChild(statusBtn);
-      
-      // Añadir al documento
-      document.body.appendChild(debugPanel);
+      }
     });
   </script>
 
