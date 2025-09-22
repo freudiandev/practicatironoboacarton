@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Generador Automático de Sprites Uniformes</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            background: #111; 
+            color: #0f0; 
+            padding: 20px; 
+            text-align: center;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background: #222;
+            border-radius: 8px;
+            border-left: 4px solid #0f0;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .sprite-card {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #555;
+        }
+        .sprite-comparison {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .sprite-before, .sprite-after {
+            text-align: center;
+        }
+        .sprite-before canvas, .sprite-after canvas {
+            border: 2px solid #666;
+            margin: 10px;
+        }
+        .sprite-after canvas {
+            border-color: #0f0;
+        }
+        .download-btn {
+            background: #0a8a0a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .download-btn:hover {
+            background: #0c9c0c;
+        }
+        #processing {
+            font-size: 18px;
+            color: #ff0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Generador Automático de Sprites Uniformes</h1>
+    <p>Uniformizando sprites de noboas manteniendo proporción...</p>
+    
+    <div id="processing">⚙️ Procesando sprites...</div>
+    <div id="status-container"></div>
+    <div id="preview-container"></div>
+    
+    <script>
+        const sprites = ['casual', 'deportivo', 'presidencial'];
+        const processedSprites = [];
+        let loadedCount = 0;
+        let targetSize = 256; // Tamaño estándar para sprites de juegos
+
+        function updateStatus(message) {
+            const container = document.getElementById('status-container');
+            const div = document.createElement('div');
+            div.className = 'status';
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> ${message}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function processSprite(type) {
+            updateStatus(`📥 Cargando noboa-${type}.png...`);
+            
+            const img = new Image();
+            img.onload = function() {
+                updateStatus(`✅ noboa-${type}.png cargado: ${img.width}×${img.height}px`);
+                
+                // Crear canvas uniformizado
+                const canvas = document.createElement('canvas');
+                canvas.width = targetSize;
+                canvas.height = targetSize;
+                const ctx = canvas.getContext('2d');
+                
+                // Fondo transparente
+                ctx.clearRect(0, 0, targetSize, targetSize);
+                
+                // Calcular escala manteniendo proporción
+                const scale = Math.min(targetSize / img.width, targetSize / img.height) * 0.85; // 0.85 para margen
+                const drawWidth = img.width * scale;
+                const drawHeight = img.height * scale;
+                const x = (targetSize - drawWidth) / 2;
+                const y = (targetSize - drawHeight) / 2;
+                
+                // Dibujar imagen centrada y escalada
+                ctx.drawImage(img, x, y, drawWidth, drawHeight);
+                
+                // Crear canvas de preview del original
+                const originalCanvas = document.createElement('canvas');
+                originalCanvas.width = 128;
+                originalCanvas.height = 128;
+                const originalCtx = originalCanvas.getContext('2d');
+                originalCtx.fillStyle = '#f0f0f0';
+                originalCtx.fillRect(0, 0, 128, 128);
+                
+                const previewScale = Math.min(128 / img.width, 128 / img.height);
+                const previewWidth = img.width * previewScale;
+                const previewHeight = img.height * previewScale;
+                const previewX = (128 - previewWidth) / 2;
+                const previewY = (128 - previewHeight) / 2;
+                originalCtx.drawImage(img, previewX, previewY, previewWidth, previewHeight);
+                
+                // Crear canvas de preview del uniformizado
+                const uniformCanvas = document.createElement('canvas');
+                uniformCanvas.width = 128;
+                uniformCanvas.height = 128;
+                const uniformCtx = uniformCanvas.getContext('2d');
+                uniformCtx.fillStyle = '#f0f0f0';
+                uniformCtx.fillRect(0, 0, 128, 128);
+                uniformCtx.drawImage(canvas, 0, 0, targetSize, targetSize, 0, 0, 128, 128);
+                
+                processedSprites.push({
+                    type: type,
+                    original: { width: img.width, height: img.height, canvas: originalCanvas },
+                    uniform: { width: targetSize, height: targetSize, canvas: canvas },
+                    preview: uniformCanvas,
+                    scale: scale
+                });
+                
+                updateStatus(`🎨 noboa-${type}.png uniformizado a ${targetSize}×${targetSize}px (escala: ${(scale*100).toFixed(1)}%)`);
+                
+                loadedCount++;
+                if (loadedCount === sprites.length) {
+                    finishProcessing();
+                }
+            };
+            
+            img.onerror = function() {
+                updateStatus(`❌ Error cargando noboa-${type}.png`);
+                loadedCount++;
+                if (loadedCount === sprites.length) {
+                    finishProcessing();
+                }
+            };
+            
+            img.src = `noboa-${type}.png`;
+        }
+
+        function finishProcessing() {
+            document.getElementById('processing').innerHTML = '✅ Procesamiento completado!';
+            updateStatus(`🎉 Todos los sprites uniformizados exitosamente!`);
+            
+            // Mostrar comparación y descargas
+            const container = document.getElementById('preview-container');
+            container.innerHTML = '<h2>📊 Resultados:</h2>';
+            
+            const grid = document.createElement('div');
+            grid.className = 'preview-grid';
+            
+            processedSprites.forEach(sprite => {
+                const card = document.createElement('div');
+                card.className = 'sprite-card';
+                
+                card.innerHTML = `
+                    <h3>Noboa ${sprite.type}</h3>
+                    <div class="sprite-comparison">
+                        <div class="sprite-before">
+                            <h4>Original</h4>
+                            <div>${sprite.original.width}×${sprite.original.height}px</div>
+                        </div>
+                        <div class="sprite-after">
+                            <h4>Uniformizado</h4>
+                            <div>${sprite.uniform.width}×${sprite.uniform.height}px</div>
+                        </div>
+                    </div>
+                    <p>Escala aplicada: ${(sprite.scale * 100).toFixed(1)}%</p>
+                    <button class="download-btn" onclick="downloadSprite('${sprite.type}')">
+                        💾 Descargar noboa-${sprite.type}-uniform.png
+                    </button>
+                `;
+                
+                // Agregar previews
+                const comparison = card.querySelector('.sprite-comparison');
+                comparison.children[0].appendChild(sprite.original.canvas.cloneNode());
+                comparison.children[1].appendChild(sprite.preview);
+                
+                grid.appendChild(card);
+            });
+            
+            container.appendChild(grid);
+            
+            // Botón para descargar todos
+            const downloadAllBtn = document.createElement('button');
+            downloadAllBtn.className = 'download-btn';
+            downloadAllBtn.style.fontSize = '18px';
+            downloadAllBtn.style.padding = '20px 40px';
+            downloadAllBtn.innerHTML = '📦 Descargar Todos los Sprites Uniformes';
+            downloadAllBtn.onclick = downloadAll;
+            container.appendChild(downloadAllBtn);
+            
+            updateStatus(`📋 Listo para descargar ${processedSprites.length} sprites uniformizados`);
+        }
+
+        function downloadSprite(type) {
+            const sprite = processedSprites.find(s => s.type === type);
+            if (sprite) {
+                const link = document.createElement('a');
+                link.download = `noboa-${type}-uniform.png`;
+                link.href = sprite.uniform.canvas.toDataURL('image/png');
+                link.click();
+                updateStatus(`⬇️ Descargado: noboa-${type}-uniform.png`);
+            }
+        }
+
+        function downloadAll() {
+            processedSprites.forEach(sprite => {
+                setTimeout(() => {
+                    downloadSprite(sprite.type);
+                }, sprite.type === 'casual' ? 0 : sprite.type === 'deportivo' ? 500 : 1000);
+            });
+            updateStatus(`📦 Iniciando descarga de todos los sprites...`);
+        }
+
+        // Iniciar procesamiento automático
+        updateStatus('🚀 Iniciando uniformización automática de sprites...');
+        sprites.forEach(processSprite);
+    </script>
+</body>
+</html>

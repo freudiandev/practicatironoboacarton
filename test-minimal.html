@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prueba Mínima de Sistemas</title>
+  <style>
+    body { font-family: monospace; background: #000; color: #0f0; padding: 20px; }
+    canvas { border: 1px solid #333; background: #111; }
+    .controls { margin: 20px 0; }
+    button { 
+      padding: 10px 20px; 
+      margin: 5px; 
+      background: #007bff; 
+      color: white; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+    }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h1>🔫 Prueba Mínima de Sistemas de Armas</h1>
+  
+  <canvas id="testCanvas" width="600" height="400"></canvas>
+  
+  <div class="controls">
+    <button onclick="testShotgunSound()">🔊 Probar Sonido Escopeta</button>
+    <button onclick="testBulletCreation()">🎯 Crear Bala</button>
+    <button onclick="testBulletRender()">🎨 Renderizar Efectos</button>
+    <button onclick="clearCanvas()">🧹 Limpiar Canvas</button>
+  </div>
+  
+  <div id="log"></div>
+  
+  <script src="bullet-effects.js"></script>
+  <script src="weapon-audio.js"></script>
+  
+  <script>
+    const canvas = document.getElementById('testCanvas');
+    const ctx = canvas.getContext('2d');
+    const log = document.getElementById('log');
+    
+    let bulletSystem = null;
+    let audioSystem = null;
+    
+    function addLog(message, type = 'info') {
+      const div = document.createElement('div');
+      div.style.color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : '#ff0';
+      div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+      log.appendChild(div);
+      console.log(message);
+    }
+    
+    // Inicializar sistemas
+    try {
+      bulletSystem = new BulletEffectsSystem();
+      addLog('✅ Sistema de balas inicializado', 'success');
+    } catch (error) {
+      addLog(`❌ Error en sistema de balas: ${error.message}`, 'error');
+    }
+    
+    try {
+      audioSystem = new WeaponAudioSystem();
+      addLog('✅ Sistema de audio inicializado', 'success');
+    } catch (error) {
+      addLog(`❌ Error en sistema de audio: ${error.message}`, 'error');
+    }
+    
+    function testShotgunSound() {
+      if (audioSystem) {
+        try {
+          audioSystem.playShotgunSound();
+          addLog('🔊 Sonido de escopeta reproducido', 'success');
+        } catch (error) {
+          addLog(`❌ Error reproduciendo sonido: ${error.message}`, 'error');
+        }
+      } else {
+        addLog('❌ Sistema de audio no disponible', 'error');
+      }
+    }
+    
+    function testBulletCreation() {
+      if (bulletSystem) {
+        try {
+          // Crear bala desde el centro hacia la derecha
+          const result = bulletSystem.createBullet(300, 200, 0, 0);
+          addLog(`🎯 Bala creada: ${JSON.stringify(result)}`, 'success');
+        } catch (error) {
+          addLog(`❌ Error creando bala: ${error.message}`, 'error');
+        }
+      } else {
+        addLog('❌ Sistema de balas no disponible', 'error');
+      }
+    }
+    
+    function testBulletRender() {
+      if (bulletSystem) {
+        try {
+          // Simular un objeto de juego mínimo
+          const mockGame = {
+            maze: [
+              [1,1,1,1,1],
+              [1,0,0,0,1],
+              [1,0,0,0,1],
+              [1,0,0,0,1],
+              [1,1,1,1,1]
+            ],
+            enemies: [],
+            width: canvas.width,
+            height: canvas.height,
+            player: { x: 300, z: 200 }
+          };
+          
+          // Actualizar sistema (necesario para animaciones)
+          bulletSystem.update(mockGame);
+          
+          // Renderizar efectos
+          bulletSystem.render(ctx, canvas.width, canvas.height);
+          addLog('🎨 Efectos renderizados', 'success');
+        } catch (error) {
+          addLog(`❌ Error renderizando: ${error.message}`, 'error');
+        }
+      } else {
+        addLog('❌ Sistema de balas no disponible', 'error');
+      }
+    }
+    
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      addLog('🧹 Canvas limpiado');
+    }
+    
+    // Auto-renderizado para ver animaciones
+    setInterval(() => {
+      if (bulletSystem && bulletSystem.bullets && bulletSystem.bullets.length > 0) {
+        testBulletRender();
+      }
+    }, 50);
+    
+    addLog('🚀 Sistema de pruebas listo');
+  </script>
+</body>
+</html>

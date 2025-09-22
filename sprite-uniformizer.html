@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Sprite Analyzer - Noboas</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            background: #222; 
+            color: white; 
+            padding: 20px; 
+        }
+        .sprite-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #333;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .sprite-preview {
+            border: 2px solid #555;
+            background: #fff;
+        }
+        .info-text {
+            flex: 1;
+        }
+        #results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #0a4a0a;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Analizador de Sprites Noboas</h1>
+    <p>Analizando dimensiones de todos los sprites...</p>
+    
+    <div id="sprite-container"></div>
+    <div id="results"></div>
+
+    <script>
+        const sprites = ['casual', 'deportivo', 'presidencial'];
+        const spriteData = [];
+        let loadedCount = 0;
+
+        function analyzeSprite(type) {
+            const img = new Image();
+            img.onload = function() {
+                const data = {
+                    type: type,
+                    width: img.width,
+                    height: img.height,
+                    aspectRatio: (img.width / img.height).toFixed(3),
+                    image: img
+                };
+                spriteData.push(data);
+                
+                // Mostrar información del sprite
+                const container = document.getElementById('sprite-container');
+                const div = document.createElement('div');
+                div.className = 'sprite-info';
+                
+                const canvas = document.createElement('canvas');
+                canvas.className = 'sprite-preview';
+                canvas.width = 100;
+                canvas.height = 100;
+                const ctx = canvas.getContext('2d');
+                
+                // Dibujar imagen escalada manteniendo proporción
+                const scale = Math.min(100 / img.width, 100 / img.height);
+                const drawWidth = img.width * scale;
+                const drawHeight = img.height * scale;
+                const x = (100 - drawWidth) / 2;
+                const y = (100 - drawHeight) / 2;
+                
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(0, 0, 100, 100);
+                ctx.drawImage(img, x, y, drawWidth, drawHeight);
+                
+                div.innerHTML = `
+                    <div class="info-text">
+                        <h3>noboa-${type}.png</h3>
+                        <p><strong>Dimensiones:</strong> ${img.width} × ${img.height} px</p>
+                        <p><strong>Proporción:</strong> ${data.aspectRatio}</p>
+                        <p><strong>Tamaño:</strong> ${((img.width * img.height) / 1000).toFixed(1)}K pixels</p>
+                    </div>
+                `;
+                div.insertBefore(canvas, div.firstChild);
+                container.appendChild(div);
+                
+                loadedCount++;
+                if (loadedCount === sprites.length) {
+                    generateResults();
+                }
+            };
+            
+            img.onerror = function() {
+                console.error(`Error cargando: noboa-${type}.png`);
+                loadedCount++;
+                if (loadedCount === sprites.length) {
+                    generateResults();
+                }
+            };
+            
+            img.src = `noboa-${type}.png`;
+        }
+
+        function generateResults() {
+            const results = document.getElementById('results');
+            
+            if (spriteData.length === 0) {
+                results.innerHTML = '<h2>❌ Error: No se pudieron cargar las imágenes</h2>';
+                return;
+            }
+
+            // Calcular dimensiones objetivo
+            const maxWidth = Math.max(...spriteData.map(s => s.width));
+            const maxHeight = Math.max(...spriteData.map(s => s.height));
+            
+            // Encontrar una dimensión cuadrada que sea potencia de 2 y contenga todas las imágenes
+            const targetSize = Math.pow(2, Math.ceil(Math.log2(Math.max(maxWidth, maxHeight))));
+            
+            let html = `
+                <h2>📊 Análisis Completado</h2>
+                <h3>📏 Dimensiones Actuales:</h3>
+                <ul>
+            `;
+            
+            spriteData.forEach(sprite => {
+                html += `<li><strong>${sprite.type}:</strong> ${sprite.width}×${sprite.height} (ratio: ${sprite.aspectRatio})</li>`;
+            });
+            
+            html += `
+                </ul>
+                <h3>🎯 Recomendación de Uniformización:</h3>
+                <p><strong>Dimensión objetivo:</strong> ${targetSize} × ${targetSize} pixels</p>
+                <p><strong>Método:</strong> Centrar cada imagen manteniendo proporción original</p>
+                <p><strong>Fondo:</strong> Transparente</p>
+                
+                <h3>📋 Plan de Uniformización:</h3>
+                <ol>
+                    <li>Crear canvas de ${targetSize}×${targetSize} para cada sprite</li>
+                    <li>Mantener proporción original de cada imagen</li>
+                    <li>Centrar imagen en el canvas</li>
+                    <li>Rellenar con transparencia</li>
+                    <li>Exportar como PNG optimizado</li>
+                </ol>
+                
+                <button onclick="generateUniformSprites()" style="
+                    padding: 15px 30px; 
+                    background: #0a8a0a; 
+                    color: white; 
+                    border: none; 
+                    border-radius: 5px; 
+                    font-size: 16px; 
+                    cursor: pointer;
+                    margin: 20px 0;
+                ">🔧 Generar Sprites Uniformes</button>
+                
+                <div id="uniform-sprites"></div>
+            `;
+            
+            results.innerHTML = html;
+        }
+
+        function generateUniformSprites() {
+            const container = document.getElementById('uniform-sprites');
+            const targetSize = Math.pow(2, Math.ceil(Math.log2(Math.max(...spriteData.map(s => Math.max(s.width, s.height))))));
+            
+            container.innerHTML = '<h3>🎨 Sprites Uniformizados:</h3>';
+            
+            spriteData.forEach(sprite => {
+                const div = document.createElement('div');
+                div.className = 'sprite-info';
+                div.style.background = '#2a2a2a';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = targetSize;
+                canvas.height = targetSize;
+                canvas.style.border = '2px solid #0a8a0a';
+                canvas.style.background = 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAGElEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==)';
+                
+                const ctx = canvas.getContext('2d');
+                
+                // Calcular escala para mantener proporción
+                const scale = Math.min(targetSize / sprite.width, targetSize / sprite.height) * 0.9; // 0.9 para dejar un pequeño margen
+                const drawWidth = sprite.width * scale;
+                const drawHeight = sprite.height * scale;
+                const x = (targetSize - drawWidth) / 2;
+                const y = (targetSize - drawHeight) / 2;
+                
+                // Dibujar imagen centrada
+                ctx.drawImage(sprite.image, x, y, drawWidth, drawHeight);
+                
+                div.innerHTML = `
+                    <div class="info-text">
+                        <h4>noboa-${sprite.type}-uniform.png</h4>
+                        <p><strong>Nueva dimensión:</strong> ${targetSize} × ${targetSize} px</p>
+                        <p><strong>Imagen original:</strong> ${sprite.width} × ${sprite.height} px</p>
+                        <p><strong>Escala aplicada:</strong> ${(scale * 100).toFixed(1)}%</p>
+                        <button onclick="downloadSprite('${sprite.type}', this.parentElement.parentElement.querySelector('canvas'))" style="
+                            padding: 8px 16px; 
+                            background: #0a6a0a; 
+                            color: white; 
+                            border: none; 
+                            border-radius: 3px; 
+                            cursor: pointer;
+                            margin-top: 10px;
+                        ">💾 Descargar</button>
+                    </div>
+                `;
+                div.insertBefore(canvas, div.firstChild);
+                container.appendChild(div);
+            });
+        }
+
+        function downloadSprite(type, canvas) {
+            const link = document.createElement('a');
+            link.download = `noboa-${type}-uniform.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Iniciar análisis
+        sprites.forEach(analyzeSprite);
+    </script>
+</body>
+</html>

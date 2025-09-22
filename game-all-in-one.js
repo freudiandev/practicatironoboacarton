@@ -13,9 +13,9 @@ window.GAME_CONFIG = {
   playerSpeed: 2.0, // Reducido para menos sensibilidad
   rotationSpeed: 0.03, // Reducido de 0.05 para menos sensibilidad
   playerRadius: 20,
-  maxEnemies: 8,
+  maxEnemies: 4,         // Reducido de 8 a 4 para menos densidad
   enemySpeed: 1.0,
-  spawnCooldown: 3000,
+  spawnCooldown: 5000,   // Aumentado de 3000 a 5000ms para spawns más espaciados
   fireRate: 300,
   maxAmmo: 30,
   damage: 25,
@@ -28,12 +28,14 @@ window.GAME_CONFIG = {
   showEnemyFallbackMarkers: false, // No mostrar marcadores de cuadrados rojos
   // Ajustes de movimiento tipo "blanco de tiro"
   targetTrack: {
-    amplitudeMinCells: 0.8,     // amplitud mínima en múltiplos de cellSize
-    amplitudeFallbackCells: 0.6, // amplitud fallback para pasillos cortos
-    lateralSpeed: 1.0,          // factor de velocidad lateral base (multiplica enemy.speed)
-    advanceSpeed: 0.22,         // factor de avance frontal base (multiplica enemy.speed)
-    edgePauseMs: [260, 780],    // rango de pausa en borde
-    hideAtEdgesChance: 0.25     // probabilidad de ocultarse en bordes
+    amplitudeMinCells: 1.2,     // amplitud mínima en múltiplos de cellSize - aumentada para más recorrido
+    amplitudeFallbackCells: 0.8, // amplitud fallback para pasillos cortos
+    lateralSpeed: 0.7,          // factor de velocidad lateral base - reducida para más control
+    advanceSpeed: 0.15,         // factor de avance frontal base - reducida
+    edgePauseMs: [800, 1500],   // rango de pausa en borde - aumentada para más tiempo visible
+    hideAtEdgesChance: 0.15,    // probabilidad de ocultarse en bordes - reducida
+    predictablePattern: true,   // Nuevo: activar patrones predecibles
+    rhythmicMovement: true      // Nuevo: movimiento rítmico como blanco de tiro
   },
   // Push-back suave para mantener distancia
   separation: {
@@ -152,6 +154,7 @@ window.DoomGame = {
       // Inicializar sistemas
   this.initSounds();
   this.initTextures();
+  this.initWeaponSystems();
   this.setupControls();
   // Spawnear enemigos SOLO cuando los sprites PNG estén listos
   this.spawnInitialEnemies();
@@ -266,6 +269,68 @@ window.DoomGame = {
     return canvas;
   },
   
+  initWeaponSystems() {
+    console.log('🔫 Inicializando sistemas de armas...');
+    
+    // Verificar disponibilidad de clases
+    console.log('BulletEffectsSystem disponible:', typeof BulletEffectsSystem !== 'undefined');
+    console.log('WeaponAudioSystem disponible:', typeof WeaponAudioSystem !== 'undefined');
+    
+    // Inicializar sistema de efectos de balas
+    if (typeof BulletEffectsSystem !== 'undefined') {
+      try {
+        this.bulletEffects = new BulletEffectsSystem();
+        console.log('✅ Sistema de efectos de balas cargado');
+        
+        // Verificar métodos críticos
+        if (typeof this.bulletEffects.render === 'function') {
+          console.log('✅ Método render disponible');
+        } else {
+          console.error('❌ Método render NO disponible');
+        }
+        
+        if (typeof this.bulletEffects.createBullet === 'function') {
+          console.log('✅ Método createBullet disponible');
+        } else {
+          console.error('❌ Método createBullet NO disponible');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error instanciando BulletEffectsSystem:', error);
+      }
+    } else {
+      console.error('❌ BulletEffectsSystem no disponible - verificar carga de bullet-effects.js');
+    }
+    
+    // Inicializar sistema de audio de armas
+    if (typeof WeaponAudioSystem !== 'undefined') {
+      try {
+        this.weaponAudio = new WeaponAudioSystem();
+        console.log('✅ Sistema de audio de armas cargado');
+        
+        // Verificar métodos críticos
+        if (typeof this.weaponAudio.playShotgunSound === 'function') {
+          console.log('✅ Método playShotgunSound disponible');
+        } else {
+          console.error('❌ Método playShotgunSound NO disponible');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error instanciando WeaponAudioSystem:', error);
+      }
+    } else {
+      console.error('❌ WeaponAudioSystem no disponible - verificar carga de weapon-audio.js');
+    }
+    
+    // Contador de headshots
+    this.headshots = 0;
+    
+    // Estado de depuración
+    console.log('🎯 Estado final de sistemas de armas:');
+    console.log('- bulletEffects:', !!this.bulletEffects);
+    console.log('- weaponAudio:', !!this.weaponAudio);
+  },
+  
   setupControls() {
   const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     document.addEventListener('keydown', (e) => {
@@ -278,12 +343,21 @@ window.DoomGame = {
       if (e.code === 'KeyR') {
         this.reload();
       }
+      
+      // Salir del pointer lock con ESC
+      if (e.code === 'Escape' && document.pointerLockElement) {
+        document.exitPointerLock();
+        e.preventDefault();
+      }
     });
     
     document.addEventListener('keyup', (e) => {
       this.player.keys[e.code] = false;
       this.player.keysPressTime[e.code] = 0;
     });
+    
+    // Sistema de captura de mouse mejorado
+    this.setupMouseCapture();
     
     document.addEventListener('mousemove', (e) => {
       if (document.pointerLockElement) {
@@ -294,23 +368,56 @@ window.DoomGame = {
         this.player.verticalLook = Math.max(-0.5, Math.min(0.5, this.player.verticalLook));
       }
     });
+  },
+  
+  // Configurar sistema de captura de mouse
+  setupMouseCapture() {
+    const popup = document.getElementById('mouse-capture-popup');
+    const canvas = this.canvas;
     
-    document.addEventListener('click', (e) => {
-      // Si es dispositivo táctil, no solicitar pointer lock y permitir que el botón táctil dispare
+    // Evento específico para clic en el canvas
+    canvas.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      
       if (isTouch) {
-        // Evita que clicks de botones táctiles burbujeen y cambien estado de pointer lock
-        if (e.target && (e.target.closest && e.target.closest('#mobile-controls')))
-          return;
-        // En móvil, un tap en el canvas puede disparar directamente
+        // En móvil, disparar directamente
         this.shoot();
         return;
       }
+      
       if (!document.pointerLockElement) {
-        this.canvas.requestPointerLock();
+        console.log('🖱️ Solicitando captura de mouse en canvas...');
+        canvas.requestPointerLock();
       } else {
         this.shoot();
       }
     });
+    
+    // Eventos de pointer lock
+    document.addEventListener('pointerlockchange', () => {
+      if (document.pointerLockElement === canvas) {
+        // Mouse capturado - ocultar popup
+        if (popup) popup.style.display = 'none';
+        if (canvas) canvas.classList.add('mouse-captured');
+        console.log('🎯 Mouse capturado - Modo juego activado');
+      } else {
+        // Mouse liberado - mostrar popup
+        if (popup) popup.style.display = 'block';
+        if (canvas) canvas.classList.remove('mouse-captured');
+        console.log('🖱️ Mouse liberado - Mostrar popup');
+      }
+    });
+    
+    // Error de pointer lock
+    document.addEventListener('pointerlockerror', () => {
+      console.error('❌ Error al capturar el pointer lock');
+    });
+    
+    // Inicializar estado - mostrar popup al inicio
+    if (popup) popup.style.display = 'block';
   },
   
   spawnInitialEnemies() {
@@ -481,6 +588,11 @@ window.DoomGame = {
     // Update bullets
     this.updateBullets();
     
+    // Update bullet effects system
+    if (this.bulletEffects) {
+      this.bulletEffects.updateBullets(this);
+    }
+    
     // Check collisions
     this.checkCollisions();
     
@@ -607,19 +719,47 @@ window.DoomGame = {
     // Bullet vs Enemy collisions
     this.bullets.forEach((bullet, bulletIndex) => {
       this.enemies.forEach((enemy, enemyIndex) => {
-  if (enemy.health <= 0 || enemy.hidden) return;
+        if (enemy.health <= 0 || enemy.hidden) return;
         
         const dx = bullet.x - enemy.x;
         const dz = bullet.z - enemy.z;
         const distance = Math.sqrt(dx * dx + dz * dz);
         
-        if (distance < 20) {
-          // Hit!
-          enemy.health -= GAME_CONFIG.damage;
+        // Aumentar radio de colisión para mejor jugabilidad
+        if (distance < 35) {
+          // ¡IMPACTO!
+          const damage = GAME_CONFIG.damage;
+          enemy.health -= damage;
+          console.log(`🎯 ¡IMPACTO! Enemigo recibe ${damage} de daño. Vida restante: ${enemy.health}`);
+          
+          // Remover la bala
+          bullet.active = false;
           this.bullets.splice(bulletIndex, 1);
+          
+          // Efectos visuales y sonoros del impacto
           this.sounds.hit();
           
+          // Crear efectos de sangre si está disponible el sistema avanzado
+          if (this.bulletEffects) {
+            this.bulletEffects.createBloodBurst(enemy.x, enemy.z, enemy.y || 64);
+          }
+          
+          // Empujar al enemigo ligeramente hacia atrás
+          const pushForce = 15;
+          const pushX = Math.cos(bullet.angle) * pushForce;
+          const pushZ = Math.sin(bullet.angle) * pushForce;
+          
+          // Verificar que la nueva posición sea válida antes de empujar
+          const newX = enemy.x + pushX;
+          const newZ = enemy.z + pushZ;
+          if (this.canMoveTo(newX, newZ)) {
+            enemy.x = newX;
+            enemy.z = newZ;
+          }
+          
+          // Verificar si el enemigo murió
           if (enemy.health <= 0) {
+            console.log('💀 ¡ENEMIGO ELIMINADO!');
             this.enemyDeath(enemy, enemyIndex);
           }
         }
@@ -678,27 +818,71 @@ window.DoomGame = {
   shoot() {
     const currentTime = Date.now();
     
+    console.log('🔫 Intento de disparo...');
+    
     if (this.player.ammo <= 0) {
-      // Click vacío
+      console.log('🚫 Sin munición');
       return;
     }
     
     if (currentTime - this.player.lastShot < GAME_CONFIG.fireRate) {
+      console.log('🚫 Demasiado rápido - esperando cooldown');
       return;
     }
     
     this.player.ammo--;
     this.player.lastShot = currentTime;
     
-    this.bullets.push({
+    console.log(`💥 ¡DISPARO! Munición restante: ${this.player.ammo}`);
+    
+    // Calcular dirección exacta hacia el centro de la cruz (crosshair)
+    const shootAngle = this.player.angle; // Ángulo exacto hacia donde mira el jugador
+    const verticalLook = this.player.verticalLook; // Mirada vertical
+    
+    // Usar el nuevo sistema de efectos de balas
+    if (this.bulletEffects) {
+      console.log('🎯 Usando BulletEffectsSystem');
+      try {
+        const result = this.bulletEffects.createBullet(
+          this.player.x,
+          this.player.z,
+          shootAngle,
+          verticalLook
+        );
+        console.log('✅ Bala creada (nuevo sistema):', result);
+      } catch (error) {
+        console.error('❌ Error creando bala:', error);
+      }
+    } 
+    
+    // SIEMPRE usar también el sistema principal para garantizar funcionalidad
+    console.log('🎯 Usando sistema principal de balas');
+    const newBullet = {
       x: this.player.x,
       z: this.player.z,
-      angle: this.player.angle,
+      y: 64 + (verticalLook * 100), // Altura basada en mirada vertical
+      angle: shootAngle,
       speed: GAME_CONFIG.bulletSpeed,
-      distance: 0
-    });
+      distance: 0,
+      active: true,
+      startTime: currentTime
+    };
+    this.bullets.push(newBullet);
+    console.log('✅ Bala creada (sistema principal)');
     
-    this.sounds.shoot();
+    // Reproducir sonido de disparo
+    if (this.weaponAudio) {
+      console.log('🔊 Usando WeaponAudioSystem');
+      try {
+        this.weaponAudio.playShotgunSound();
+        console.log('✅ Sonido de escopeta reproducido');
+      } catch (error) {
+        console.error('❌ Error reproduciendo sonido:', error);
+      }
+    } else {
+      console.log('⚠️ Usando sonido fallback');
+      this.sounds.shoot();
+    }
   },
   
   reload() {
@@ -725,7 +909,23 @@ window.DoomGame = {
     }
     
     if (enemyCount) {
-      enemyCount.textContent = this.enemies.filter(e => e.health > 0).length.toString();
+      const aliveEnemies = this.enemies.filter(e => e.health > 0).length;
+      const currentTime = performance.now();
+      const nextSpawnIn = Math.max(0, GAME_CONFIG.spawnCooldown - (currentTime - this.enemySpawnTimer));
+      const nextSpawnSeconds = Math.ceil(nextSpawnIn / 1000);
+      
+      if (aliveEnemies < GAME_CONFIG.maxEnemies && nextSpawnIn > 0) {
+        enemyCount.textContent = `${aliveEnemies}/${GAME_CONFIG.maxEnemies} (Next: ${nextSpawnSeconds}s)`;
+      } else {
+        enemyCount.textContent = `${aliveEnemies}/${GAME_CONFIG.maxEnemies}`;
+      }
+    }
+  },
+  
+  updateHeadshotCounter() {
+    const headshotDisplay = document.getElementById('headshot-counter');
+    if (headshotDisplay) {
+      headshotDisplay.textContent = this.headshots.toString();
     }
   },
   
@@ -819,13 +1019,25 @@ window.DoomGame = {
     // 5. Render sprites (enemies and items)
     this.renderSprites();
     
-    // 6. Crosshair (siempre al frente)
+    // 5.5. Render bullets (sistema fallback)
+    this.renderBullets();
+    
+    // 6. Render bullet effects
+    if (this.bulletEffects) {
+      try {
+        this.bulletEffects.render(this.ctx, this.width, this.height);
+      } catch (error) {
+        console.error('❌ Error renderizando efectos de balas:', error);
+      }
+    }
+    
+    // 7. Crosshair (siempre al frente)
     this.renderCrosshair();
     
-    // 7. Debug info expandida
+    // 8. Debug info expandida
     this.renderDebugInfo();
     
-    // 8. Weapon display (siempre al frente)
+    // 9. Weapon display (siempre al frente)
     this.renderWeapon();
   },
   
@@ -1156,6 +1368,82 @@ window.DoomGame = {
     this.ctx.fill();
   },
 
+  // Renderizar balas como puntos 3D
+  renderBullets() {
+    if (!this.bullets || this.bullets.length === 0) return;
+    
+    this.bullets.forEach(bullet => {
+      if (!bullet.active) return;
+      
+      // Calcular posición relativa al jugador
+      const dx = bullet.x - this.player.x;
+      const dz = bullet.z - this.player.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      
+      // No renderizar balas muy lejas o muy cerca
+      if (distance > 800 || distance < 5) return;
+      
+      // Calcular ángulo relativo al jugador
+      const angle = Math.atan2(dz, dx) - this.player.angle;
+      
+      // Verificar que la bala esté en el campo de visión
+      if (Math.abs(angle) > Math.PI / 2) return;
+      
+      // Proyección 3D a 2D con perspectiva correcta
+      const fov = GAME_CONFIG.fov;
+      const screenX = (this.width / 2) + (Math.tan(angle) / Math.tan(fov / 2)) * (this.width / 2);
+      
+      // Verificar si está en pantalla
+      if (screenX < -20 || screenX >= this.width + 20) return;
+      
+      // Calcular altura en pantalla (considerando mirada vertical)
+      const baseY = this.height / 2;
+      const verticalOffset = this.player.verticalLook * 200;
+      const bulletVerticalOffset = (bullet.y - 64) * (200 / distance); // Perspectiva vertical
+      const screenY = baseY + verticalOffset + bulletVerticalOffset;
+      
+      // Tamaño basado en distancia para perspectiva realista
+      const baseSize = 4;
+      const size = Math.max(1, baseSize * (100 / distance));
+      
+      // Renderizar la bala como un punto brillante con estela
+      this.ctx.save();
+      
+      // Estela de la bala (múltiples puntos para crear efecto de velocidad)
+      const trailLength = 3;
+      for (let i = 0; i < trailLength; i++) {
+        const trailAlpha = (trailLength - i) / trailLength * 0.6;
+        const trailSize = size * (trailLength - i) / trailLength;
+        const trailOffset = i * 8; // Separación entre puntos de estela
+        
+        this.ctx.globalAlpha = trailAlpha;
+        this.ctx.fillStyle = '#FFA500'; // Naranja para estela
+        this.ctx.beginPath();
+        this.ctx.arc(screenX - Math.cos(bullet.angle) * trailOffset, 
+                    screenY, trailSize, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+      
+      // Bala principal con efecto brillante
+      this.ctx.globalAlpha = 1.0;
+      this.ctx.fillStyle = '#FFD700'; // Dorado brillante
+      this.ctx.shadowColor = '#FFD700';
+      this.ctx.shadowBlur = 8;
+      this.ctx.beginPath();
+      this.ctx.arc(screenX, screenY, size, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      // Núcleo blanco brillante
+      this.ctx.fillStyle = '#FFFFFF';
+      this.ctx.shadowBlur = 4;
+      this.ctx.beginPath();
+      this.ctx.arc(screenX, screenY, size * 0.4, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      this.ctx.restore();
+    });
+  },
+
   
 
   // Configura una pista de movimiento lateral para un enemigo en función del laberinto
@@ -1236,8 +1524,26 @@ window.DoomGame = {
       enemy.nextResumeTime = 0;
     }
 
-  const speed = Math.max(0.5, enemy.speed * (GAME_CONFIG.targetTrack?.lateralSpeed ?? 1.0));
-  const slowAdvance = Math.max(0.06, enemy.speed * (GAME_CONFIG.targetTrack?.advanceSpeed ?? 0.22));
+  const speed = Math.max(0.3, enemy.speed * (GAME_CONFIG.targetTrack?.lateralSpeed ?? 0.7));
+  const slowAdvance = Math.max(0.04, enemy.speed * (GAME_CONFIG.targetTrack?.advanceSpeed ?? 0.15));
+
+    // Inicializar propiedades de movimiento rítmico si no existen
+    if (!enemy.rhythmTimer) {
+      enemy.rhythmTimer = 0;
+      enemy.rhythmCycle = 2000 + Math.random() * 1000; // Ciclo de 2-3 segundos
+      enemy.movePhase = Math.random() * Math.PI * 2;   // Fase inicial aleatoria
+    }
+
+    // Actualizar timer rítmico
+    enemy.rhythmTimer += 16; // Aproximadamente 60fps
+    if (enemy.rhythmTimer >= enemy.rhythmCycle) {
+      enemy.rhythmTimer = 0;
+      // Pausar en cambio de dirección para comportamiento de blanco
+      if (Math.random() < 0.7) { // 70% probabilidad de pausa
+        this.scheduleEdgePause(enemy, currentTime);
+      }
+      enemy.trackDir *= -1;
+    }
 
     // Mantener distancia del jugador: no cruzar un radio mínimo
     const dxP = enemy.x - this.player.x;
@@ -1246,13 +1552,17 @@ window.DoomGame = {
   const minDist = (GAME_CONFIG.separation?.minDistance ?? GAME_CONFIG.enemyMinDistanceFromPlayer) || 240;
 
   if (enemy.trackAxis === 'x') {
+      // Movimiento rítmico para blancos de tiro
+      const rhythmFactor = Math.sin((enemy.rhythmTimer / enemy.rhythmCycle) * Math.PI * 2);
+      const adjustedSpeed = speed * (0.2 + 0.8 * Math.abs(rhythmFactor)); // Varía entre 20% y 100% de velocidad
+      
       // elegir dirección que aumenta distancia si estamos cerca
       if (distP <= minDist + 10) {
-        const dPlus = Math.hypot((enemy.x + speed) - this.player.x, enemy.z - this.player.z);
-        const dMinus = Math.hypot((enemy.x - speed) - this.player.x, enemy.z - this.player.z);
+        const dPlus = Math.hypot((enemy.x + adjustedSpeed) - this.player.x, enemy.z - this.player.z);
+        const dMinus = Math.hypot((enemy.x - adjustedSpeed) - this.player.x, enemy.z - this.player.z);
         enemy.trackDir = dPlus >= dMinus ? 1 : -1;
       }
-      const nextX = enemy.x + enemy.trackDir * speed;
+      const nextX = enemy.x + enemy.trackDir * adjustedSpeed;
       const dNext = Math.hypot(nextX - this.player.x, enemy.z - this.player.z);
       if (dNext >= minDist) {
         enemy.x = nextX;
@@ -1293,12 +1603,16 @@ window.DoomGame = {
       }
       enemy.angle = enemy.trackDir > 0 ? 0 : Math.PI;
   } else {
+      // Movimiento rítmico para blancos de tiro (eje Z)
+      const rhythmFactor = Math.sin((enemy.rhythmTimer / enemy.rhythmCycle) * Math.PI * 2);
+      const adjustedSpeed = speed * (0.2 + 0.8 * Math.abs(rhythmFactor)); // Varía entre 20% y 100% de velocidad
+      
       if (distP <= minDist + 10) {
-        const dPlus = Math.hypot(enemy.x - this.player.x, (enemy.z + speed) - this.player.z);
-        const dMinus = Math.hypot(enemy.x - this.player.x, (enemy.z - speed) - this.player.z);
+        const dPlus = Math.hypot(enemy.x - this.player.x, (enemy.z + adjustedSpeed) - this.player.z);
+        const dMinus = Math.hypot(enemy.x - this.player.x, (enemy.z - adjustedSpeed) - this.player.z);
         enemy.trackDir = dPlus >= dMinus ? 1 : -1;
       }
-      const nextZ = enemy.z + enemy.trackDir * speed;
+      const nextZ = enemy.z + enemy.trackDir * adjustedSpeed;
       const dNext = Math.hypot(enemy.x - this.player.x, nextZ - this.player.z);
       if (dNext >= minDist) {
         enemy.z = nextZ;
@@ -1342,29 +1656,37 @@ window.DoomGame = {
 
   scheduleEdgePause(enemy, currentTime) {
     if (!enemy.pauseAtEdge) return;
-    const [minP, maxP] = enemy.edgePauseRange || [320, 900];
+    const [minP, maxP] = enemy.edgePauseRange || [800, 1500]; // Usar los nuevos valores de configuración
     const pause = Math.floor(minP + Math.random() * (maxP - minP));
-    if (enemy.hideAtEdges) {
+    const hideChance = GAME_CONFIG.targetTrack?.hideAtEdgesChance ?? 0.15;
+    
+    if (enemy.hideAtEdges && Math.random() < hideChance) {
       enemy.hidden = true;
     }
-    // Limitar tiempo oculto para que el ritmo se sienta constante
-    enemy.nextResumeTime = currentTime + (enemy.hidden ? Math.max(220, Math.min(650, Math.floor(pause * 0.55))) : pause);
+    // Pausas más largas para comportamiento de blanco de tiro
+    enemy.nextResumeTime = currentTime + (enemy.hidden ? Math.max(400, Math.min(800, Math.floor(pause * 0.6))) : pause);
   },
 
   // Spawnea un enemigo en una celda que califique como pasillo
   spawnEnemyInCorridor() {
     const cell = GAME_CONFIG.cellSize;
-    const spot = this.findRandomCorridorCell(50);
-    if (!spot) return;
+    const spot = this.findRandomCorridorCell(60);
+    if (!spot) {
+      console.log('⚠️ No se pudo encontrar una posición válida para spawn de enemigo');
+      return;
+    }
 
     const types = ['casual', 'deportivo', 'presidencial'];
     const type = types[this.nextEnemyTypeIndex++ % types.length];
     const speedByType = { casual: 0.9, deportivo: 1.4, presidencial: 1.1 };
 
+    const worldX = spot.x * cell + cell / 2;
+    const worldZ = spot.z * cell + cell / 2;
+
     const enemy = {
       id: Date.now(),
-      x: spot.x * cell + cell / 2,
-      z: spot.z * cell + cell / 2,
+      x: worldX,
+      z: worldZ,
       health: GAME_CONFIG.enemyHealth,
       angle: 0,
       speed: speedByType[type] || GAME_CONFIG.enemySpeed,
@@ -1377,35 +1699,89 @@ window.DoomGame = {
       trackMax: 0,
       trackDir: Math.random() < 0.5 ? -1 : 1,
       // comportamiento de blanco de tiro
-  pauseAtEdge: true,
-  edgePauseRange: GAME_CONFIG.targetTrack.edgePauseMs || [250, 800],
+      pauseAtEdge: true,
+      edgePauseRange: GAME_CONFIG.targetTrack.edgePauseMs || [800, 1500],
       nextResumeTime: 0,
-  hideAtEdges: Math.random() < (GAME_CONFIG.targetTrack.hideAtEdgesChance ?? 0.25),
+      hideAtEdges: Math.random() < (GAME_CONFIG.targetTrack.hideAtEdgesChance ?? 0.15),
       hidden: false,
       hideDuration: 300
     };
+    
     this.setupTargetTrack(enemy);
     this.enemies.push(enemy);
+    
+    console.log(`🎯 Spawned ${type} enemy at (${spot.x}, ${spot.z}) - World: (${worldX.toFixed(0)}, ${worldZ.toFixed(0)}) - Total: ${this.enemies.length}/${GAME_CONFIG.maxEnemies}`);
   },
 
-  // Busca aleatoriamente una celda pasillo (horizontal o vertical)
-  findRandomCorridorCell(attempts = 40) {
+  // Busca aleatoriamente una celda pasillo bien dispersa y lejos de otros enemigos
+  findRandomCorridorCell(attempts = 60) {
     const cols = GAME_CONFIG.gridCols;
     const rows = GAME_CONFIG.gridRows;
+    const cell = GAME_CONFIG.cellSize;
+    
     const isFree = (x, z) => (
       x >= 0 && x < cols && z >= 0 && z < rows && MAZE[z] && MAZE[z][x] === 0
     );
+    
     const farFromPlayer = (x, z) => {
-      const px = Math.floor(this.player.x / GAME_CONFIG.cellSize);
-      const pz = Math.floor(this.player.z / GAME_CONFIG.cellSize);
+      const px = Math.floor(this.player.x / cell);
+      const pz = Math.floor(this.player.z / cell);
       const dx = x - px, dz = z - pz;
-      return (dx*dx + dz*dz) >= 25; // al menos ~5 celdas de distancia
+      return (dx*dx + dz*dz) >= 36; // Aumentado de 25 a 36 (mínimo 6 celdas de distancia)
+    };
+    
+    const farFromOtherEnemies = (x, z) => {
+      const worldX = x * cell + cell / 2;
+      const worldZ = z * cell + cell / 2;
+      
+      for (let enemy of this.enemies) {
+        const dx = worldX - enemy.x;
+        const dz = worldZ - enemy.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        // Mínimo 8 celdas de distancia entre enemigos (1024 pixels)
+        if (distance < cell * 8) {
+          return false;
+        }
+      }
+      return true;
     };
 
+    // Intentar primero en las esquinas del mapa para máxima dispersión
+    const preferredZones = [
+      { minX: 1, maxX: Math.floor(cols/3), minZ: 1, maxZ: Math.floor(rows/3) },          // Esquina superior izquierda
+      { minX: Math.floor(cols*2/3), maxX: cols-1, minZ: 1, maxZ: Math.floor(rows/3) },    // Esquina superior derecha
+      { minX: 1, maxX: Math.floor(cols/3), minZ: Math.floor(rows*2/3), maxZ: rows-1 },    // Esquina inferior izquierda
+      { minX: Math.floor(cols*2/3), maxX: cols-1, minZ: Math.floor(rows*2/3), maxZ: rows-1 } // Esquina inferior derecha
+    ];
+
+    // Primero intentar en zonas preferidas
+    for (let zone of preferredZones) {
+      for (let i = 0; i < attempts/4; i++) {
+        const x = zone.minX + Math.floor(Math.random() * (zone.maxX - zone.minX));
+        const z = zone.minZ + Math.floor(Math.random() * (zone.maxZ - zone.minZ));
+        
+        if (!isFree(x, z) || !farFromPlayer(x, z) || !farFromOtherEnemies(x, z)) continue;
+
+        const freeL = isFree(x - 1, z);
+        const freeR = isFree(x + 1, z);
+        const freeU = isFree(x, z - 1);
+        const freeD = isFree(x, z + 1);
+
+        const horizontalCorridor = (freeL || freeR) && !(freeU || freeD);
+        const verticalCorridor = (freeU || freeD) && !(freeL || freeR);
+
+        if (horizontalCorridor || verticalCorridor) {
+          return { x, z };
+        }
+      }
+    }
+
+    // Si no encontró en zonas preferidas, buscar en todo el mapa
     for (let i = 0; i < attempts; i++) {
       const x = 1 + Math.floor(Math.random() * (cols - 2));
       const z = 1 + Math.floor(Math.random() * (rows - 2));
-      if (!isFree(x, z) || !farFromPlayer(x, z)) continue;
+      
+      if (!isFree(x, z) || !farFromPlayer(x, z) || !farFromOtherEnemies(x, z)) continue;
 
       const freeL = isFree(x - 1, z);
       const freeR = isFree(x + 1, z);
@@ -1423,18 +1799,38 @@ window.DoomGame = {
   },
   
   renderCrosshair() {
+    // Solo renderizar la cruz si el mouse está capturado
+    if (!document.pointerLockElement) return;
+    
     const centerX = this.width / 2;
     const centerY = this.height / 2;
-    const size = 10;
+    const size = 12;
     
-    this.ctx.strokeStyle = '#FFFFFF';
-    this.ctx.lineWidth = 2;
+    // Cruz con borde para mejor visibilidad
+    this.ctx.lineWidth = 3;
+    this.ctx.strokeStyle = '#000000'; // Borde negro
     this.ctx.beginPath();
     this.ctx.moveTo(centerX - size, centerY);
     this.ctx.lineTo(centerX + size, centerY);
     this.ctx.moveTo(centerX, centerY - size);
     this.ctx.lineTo(centerX, centerY + size);
     this.ctx.stroke();
+    
+    // Cruz principal roja
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeStyle = '#FF0000'; // Rojo brillante
+    this.ctx.beginPath();
+    this.ctx.moveTo(centerX - size, centerY);
+    this.ctx.lineTo(centerX + size, centerY);
+    this.ctx.moveTo(centerX, centerY - size);
+    this.ctx.lineTo(centerX, centerY + size);
+    this.ctx.stroke();
+    
+    // Punto central - SOLO cuando el mouse está capturado
+    this.ctx.fillStyle = '#FF0000';
+    this.ctx.beginPath();
+    this.ctx.arc(centerX, centerY, 2, 0, Math.PI * 2);
+    this.ctx.fill();
   },
   
   gameLoop() {

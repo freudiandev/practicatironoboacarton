@@ -23,7 +23,7 @@ const SPRITE_CONFIG = {
   ENEMY_TYPES: {
     'casual': {
   spriteUrl: '/noboa-casual.png',
-      width: 0.5,           // Ancho relativo (multiplicador)
+      width: 0.62,          // Más ancho - ajustado de 0.38 a 0.62 para hacerlo más robusto
       height: 1.0,          // Altura relativa (multiplicador)
       walkSpeed: 1.0        // Velocidad relativa
     },

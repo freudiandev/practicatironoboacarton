@@ -26,6 +26,9 @@
   <meta property="og:type" content="website">
   <meta property="og:image" content="game-preview.png">
   
+  <!-- SISTEMA DE VERSIONADO AUTOMÁTICO - Se ejecuta PRIMERO -->
+  <script src="auto-version.js"></script>
+  
   <!-- Estilos separados por funcionalidad -->
   <link rel="stylesheet" href="styles.css?v=20250818">
   <link rel="stylesheet" href="css/layout.css?v=20250818">
@@ -86,6 +89,18 @@
         <span class="hud-label">VIDA:</span>
         <span id="health-display" class="hud-value">100</span>
       </div>
+      <div class="hud-item">
+        <span class="hud-label">HEADSHOTS:</span>
+        <span id="headshot-counter" class="hud-value">0</span>
+      </div>
+    </div>
+    
+    <!-- Popup de captura de mouse -->
+    <div id="mouse-capture-popup" class="mouse-capture-popup">
+      <h3>🎯 DOOM: Noboa de Cartón</h3>
+      <div class="click-icon">🖱️</div>
+      <p><strong>Haz clic en la pantalla</strong></p>
+      <p>para capturar el mouse y comenzar a jugar</p>
     </div>
     
     <!-- Layout del juego -->
@@ -173,6 +188,33 @@
   <script>window.__ASSET_VERSION__ = '20250818';</script>
   <!-- Solo cargar el sistema de sprites necesario en producción -->
   <script src="enemy-sprites.js?v=20250818"></script>
+  
+  <!-- Sistemas de armas: efectos de balas y audio -->
+  <script src="bullet-effects.js?v=20250818"></script>
+  <script src="weapon-audio.js?v=20250818"></script>
+  
+  <!-- Test inmediato de sistemas de armas -->
+  <script>
+    console.log('🧪 Testeo inmediato de sistemas de armas...');
+    console.log('BulletEffectsSystem:', typeof BulletEffectsSystem);
+    console.log('WeaponAudioSystem:', typeof WeaponAudioSystem);
+    
+    // Test rápido de instanciación
+    try {
+      const testBullets = new BulletEffectsSystem();
+      console.log('✅ BulletEffectsSystem instanciado correctamente');
+    } catch (e) {
+      console.error('❌ Error instanciando BulletEffectsSystem:', e);
+    }
+    
+    try {
+      const testAudio = new WeaponAudioSystem();
+      console.log('✅ WeaponAudioSystem instanciado correctamente');
+    } catch (e) {
+      console.error('❌ Error instanciando WeaponAudioSystem:', e);
+    }
+  </script>
+  
   <!-- Carga condicional de utilidades de debug (deshabilitado por defecto) -->
   <script>
   window.__DEBUG_MODE__ = false; // Cambiar a true solo para depurar localmente

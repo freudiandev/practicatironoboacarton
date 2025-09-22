@@ -101,6 +101,7 @@ body {
   background: #000;
   position: relative;
   overflow: hidden;
+  cursor: default; /* Cursor normal en el container */
 }
 
 .right-panel-improved {
@@ -121,7 +122,11 @@ body {
 #gameCanvas {
   display: block;
   margin: 0 auto;
-  cursor: none;
+  cursor: pointer !important; /* Forzar cursor pointer */
+}
+
+#gameCanvas.mouse-captured {
+  cursor: none !important; /* Ocultar cursor cuando esté capturado */
 }
 
 .loading-screen {
@@ -177,3 +182,53 @@ body {
   font-size: 14px;
   z-index: 100;
 }
+
+/* Sistema de captura de mouse y mira */
+.mouse-capture-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 30px;
+  border-radius: 15px;
+  border: 3px solid #ff6b6b;
+  text-align: center;
+  z-index: 2000;
+  font-family: 'Arial', sans-serif;
+  box-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+  animation: pulsePopup 2s infinite;
+}
+
+@keyframes pulsePopup {
+  0%, 100% { 
+    border-color: #ff6b6b; 
+    box-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+  }
+  50% { 
+    border-color: #ff4757; 
+    box-shadow: 0 0 50px rgba(255, 107, 107, 0.8);
+  }
+}
+
+.mouse-capture-popup h3 {
+  margin: 0 0 15px 0;
+  color: #ff6b6b;
+  font-size: 1.5em;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+}
+
+.mouse-capture-popup p {
+  margin: 0;
+  font-size: 1.1em;
+  line-height: 1.4;
+}
+
+.mouse-capture-popup .click-icon {
+  font-size: 2em;
+  margin: 15px 0;
+  color: #ffa502;
+}
+
+/* === FIN DEL ARCHIVO === */
