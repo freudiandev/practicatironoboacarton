@@ -289,8 +289,8 @@ window.DoomGame = {
       if (document.pointerLockElement) {
         this.player.angle += e.movementX * GAME_CONFIG.mouseSensitivity;
         
-        // Movimiento vertical del mouse (opcional)
-        this.player.verticalLook += e.movementY * GAME_CONFIG.mouseSensitivity;
+        // Movimiento vertical del mouse - CORREGIDO: mouse arriba = cámara arriba
+        this.player.verticalLook -= e.movementY * GAME_CONFIG.mouseSensitivity;
         this.player.verticalLook = Math.max(-0.5, Math.min(0.5, this.player.verticalLook));
       }
     });
@@ -314,6 +314,38 @@ window.DoomGame = {
   },
   
   spawnInitialEnemies() {
+    console.log('🎯 SPAWNING ENEMIES - DEBUG MODE');
+    console.log(`Player position: (${this.player.x}, ${this.player.z})`);
+    
+    // TEMPORAL: Crear un enemigo muy cerca del jugador para testing
+    const testEnemy = {
+      id: 999,
+      x: this.player.x + 200, // 200 pixels adelante
+      z: this.player.z,
+      health: 100,
+      angle: 0,
+      speed: 1.0,
+      lastMove: 0,
+      target: null,
+      state: 'target',
+      type: 'casual',
+      trackAxis: null,
+      trackMin: 0,
+      trackMax: 0,
+      trackDir: 1,
+      pauseAtEdge: false,
+      edgePauseRange: [250, 800],
+      nextResumeTime: 0,
+      hideAtEdges: false,
+      hidden: false,
+      hideDuration: 300,
+      sepVX: 0,
+      sepVZ: 0
+    };
+    
+    this.enemies.push(testEnemy);
+    console.log(`✅ Test enemy created at (${testEnemy.x}, ${testEnemy.z})`);
+    
     const spawnPoints = [
       {x: 2 * 128, z: 2 * 128},
       {x: 17 * 128, z: 2 * 128},
@@ -324,7 +356,7 @@ window.DoomGame = {
     ];
     
     const types = ['casual', 'deportivo', 'presidencial'];
-    const minSpawnDist = GAME_CONFIG.enemyMinDistanceFromPlayer || 240;
+    const minSpawnDist = 50; // TEMPORAL: Reducido para debug (era GAME_CONFIG.enemyMinDistanceFromPlayer || 240)
     const speedByType = { casual: 0.9, deportivo: 1.4, presidencial: 1.1 };
     spawnPoints.forEach((point, index) => {
       if (this.isValidSpawnPoint(point.x, point.z)) {
@@ -332,8 +364,10 @@ window.DoomGame = {
         const dxp = point.x - this.player.x;
         const dzp = point.z - this.player.z;
         if (Math.hypot(dxp, dzp) < minSpawnDist * 1.1) {
+          console.log(`⚠️ Skipping spawn point ${index} - too close to player: ${Math.round(Math.hypot(dxp, dzp))} < ${minSpawnDist * 1.1}`);
           return; // no spawnear tan cerca
         }
+        console.log(`✅ Spawning enemy ${index} at (${point.x}, ${point.z}) - distance: ${Math.round(Math.hypot(dxp, dzp))}`);
         const type = types[index % types.length];
         const enemy = {
           id: index,
@@ -1007,19 +1041,25 @@ window.DoomGame = {
   renderSprites() {
     // Renderizar enemigos con sprites PNG a escala humana si el sistema existe
     if (window.EnemySpriteSystem) {
+      // Log ocasional para no saturar la consola
+      if (Math.random() < 0.02) {
+        console.log(`🎮 Rendering ${this.enemies.length} enemies with EnemySpriteSystem`);
+      }
       // Dibujar usando el sistema de sprites; no ocultar por loading
-      this.enemies.forEach(enemy => {
+      this.enemies.forEach((enemy, index) => {
         if (enemy.health <= 0 || enemy.hidden) return;
         try {
           window.EnemySpriteSystem.renderEnemySprite(this.ctx, enemy, this.player);
         } catch (err) {
           // No dibujar fallback rojo si existe el sistema de sprites; solo registrar
+          console.error('Sprite render failed:', err);
           if (window.console && console.warn) {
             console.warn('Sprite render falló, se omite fallback para evitar cuadros rojos:', err);
           }
         }
       });
     } else {
+      console.log('❌ EnemySpriteSystem not found, using fallback');
       // Fallback a marcadores simples solo si no hay sistema de sprites
       this.enemies.forEach(enemy => this.renderEnemyFallbackMarker(enemy));
     }

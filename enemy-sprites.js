@@ -16,7 +16,7 @@ const SPRITE_CONFIG = {
   // Configuración visual
   // Distancia máxima de renderizado en "celdas" (tiles) del mapa
   // En este juego, las posiciones están en píxeles; convertiremos a tiles usando cellSize
-  MAX_RENDER_DISTANCE: 36,
+  MAX_RENDER_DISTANCE: 50, // Aumentado para mayor visibilidad (era 36)
   SPRITE_QUALITY: 'high',   // Calidad de renderizado (high/medium/low)
   
   // Tipos de enemigos y sus características
@@ -52,7 +52,7 @@ const SpriteSystem = {
   },
   
   // Mensajes de debug
-  debug: false,             // Desactivar overlay/etiquetas para evitar rectángulos visibles
+  debug: false,             // Desactivado para juego limpio sin líneas
   
   // Estado de carga
   loading: true,
@@ -878,6 +878,81 @@ const SpriteSystem = {
   },
   
   /**
+   * Verifica y ajusta la alineación de sprites al suelo
+   */
+  adjustSpriteGrounding() {
+    if (!window.DoomGame || !window.DoomGame.enemies) return;
+    
+    // Forzar que todos los enemigos tengan coordenadas Y consistentes
+    window.DoomGame.enemies.forEach(enemy => {
+      if (!enemy.groundLevel) {
+        // Calcular nivel del suelo basado en la posición del jugador
+        enemy.groundLevel = 0; // En este juego, el suelo está en Y=0
+        enemy.y = enemy.groundLevel; // Asegurar que esté en el suelo
+      }
+    });
+    
+    this.logInfo('✅ Alineación de sprites al suelo verificada');
+  },
+  
+  /**
+   * Función de debug para verificar la posición de los sprites
+   */
+  debugSpritePosition(ctx, enemy, player, screenX, screenY, spriteWidth, spriteHeight) {
+    if (!this.debug) return;
+    
+    const dx = enemy.x - player.x;
+    const dz = enemy.z - player.z;
+    const pixelDistance = Math.sqrt(dx*dx + dz*dz);
+    const verticalLook = player.verticalLook || 0;
+    const verticalOffset = verticalLook * ctx.canvas.height * 0.6;
+    
+    // Horizonte (centro teórico)
+    const horizon = (ctx.canvas.height / 2) + verticalOffset;
+    
+    // Nivel del suelo 3D calculado con perspectiva
+    const virtualWallHeight = (ctx.canvas.height * 150) / Math.max(pixelDistance, 1);
+    const virtualWallTop = (ctx.canvas.height - virtualWallHeight) / 2 + verticalOffset;
+    const ground3DLevel = virtualWallTop + virtualWallHeight;
+    
+    ctx.save();
+    
+    // Dibujar horizonte teórico - AZUL CLARO
+    ctx.strokeStyle = 'rgba(100, 150, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, horizon);
+    ctx.lineTo(ctx.canvas.width, horizon);
+    ctx.stroke();
+    
+    // Dibujar nivel del suelo 3D real - VERDE BRILLANTE
+    ctx.strokeStyle = 'rgba(0, 255, 0, 1.0)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, ground3DLevel);
+    ctx.lineTo(ctx.canvas.width, ground3DLevel);
+    ctx.stroke();
+    
+    // Marcar la base del sprite - ROJO
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.9)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(screenX - spriteWidth/2, screenY + spriteHeight);
+    ctx.lineTo(screenX + spriteWidth/2, screenY + spriteHeight);
+    ctx.stroke();
+    
+    // Texto explicativo
+    ctx.fillStyle = 'rgba(0, 255, 0, 1.0)';
+    ctx.font = '12px Arial';
+    ctx.fillText(`SUELO 3D (dist: ${Math.round(pixelDistance)})`, 10, ground3DLevel - 10);
+    
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+    ctx.fillText('BASE SPRITE', screenX - 30, screenY + spriteHeight + 15);
+    
+    ctx.restore();
+  },
+  
+  /**
    * Renderiza un sprite de enemigo en el juego
    * @param {CanvasRenderingContext2D} ctx - Contexto del canvas
    * @param {Object} enemy - Datos del enemigo a renderizar
@@ -886,6 +961,11 @@ const SpriteSystem = {
   renderEnemySprite(ctx, enemy, player) {
     if (!enemy || !player || !ctx) {
       return; // Salir si faltan datos esenciales
+    }
+    
+    // Una vez cada 10 intentos, mostrar log para no saturar
+    if (Math.random() < 0.1) {
+      console.log(`🎯 Rendering enemy: type=${enemy.type}, pos=(${Math.round(enemy.x)}, ${Math.round(enemy.z)}), health=${enemy.health}`);
     }
     
   // Si el sprite específico ya está disponible (no fallback), podemos dibujar aunque el estado global siga "loading"
@@ -898,7 +978,10 @@ const SpriteSystem = {
     const pickLoadedType = () => (Object.keys(this.sprites).find(t => this.sprites[t] && !this.sprites[t].__isFallback) || null);
     if (!enemy.type || !this.sprites[enemy.type] || this.sprites[enemy.type].__isFallback) {
       const valid = pickLoadedType();
-      if (!valid) return; // no hay sprite real aún
+      if (!valid) {
+        if (Math.random() < 0.1) console.log('❌ No valid sprite loaded yet');
+        return; // no hay sprite real aún
+      }
       enemy.type = valid;
     }
     
@@ -913,7 +996,9 @@ const SpriteSystem = {
   const distanceTiles = pixelDistance / cellSize;
     
   // No renderizar si está demasiado lejos (según tiles)
-  if (distanceTiles > SPRITE_CONFIG.MAX_RENDER_DISTANCE) return;
+  if (distanceTiles > SPRITE_CONFIG.MAX_RENDER_DISTANCE) {
+      return;
+  }
     
     // Calcular ángulo relativo al jugador
     let angle = Math.atan2(dz, dx) - player.angle;
@@ -923,18 +1008,26 @@ const SpriteSystem = {
     
     // Verificar si está en el campo de visión
     const fov = player.fov || Math.PI/3;
-    if (Math.abs(angle) > fov/2) return;
+    if (Math.abs(angle) > fov/2) {
+        return; // Fuera del campo de visión
+    }
+    
+    // Verificar visibilidad (si hay paredes bloqueando) ANTES de cálculos pesados
+    const isVisible = this.checkVisibility(player, enemy);
+    if (!isVisible) return; // Oculto detrás de una pared
     
     // Calcular posición en pantalla
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
     const screenX = (canvasWidth/2) + (angle/(fov/2)) * (canvasWidth/2);
     
-    // Calcular tamaño basado en distancia (perspectiva)
-  const scaleMultiplier = 1.2; // Ajuste de escala global (aumentado para mejor visibilidad)
+    // Calcular tamaño basado en la misma perspectiva 3D que las paredes
+  // Usar la misma constante de altura (150) y lógica que el sistema de paredes
+  const wallHeightConstant = 150; // Misma constante que game-all-in-one.js línea 921
+  const spriteScaleFactor = 0.8; // Factor para que los sprites se vean del tamaño apropiado
     const enemyConfig = SPRITE_CONFIG.ENEMY_TYPES[enemy.type || 'casual'];
-  // Usar distancia en tiles para mantener escala humana a 1.75m aprox.
-  const spriteHeight = (canvasHeight * SPRITE_CONFIG.HUMAN_HEIGHT * scaleMultiplier) / Math.max(distanceTiles, 0.1);
+  // Calcular altura usando exactamente la misma perspectiva que las paredes
+  const spriteHeight = (canvasHeight * wallHeightConstant * spriteScaleFactor) / Math.max(pixelDistance, 1);
     const spriteWidth = spriteHeight / SPRITE_CONFIG.HUMAN_RATIO;
     
     // Seleccionar imagen según tipo
@@ -944,55 +1037,110 @@ const SpriteSystem = {
       return;
     }
     
-  // Calcular posición Y para que el sprite esté apoyado en el suelo del juego (no flotando)
-  // Usamos la misma fórmula de offset vertical que el render del suelo en DoomGame.renderFloor
+  // Calcular posición Y con perspectiva 3D de raycasting real
+  // En raycasting, los objetos más lejanos aparecen más cerca del horizonte
+  // Los objetos más cercanos aparecen más lejos del horizonte (hacia abajo)
   const verticalLook = player.verticalLook || 0;
-  const floorTop = (canvasHeight / 2) + (verticalLook * canvasHeight * 0.6);
-  const screenY = floorTop - spriteHeight; // anclar la base del sprite al suelo
+  const verticalOffset = verticalLook * canvasHeight * 0.6;
+  const horizon = (canvasHeight / 2) + verticalOffset;
+  
+  // Simular una "pared virtual" a la distancia del enemigo para obtener la perspectiva correcta
+  // Usar la misma constante de altura que las paredes reales (150)
+  const virtualWallHeight = (canvasHeight * 150) / Math.max(pixelDistance, 1);
+  const virtualWallTop = (canvasHeight - virtualWallHeight) / 2 + verticalOffset;
+  const virtualWallBottom = virtualWallTop + virtualWallHeight;
+  
+  // El suelo 3D está donde termina la pared virtual (wallBottom)
+  // Esto simula la perspectiva correcta: cerca = más abajo, lejos = más cerca del horizonte
+  const ground3DLevel = virtualWallBottom;
+  const screenY = ground3DLevel - spriteHeight;
     
-    // Verificar si hay una pared entre el jugador y el enemigo
-    const isVisible = this.checkVisibility(player, enemy);
+    // Guardar contexto
+    ctx.save();
     
-    if (isVisible) {
-      // Guardar contexto
-      ctx.save();
+    // Ajustar transparencia según distancia en tiles
+    const alpha = Math.max(0.4, Math.min(1.0, 1.2 - (distanceTiles/SPRITE_CONFIG.MAX_RENDER_DISTANCE)));
+    ctx.globalAlpha = alpha;
+    
+    // Dibujar sprite con las proporciones calculadas (protegido)
+    try {
+      ctx.drawImage(
+        sprite,
+        screenX - spriteWidth/2,
+        screenY,
+        spriteWidth,
+        spriteHeight
+      );
       
-  // Ajustar transparencia según distancia en tiles
-  const alpha = Math.max(0.4, Math.min(1.0, 1.2 - (distanceTiles/SPRITE_CONFIG.MAX_RENDER_DISTANCE)));
-      ctx.globalAlpha = alpha;
+      // Log ocasional de éxito
+      if (Math.random() < 0.05) {
+        console.log(`✅ Sprite rendered for ${enemy.type} at (${Math.round(screenX)}, ${Math.round(screenY)})`);
+      }
       
-      // Dibujar sprite con las proporciones calculadas (protegido)
-      try {
-        ctx.drawImage(
-          sprite,
-          screenX - spriteWidth/2,
-          screenY,
-          spriteWidth,
-          spriteHeight
-        );
-      } catch (e) {
-        this.logError(`drawImage falló para '${enemy.type}': ${e.message}`);
-        ctx.restore();
+    } catch (e) {
+      console.error(`❌ drawImage failed for '${enemy.type}': ${e.message}`);
+      this.logError(`drawImage falló para '${enemy.type}': ${e.message}`);
+      ctx.restore();
         return;
       }
       
-  // Sin marcos/etiquetas de debug para evitar figuras rectangulares
-      
       // Restaurar contexto
       ctx.restore();
-    }
   },
   
   /**
-   * Verifica si hay paredes entre el jugador y el enemigo
+   * Verifica si hay paredes entre el jugador y el enemigo usando raycasting
    * @param {Object} player - Datos del jugador
    * @param {Object} enemy - Datos del enemigo
-   * @returns {boolean} true si el enemigo es visible
+   * @returns {boolean} true si el enemigo es visible (sin paredes bloqueando)
    */
   checkVisibility(player, enemy) {
-    // Versión simplificada: siempre visible
-    // En un juego real, aquí se implementaría el raycasting para comprobar
-    // si hay paredes entre el jugador y el enemigo
+    // Si no hay laberinto definido, asumir que es visible
+    if (!window.MAZE || !window.GAME_CONFIG) {
+      return true;
+    }
+    
+    const cellSize = window.GAME_CONFIG.cellSize || 128;
+    
+    // Calcular vector de dirección desde jugador hacia enemigo
+    const dx = enemy.x - player.x;
+    const dz = enemy.z - player.z;
+    const distance = Math.sqrt(dx * dx + dz * dz);
+    
+    // Si están muy cerca, siempre visible
+    if (distance < cellSize * 0.3) {
+      return true;
+    }
+    
+    // Normalizar dirección
+    const dirX = dx / distance;
+    const dirZ = dz / distance;
+    
+    // Hacer raycasting desde jugador hacia enemigo
+    const stepSize = cellSize * 0.1; // Pasos pequeños para precisión
+    const maxSteps = Math.ceil(distance / stepSize);
+    
+    for (let step = 1; step < maxSteps; step++) {
+      const rayX = player.x + dirX * stepSize * step;
+      const rayZ = player.z + dirZ * stepSize * step;
+      
+      // Convertir a coordenadas de grid
+      const mapX = Math.floor(rayX / cellSize);
+      const mapZ = Math.floor(rayZ / cellSize);
+      
+      // Verificar límites del mapa
+      if (mapX < 0 || mapX >= window.MAZE[0].length || 
+          mapZ < 0 || mapZ >= window.MAZE.length) {
+        return false; // Fuera del mapa = no visible
+      }
+      
+      // Si encontramos una pared (valor 1), el enemigo está oculto
+      if (window.MAZE[mapZ][mapX] === 1) {
+        return false;
+      }
+    }
+    
+    // No se encontró ninguna pared, el enemigo es visible
     return true;
   },
   
@@ -1235,6 +1383,9 @@ function initSprites() {
     SpriteSystem.forceVisibility();
   // Garantizar que los 3 PNGs propios terminen cargados
   SpriteSystem.ensureAllSprites();
+    
+    // Ajustar alineación al suelo
+    SpriteSystem.adjustSpriteGrounding();
     
     // Verificar integración con DoomGame
     if (window.DoomGame) {
