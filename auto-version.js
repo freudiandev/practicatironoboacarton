@@ -5,162 +5,163 @@
 
 (function() {
   'use strict';
-  
-  console.log('🔄 Auto-versioning system iniciado');
-  
-  // Generar nueva versión basada en timestamp
-  function generateVersion() {
-    const now = new Date();
-    return now.getFullYear().toString() + 
-           (now.getMonth() + 1).toString().padStart(2, '0') + 
-           now.getDate().toString().padStart(2, '0') + 
-           now.getHours().toString().padStart(2, '0') + 
-           now.getMinutes().toString().padStart(2, '0');
+
+  const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
+  const STORAGE_KEY = 'asset_version_map_v1';
+
+  const encoder = new TextEncoder();
+
+  function bufferToHex(buffer, length = 8) {
+    const bytes = new Uint8Array(buffer);
+    let hex = '';
+    for (let i = 0; i < bytes.length && hex.length < length * 2; i++) {
+      hex += bytes[i].toString(16).padStart(2, '0');
+    }
+    return hex.slice(0, length * 2);
   }
-  
-  // Obtener versión actual o generar nueva
-  function getCurrentVersion() {
-    // Intentar obtener versión de localStorage (persiste por sesión)
-    let version = localStorage.getItem('asset_version');
-    const lastUpdate = localStorage.getItem('asset_version_timestamp');
+
+  async function hashContent(content) {
+    if (window.crypto?.subtle?.digest) {
+      const data = typeof content === 'string' ? encoder.encode(content) : content;
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return bufferToHex(digest, 6); // 12 caracteres hex
+    }
+
+    // Fallback sencillo si SubtleCrypto no está disponible
+    let hash = 0;
+    const text = typeof content === 'string' ? content : String(content);
+    for (let i = 0; i < text.length; i++) {
+      hash = (hash << 5) - hash + text.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(16);
+  }
+
+  function getStoredMap() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return {};
+      return parsed;
+    } catch (error) {
+      console.warn('No se pudo leer el mapa de versiones:', error);
+      return {};
+    }
+  }
+
+  function saveMap(map) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    } catch (error) {
+      console.warn('No se pudo guardar el mapa de versiones:', error);
+    }
+  }
+
+  function buildCacheKey(url) {
+    try {
+      const u = new URL(url, window.location.href);
+      return u.pathname + u.search;
+    } catch (_) {
+      return url;
+    }
+  }
+
+  async function versionStylesheets(versionMap) {
+    const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
+
+    await Promise.all(links.map(async link => {
+      const originalHref = link.getAttribute('data-original-href') || link.getAttribute('href') || '';
+      const baseHref = originalHref.split('?')[0];
+      if (!baseHref) return;
+
+      const cacheKey = buildCacheKey(baseHref);
+      const cached = versionMap[cacheKey];
+      const now = Date.now();
+
+      if (cached && cached.expires > now) {
+        applyVersion(link, baseHref, cached.version);
+        return;
+      }
+
+      try {
+        const response = await fetch(baseHref, { cache: 'no-cache' });
+        if (!response.ok) {
+          throw new Error(`Respuesta ${response.status}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const version = await hashContent(arrayBuffer);
+
+        versionMap[cacheKey] = {
+          version,
+          expires: now + CACHE_TTL_MS,
+          lastCheck: now
+        };
+
+        applyVersion(link, baseHref, version);
+      } catch (error) {
+        console.warn(`No se pudo versionar ${baseHref}:`, error);
+      }
+    }));
+  }
+
+  function applyVersion(link, baseHref, version) {
+    const newHref = `${baseHref}?v=${version}`;
+    if (!link.getAttribute('data-original-href')) {
+      link.setAttribute('data-original-href', baseHref);
+    }
+    if (link.getAttribute('href') !== newHref) {
+      link.setAttribute('href', newHref);
+      console.log(`🆕 CSS versionado: ${newHref}`);
+    }
+  }
+
+  function cleanStaleEntries(versionMap) {
     const now = Date.now();
-    
-    // Regenerar versión cada 5 minutos o si no existe
-    if (!version || !lastUpdate || (now - parseInt(lastUpdate)) > 300000) {
-      version = generateVersion();
-      localStorage.setItem('asset_version', version);
-      localStorage.setItem('asset_version_timestamp', now.toString());
-      console.log('🆕 Nueva versión generada:', version);
-    } else {
-      console.log('♻️ Usando versión existente:', version);
+    let dirty = false;
+    for (const key of Object.keys(versionMap)) {
+      if (!versionMap[key] || versionMap[key].expires < now - CACHE_TTL_MS) {
+        delete versionMap[key];
+        dirty = true;
+      }
     }
-    
-    return version;
-  }
-  
-  // Actualizar URLs de archivos con nueva versión
-  function updateAssetVersions() {
-    const version = getCurrentVersion();
-    
-    // Actualizar variable global
-    window.__ASSET_VERSION__ = version;
-    
-    let updatedCount = 0;
-    
-    // Actualizar enlaces CSS
-    const cssLinks = document.querySelectorAll('link[rel="stylesheet"]');
-    cssLinks.forEach(link => {
-      const href = link.getAttribute('href');
-      if (href && (href.includes('.css') || href.includes('css/'))) {
-        let newHref = href.replace(/\?v=\d+/, '').replace(/\?.*/, '');
-        newHref += `?v=${version}`;
-        if (link.getAttribute('href') !== newHref) {
-          link.setAttribute('href', newHref);
-          updatedCount++;
-          console.log(`📝 CSS actualizado: ${newHref}`);
-        }
-      }
-    });
-    
-    // Actualizar scripts JS
-    const scripts = document.querySelectorAll('script[src]');
-    scripts.forEach(script => {
-      const src = script.getAttribute('src');
-      if (src && src.includes('.js') && !src.includes('auto-version.js')) {
-        let newSrc = src.replace(/\?v=\d+/, '').replace(/\?.*/, '');
-        newSrc += `?v=${version}`;
-        if (script.getAttribute('src') !== newSrc) {
-          // Para scripts ya cargados, crear uno nuevo
-          const newScript = document.createElement('script');
-          newScript.src = newSrc;
-          newScript.async = script.async;
-          newScript.defer = script.defer;
-          
-          // Insertar antes del script original
-          script.parentNode.insertBefore(newScript, script);
-          
-          // Remover el script original después de que se cargue el nuevo
-          newScript.onload = () => {
-            script.remove();
-            updatedCount++;
-            console.log(`📝 JS actualizado: ${newSrc}`);
-          };
-        }
-      }
-    });
-    
-    // Actualizar imágenes precargadas
-    const preloadImages = document.querySelectorAll('#sprite-preload img');
-    preloadImages.forEach(img => {
-      const src = img.getAttribute('src');
-      if (src && src.includes('.png')) {
-        let newSrc = src.replace(/\?v=\d+/, '').replace(/\?.*/, '');
-        newSrc += `?v=${version}`;
-        if (img.getAttribute('src') !== newSrc) {
-          img.setAttribute('src', newSrc);
-          updatedCount++;
-          console.log(`📝 IMG actualizado: ${newSrc}`);
-        }
-      }
-    });
-    
-    if (updatedCount > 0) {
-      console.log(`✅ ${updatedCount} recursos actualizados con versión ${version}`);
+    if (dirty) {
+      saveMap(versionMap);
     }
-    
-    return version;
   }
-  
-  // Funciones para forzar actualización manual
+
+  async function run() {
+    console.log('� Auto-versioning system iniciado');
+    const versionMap = getStoredMap();
+    cleanStaleEntries(versionMap);
+
+    await versionStylesheets(versionMap);
+
+    const aggregateVersion = Object.values(versionMap)
+      .map(entry => entry?.version)
+      .filter(Boolean)
+      .join('-') || Date.now().toString(36);
+
+    window.__ASSET_VERSION__ = aggregateVersion;
+
+    saveMap(versionMap);
+    console.log('✅ Versionado automático completado');
+  }
+
   window.forceAssetUpdate = function() {
-    localStorage.removeItem('asset_version');
-    localStorage.removeItem('asset_version_timestamp');
+    localStorage.removeItem(STORAGE_KEY);
     location.reload();
   };
-  
-  window.clearAssetCache = function() {
-    localStorage.removeItem('asset_version');
-    localStorage.removeItem('asset_version_timestamp');
-    console.log('🗑️ Caché de versiones limpiado');
-  };
-  
-  // Auto-ejecutar cuando el DOM esté listo
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateAssetVersions);
-  } else {
-    updateAssetVersions();
-  }
-  
-  // Actualizar periódicamente si la página permanece abierta
-  setInterval(() => {
-    const lastUpdate = localStorage.getItem('asset_version_timestamp');
-    const now = Date.now();
-    
-    // Actualizar cada 10 minutos si la página sigue abierta
-    if (lastUpdate && (now - parseInt(lastUpdate)) > 600000) {
-      console.log('⏰ Actualizando versiones por tiempo...');
-      localStorage.removeItem('asset_version');
-      updateAssetVersions();
-    }
-  }, 60000); // Verificar cada minuto
-  
-  // Funciones de debug
-  window.getAssetVersion = () => getCurrentVersion();
+
   window.debugAssetVersioning = function() {
-    console.log('📊 Estado del sistema de versionado:');
-    console.log('- Versión actual:', getCurrentVersion());
-    console.log('- Timestamp:', new Date(parseInt(localStorage.getItem('asset_version_timestamp'))));
-    console.log('- Variable global:', window.__ASSET_VERSION__);
-    
-    console.log('📋 Recursos versionados:');
-    document.querySelectorAll('link[href*="?v="], script[src*="?v="], img[src*="?v="]').forEach(el => {
-      const attr = el.href || el.src;
-      console.log(`  - ${el.tagName}: ${attr}`);
-    });
+    console.log('📊 Version map:', getStoredMap());
   };
-  
-  console.log('✅ Auto-versioning system listo');
-  console.log('💡 Usa forceAssetUpdate() para forzar actualización');
-  console.log('💡 Usa debugAssetVersioning() para ver estado');
-  
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
+
 })();

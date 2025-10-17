@@ -12,6 +12,7 @@ const SPRITE_CONFIG = {
   HUMAN_RATIO: 2.5,        // Relación altura/anchura para una persona
   HUMAN_WIDTH: 0.5,         // Ancho de persona en unidades del juego
   HUMAN_HEIGHT: 1.75,       // Altura estándar en unidades del juego (1.75m)
+  HEADSHOT_ZONE_RATIO: 0.22, // Porción visible asignada a la cabeza (ajustable)
   
   // Configuración visual
   // Distancia máxima de renderizado en "celdas" (tiles) del mapa
@@ -775,68 +776,77 @@ const SpriteSystem = {
    * @returns {HTMLCanvasElement} Canvas con el sprite procesado
    */
   processSprite(img, type) {
-    // Obtener configuración específica para este tipo
-    const config = SPRITE_CONFIG.ENEMY_TYPES[type];
-    
-    // Crear canvas temporal para procesar el sprite
+    const config = SPRITE_CONFIG.ENEMY_TYPES[type] || {};
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
-    // Dimensiones del canvas
+
     canvas.width = 256;
     canvas.height = Math.floor(256 * SPRITE_CONFIG.HUMAN_RATIO);
-    
-    // Calcular proporciones ideales
-    const targetWidth = canvas.width * config.width;
-    const targetHeight = canvas.height * config.height;
-    
-    // Calcular posición para centrar
-    const offsetX = (canvas.width - targetWidth) / 2;
-    const offsetY = canvas.height - targetHeight; // Alinear con la base
-    
-    // Limpiar canvas
+
+    const originalWidth = img.naturalWidth || img.width || 1;
+    const originalHeight = img.naturalHeight || img.height || 1;
+    const originalRatio = originalHeight / originalWidth || SPRITE_CONFIG.HUMAN_RATIO;
+
+    const maxWidth = canvas.width * (config.width || 1);
+    const maxHeight = canvas.height * (config.height || 1);
+
+    const baseScale = Math.min(maxWidth / originalWidth, maxHeight / originalHeight);
+    const safeScale = Math.max(baseScale, 0.01);
+
+    let destWidth = originalWidth * safeScale;
+    let destHeight = originalHeight * safeScale;
+
+    let scaleMultiplier = 1;
+    let verticalNudge = 0;
+
+    switch (type) {
+      case 'casual':
+        scaleMultiplier = 1.03;
+        verticalNudge = -canvas.height * 0.015;
+        break;
+      case 'deportivo':
+        scaleMultiplier = 1.07;
+        verticalNudge = -canvas.height * 0.045;
+        break;
+      case 'presidencial':
+      default:
+        scaleMultiplier = 1.0;
+        verticalNudge = -canvas.height * 0.01;
+        break;
+    }
+
+    destWidth *= scaleMultiplier;
+    destHeight *= scaleMultiplier;
+
+    const safetyScale = Math.min(canvas.width / destWidth, canvas.height / destHeight, 1);
+    if (safetyScale < 1) {
+      destWidth *= safetyScale;
+      destHeight *= safetyScale;
+    }
+
+    const offsetX = (canvas.width - destWidth) / 2;
+    let offsetY = canvas.height - destHeight + verticalNudge;
+    if (!Number.isFinite(offsetY)) offsetY = canvas.height - destHeight;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-  // Sin borde de debug para no crear rectángulos visibles
-    
+
     try {
-      // Ajustar según tipo de enemigo
-      switch(type) {
-        case 'casual':
-          // Dibujar sprite casual (ligeras correcciones para aspecto natural)
-          ctx.drawImage(
-            img, 
-            offsetX, offsetY * 0.9, 
-            targetWidth, targetHeight * 1.1
-          );
-          break;
-          
-        case 'deportivo':
-          // Dibujar sprite deportivo (más esbelto)
-          ctx.drawImage(
-            img, 
-            offsetX, offsetY * 0.85, 
-            targetWidth * 0.9, targetHeight * 1.15
-          );
-          break;
-          
-        case 'presidencial':
-        default:
-          // Dibujar sprite presidencial (más formal, mejor proporcionado)
-          ctx.drawImage(
-            img, 
-            offsetX, offsetY, 
-            targetWidth, targetHeight
-          );
-          break;
+      ctx.drawImage(img, offsetX, offsetY, destWidth, destHeight);
+
+      canvas.__isFallback = false;
+      canvas.__aspectRatio = destHeight / destWidth || SPRITE_CONFIG.HUMAN_RATIO;
+      canvas.__renderScale = config.height || 1;
+      canvas.__headshotRatio = SPRITE_CONFIG.HEADSHOT_ZONE_RATIO;
+      canvas.__visibleMetrics = this.analyzeSpriteVisibility(ctx, canvas);
+      if (canvas.__visibleMetrics && canvas.__visibleMetrics.head) {
+        const headRegion = canvas.__visibleMetrics.head;
+        canvas.__headshotRegion = headRegion;
       }
-      
-  // No añadir etiquetas para evitar artefactos rectangulares
-      
-  // Marcar como sprite real (no respaldo)
-  canvas.__isFallback = false;
-  this.logInfo(`Sprite '${type}' procesado: ${canvas.width}x${canvas.height}`);
-  return canvas;
+      canvas.__type = type;
+
+      this.logInfo(`Sprite '${type}' procesado sin distorsión (${Math.round(destWidth)}x${Math.round(destHeight)})`);
+      return canvas;
     } catch (e) {
       this.logError(`Error al procesar sprite '${type}': ${e.message}`);
       return this.createFallbackSprite(type);
@@ -876,6 +886,96 @@ const SpriteSystem = {
       }
     });
   },
+
+      analyzeSpriteVisibility(ctx, canvas) {
+        if (!ctx || !canvas) {
+          return null;
+        }
+
+        try {
+          const width = canvas.width;
+          const height = canvas.height;
+          const imageData = ctx.getImageData(0, 0, width, height);
+          const data = imageData.data;
+          const alphaThreshold = 20;
+
+          let top = height;
+          let bottom = -1;
+          let left = width;
+          let right = -1;
+          let maxCoverage = 0;
+
+          const coveragePerRow = new Array(height).fill(0);
+
+          for (let y = 0; y < height; y++) {
+            let rowCoverage = 0;
+            let rowLeft = width;
+            let rowRight = -1;
+
+            for (let x = 0; x < width; x++) {
+              const index = (y * width + x) * 4;
+              const alpha = data[index + 3];
+              if (alpha > alphaThreshold) {
+                rowCoverage++;
+                if (x < rowLeft) rowLeft = x;
+                if (x > rowRight) rowRight = x;
+              }
+            }
+
+            if (rowCoverage > 0) {
+              coveragePerRow[y] = rowCoverage;
+              if (y < top) top = y;
+              if (y > bottom) bottom = y;
+              if (rowLeft < left) left = rowLeft;
+              if (rowRight > right) right = rowRight;
+              if (rowCoverage > maxCoverage) maxCoverage = rowCoverage;
+            }
+          }
+
+          if (bottom === -1 || top === height) {
+            return null;
+          }
+
+          const topRatio = top / height;
+          const bottomRatio = (bottom + 1) / height;
+          const visibleHeightRatio = Math.max(0, bottomRatio - topRatio);
+
+          const shoulderThreshold = Math.max(1, maxCoverage * 0.58);
+          let headEndRow = bottom;
+          for (let y = top; y <= bottom; y++) {
+            if (coveragePerRow[y] >= shoulderThreshold) {
+              headEndRow = y;
+              break;
+            }
+          }
+
+          if (headEndRow <= top) {
+            const fallbackHeight = Math.max(1, Math.floor((bottom - top + 1) * SPRITE_CONFIG.HEADSHOT_ZONE_RATIO));
+            headEndRow = Math.min(bottom, top + fallbackHeight);
+          }
+
+          const headBottomRatio = Math.min(bottomRatio, (headEndRow + 1) / height);
+          const headHeightRatio = Math.max(0, headBottomRatio - topRatio);
+
+          return {
+            top,
+            bottom,
+            left,
+            right,
+            topRatio,
+            bottomRatio,
+            heightRatio: visibleHeightRatio,
+            head: {
+              topRatio,
+              bottomRatio: headBottomRatio,
+              heightRatio: headHeightRatio
+            }
+          };
+        } catch (error) {
+          this.logWarn(`No se pudo analizar sprite: ${error.message}`);
+          return null;
+        }
+      },
   
   /**
    * Verifica y ajusta la alineación de sprites al suelo
@@ -962,6 +1062,12 @@ const SpriteSystem = {
     if (!enemy || !player || !ctx) {
       return; // Salir si faltan datos esenciales
     }
+
+    // Reiniciar metadata de render para evitar datos obsoletos
+    if (enemy) {
+      enemy.renderBounds = null;
+      enemy.isVisibleOnScreen = false;
+    }
     
     // Una vez cada 10 intentos, mostrar log para no saturar
     if (Math.random() < 0.1) {
@@ -1025,17 +1131,19 @@ const SpriteSystem = {
   // Usar la misma constante de altura (150) y lógica que el sistema de paredes
   const wallHeightConstant = 150; // Misma constante que game-all-in-one.js línea 921
   const spriteScaleFactor = 0.8; // Factor para que los sprites se vean del tamaño apropiado
-    const enemyConfig = SPRITE_CONFIG.ENEMY_TYPES[enemy.type || 'casual'];
-  // Calcular altura usando exactamente la misma perspectiva que las paredes
-  const spriteHeight = (canvasHeight * wallHeightConstant * spriteScaleFactor) / Math.max(pixelDistance, 1);
-    const spriteWidth = spriteHeight / SPRITE_CONFIG.HUMAN_RATIO;
-    
+    const enemyConfig = SPRITE_CONFIG.ENEMY_TYPES[enemy.type || 'casual'] || {};
+  const spriteBaseHeight = (canvasHeight * wallHeightConstant * spriteScaleFactor) / Math.max(pixelDistance, 1);
+  const spriteHeight = spriteBaseHeight * (enemyConfig.height || 1);
+
     // Seleccionar imagen según tipo
-  let sprite = this.sprites[enemy.type];
+    const sprite = this.sprites[enemy.type];
     // En ningún caso dibujar sprites de respaldo
     if (!sprite || sprite.__isFallback) {
       return;
     }
+
+    const spriteAspect = (sprite && sprite.__aspectRatio) || SPRITE_CONFIG.HUMAN_RATIO;
+    const spriteWidth = spriteHeight / spriteAspect;
     
   // Calcular posición Y con perspectiva 3D de raycasting real
   // En raycasting, los objetos más lejanos aparecen más cerca del horizonte
@@ -1054,6 +1162,37 @@ const SpriteSystem = {
   // Esto simula la perspectiva correcta: cerca = más abajo, lejos = más cerca del horizonte
   const ground3DLevel = virtualWallBottom;
   const screenY = ground3DLevel - spriteHeight;
+
+  const halfWidth = spriteWidth / 2;
+  const headRatio = (sprite && sprite.__headshotRatio) || SPRITE_CONFIG.HEADSHOT_ZONE_RATIO || 0.22;
+  const headRegion = sprite && sprite.__headshotRegion;
+  const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+
+  const bounds = {
+    left: screenX - halfWidth,
+    right: screenX + halfWidth,
+    top: screenY,
+    bottom: screenY + spriteHeight,
+    width: spriteWidth,
+    height: spriteHeight,
+    centerX: screenX,
+    centerY: screenY + spriteHeight / 2,
+    headTop: headRegion ? screenY + spriteHeight * headRegion.topRatio : screenY,
+    headBottom: headRegion
+      ? screenY + spriteHeight * headRegion.bottomRatio
+      : screenY + spriteHeight * headRatio,
+    bodyTop: 0,
+    distance: pixelDistance,
+    updatedAt: now,
+    horizon,
+    ground3DLevel
+  };
+
+  bounds.bodyTop = bounds.headBottom;
+  bounds.headHeight = Math.max(0, bounds.headBottom - (bounds.headTop ?? bounds.top));
+
+  enemy.renderBounds = bounds;
+  enemy.isVisibleOnScreen = true;
     
     // Guardar contexto
     ctx.save();
@@ -1075,6 +1214,34 @@ const SpriteSystem = {
       // Log ocasional de éxito
       if (Math.random() < 0.05) {
         console.log(`✅ Sprite rendered for ${enemy.type} at (${Math.round(screenX)}, ${Math.round(screenY)})`);
+      }
+
+      // Indicador de vida sobre la cabeza
+      const maxHealth = enemy.maxHealth || enemy.initialHealth || (window.GAME_CONFIG?.enemyHealth) || 100;
+      if (typeof enemy.health === 'number' && maxHealth > 0) {
+        const healthRatio = Math.max(0, Math.min(1, enemy.health / maxHealth));
+        const barWidth = spriteWidth * 0.6;
+        const barHeight = Math.max(4, spriteHeight * 0.04);
+        const barX = screenX - barWidth / 2;
+        const barY = screenY - barHeight - 12;
+
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
+
+        const gradient = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
+        gradient.addColorStop(0, '#2dff2d');
+        gradient.addColorStop(0.5, '#c6ff3a');
+        gradient.addColorStop(1, '#ff3a3a');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(barX, barY, Math.max(0, barWidth * healthRatio), barHeight);
+
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+        ctx.strokeRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+        ctx.restore();
       }
       
     } catch (e) {
@@ -1363,9 +1530,6 @@ const SpriteSystem = {
   }
 };
 
-// Exportar el sistema para uso global
-window.EnemySpriteSystem = SpriteSystem;
-
 // Auto-inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initSprites);
@@ -1467,3 +1631,10 @@ function initSprites() {
 }
 
 console.log('📚 Sistema de sprites enemigos (versión mejorada) cargado correctamente');
+
+// Exponer configuraciones y sistema para otros módulos del juego
+if (typeof window !== 'undefined') {
+  window.SpriteSystem = SpriteSystem;
+  window.EnemySpriteSystem = SpriteSystem;
+  window.SPRITE_CONFIG = SPRITE_CONFIG;
+}

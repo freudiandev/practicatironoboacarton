@@ -47,6 +47,8 @@
           border-radius: 20px;
           padding: 40px;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          max-height: calc(100vh - 40px);
+          overflow-y: auto;
       }
       
       h1 {
@@ -83,28 +85,32 @@
           padding: 30px;
           border-radius: 15px;
           margin-bottom: 30px;
-      }
-      
-      .qr-placeholder {
-          width: 200px;
-          height: 200px;
-          background: white;
-          border-radius: 15px;
-          margin: 20px auto;
           display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #333;
-          font-weight: bold;
-          border: 3px dashed #4CAF50;
+          flex-direction: column;
+          gap: 24px;
       }
-      
+
+      .donation-qr {
+          width: min(260px, 80%);
+          border-radius: 14px;
+          border: 3px solid rgba(255, 221, 87, 0.7);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+          margin: 0 auto;
+      }
+
       .bank-info {
-          background: rgba(255, 255, 255, 0.2);
-          padding: 20px;
-          border-radius: 10px;
-          margin: 20px 0;
-          font-size: 1.1em;
+          background: rgba(12, 16, 36, 0.55);
+          padding: 22px;
+          border-radius: 16px;
+          margin: 10px 0 0;
+          font-size: 1.05em;
+          border: 1px solid rgba(255, 221, 87, 0.45);
+          text-align: left;
+          line-height: 1.7;
+      }
+
+      .bank-info strong {
+          color: #ffd742;
       }
       
       .impact {
@@ -164,8 +170,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎮 Apoya el Proyecto</h1>
-        <p class="subtitle">Videojuegos Sociales y Políticos</p>
+    <h1>🎮 Apoya el Proyecto</h1>
+    <p class="subtitle">Colectivo CiberPunk Ecuador · Videojuegos Sociales y Políticos</p>
         
         <div class="mission">
             <h2>🎯 Nuestra Misión</h2>
@@ -174,18 +180,18 @@
         
         <div class="donation-section">
             <h2>💝 Haz tu Donación</h2>
-            <p>Escanea el código QR para donar a través de <strong>De Una - Banco Pichincha</strong></p>
-            
-            <div class="qr-placeholder">
-                [COLOCA AQUÍ TU CÓDIGO QR]
-            </div>
-            
+            <p><strong>Apoya al colectivo CiberPunk Ecuador</strong>: tu aporte sostiene acciones artísticas, performance y videojuegos políticos que mantienen viva la resistencia digital.</p>
+            <img src="qrPichincha.jpg" alt="Código QR del Banco Pichincha para donar a Samantha Ayleen Rueda Chamorro" class="donation-qr">
+            <p>Escanea el QR con la app del Banco Pichincha o usa los datos bancarios para transferir directamente.</p>
             <div class="bank-info">
-                <strong>🏦 Banco Pichincha - De Una</strong><br>
-                Desarrollador: Alex Almeida (@freudiandev)
+                <p><strong>Banco Pichincha</strong> · Cuenta de ahorro transaccional</p>
+                <p>Número: <strong>2206684682</strong></p>
+                <p>Cédula: <strong>1723625032</strong></p>
+                <p>Nombre: <strong>Samantha Ayleen Rueda Chamorro</strong></p>
+                <p>Referencia: Para sostener al colectivo <strong>CiberPunk Ecuador</strong></p>
             </div>
-            
-            <p>Cualquier monto es valioso y nos ayuda a continuar creando contenido independiente 🙏</p>
+            <p>Si estás en el exterior también puedes apoyar vía PayPal: <strong>samantharueda91@gmail.com</strong></p>
+            <p>¡Dona 50 centavos, 75 centavos o lo que puedas! Cada aporte expande nuestra memoria digital.</p>
         </div>
         
         <div class="impact">
@@ -213,7 +219,7 @@
         </div>
         
         <div style="text-align: center;">
-            <a href="javascript:history.back()" class="back-button">← Volver al Juego</a>
+            <a href="index.html" class="back-button">← Volver al Menú</a>
         </div>
     </div>
 </body>

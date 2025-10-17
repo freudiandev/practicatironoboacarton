@@ -181,12 +181,48 @@ window.MenuManager = {
     if (highscores.length === 0) {
       highscoresList.innerHTML = '<p>No hay puntajes registrados</p>';
     } else {
-      let html = '<h3>Top 10 Jugadores</h3><ol>';
-      highscores.slice(0, 10).forEach(score => {
-        html += `<li>${score.name}: ${score.score} puntos (${score.date})</li>`;
+      const escapeHtml = (value) => {
+        if (typeof value !== 'string') {
+          return '';
+        }
+        const map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        };
+        return value.replace(/[&<>"']/g, char => map[char] || char);
+      };
+
+      const formatTime = (seconds) => {
+        if (typeof seconds !== 'number' || Number.isNaN(seconds)) {
+          return '00:00';
+        }
+        const total = Math.max(0, Math.floor(seconds));
+        const minutes = Math.floor(total / 60).toString().padStart(2, '0');
+        const secs = (total % 60).toString().padStart(2, '0');
+        return `${minutes}:${secs}`;
+      };
+
+      const outcomeLabel = (value) => {
+        if (value === 'win') return 'Victoria';
+        if (value === 'loss') return 'Caída';
+        return 'Partida';
+      };
+
+      const items = highscores.slice(0, 10).map((score, index) => {
+        const rankClass = index < 3 ? ' class="highlight"' : '';
+        const points = Number.isFinite(score.score) ? score.score : parseInt(score.score, 10) || 0;
+        const kills = typeof score.kills === 'number' ? score.kills : 0;
+    const timeLabel = formatTime(score.time);
+    const dateLabel = score.date ? escapeHtml(String(score.date)) : '';
+        const dateMarkup = dateLabel ? `<span class="date">${dateLabel}</span>` : '';
+        const safeName = escapeHtml(score.name || 'Anónimo');
+        return `<li${rankClass}><strong>${safeName}</strong> — ${points} pts · ${kills} bajas · ${timeLabel} · ${outcomeLabel(score.outcome)} ${dateMarkup}</li>`;
       });
-      html += '</ol>';
-      highscoresList.innerHTML = html;
+
+      highscoresList.innerHTML = `<h3>Top 10 Jugadores</h3><ol>${items.join('')}</ol>`;
     }
   },
   

@@ -145,31 +145,45 @@ class WeaponAudioSystem {
     return buffer;
   }
 
-  // Generar voz sintética "HEADSHOT"
-  async createHeadshotVoice() {
+  // Generar voz sintética "HEADSHOT" (fallback cuando no hay speechSynthesis)
+  async createHeadshotVoice(language = 'en-US') {
     if (!this.audioContext) return;
-    
+
     await this.ensureAudioContext();
-    
+
     const now = this.audioContext.currentTime;
-    
-    // Crear ganancia master para la voz
-    const voiceGain = this.audioContext.createGain();
-    voiceGain.connect(this.audioContext.destination);
-    voiceGain.gain.setValueAtTime(this.masterVolume * 0.8, now);
-    
-    // === "HEAD" parte ===
-    await this.synthesizeWord("HEAD", now, voiceGain, 0.4);
-    
-    // === "SHOT" parte ===
-    await this.synthesizeWord("SHOT", now + 0.45, voiceGain, 0.4);
-    
-    this.headshotCount++;
-    console.log(`💀 Voz HEADSHOT generada (${this.headshotCount} total)`);
+
+  const voiceGain = this.audioContext.createGain();
+  voiceGain.connect(this.audioContext.destination);
+  const boostedGain = Math.min(1, (this.masterVolume || 0.7) * 1.6);
+  voiceGain.gain.setValueAtTime(boostedGain, now);
+
+    const isEnglish = language?.startsWith('en');
+    const phrasePlan = isEnglish
+      ? [
+          { word: 'HEAD', startOffset: 0, duration: 0.38 },
+          { word: 'SHOT', startOffset: 0.42, duration: 0.42 }
+        ]
+      : [
+          { word: 'HEAD', startOffset: 0, duration: 0.38 },
+          { word: 'SHOT', startOffset: 0.42, duration: 0.42 }
+        ];
+
+    for (const segment of phrasePlan) {
+      await this.synthesizeWord(
+        segment.word,
+        now + segment.startOffset,
+        voiceGain,
+        segment.duration,
+        boostedGain
+      );
+    }
+
+    console.log('💀 Voz sintética de headshot reproducida');
   }
 
   // Sintetizar una palabra usando formantes
-  async synthesizeWord(word, startTime, outputGain, duration) {
+  async synthesizeWord(word, startTime, outputGain, duration, boost = 1) {
     const formants = this.getFormants(word);
     
     for (let formant of formants) {
@@ -188,8 +202,9 @@ class WeaponAudioSystem {
       
       // Configurar envolvente
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(formant.amplitude, startTime + 0.05);
-      gain.gain.setValueAtTime(formant.amplitude, startTime + duration - 0.1);
+  const targetAmp = Math.min(1, formant.amplitude * 1.35 * boost);
+  gain.gain.linearRampToValueAtTime(targetAmp, startTime + 0.05);
+  gain.gain.setValueAtTime(targetAmp, startTime + duration - 0.1);
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
       
       // Conectar cadena de audio
@@ -320,8 +335,56 @@ class WeaponAudioSystem {
   }
 
   // Método para headshot
-  async headshotAchieved() {
-    await this.createHeadshotVoice();
+  async headshotAchieved(options = {}) {
+    const language = options.language || this.detectPreferredLanguage();
+    const phrase = options.phrase || (language.startsWith('es') ? 'disparo fulminante en la cabeza' : 'headshot');
+
+    const usedSpeech = this.trySpeechSynthesis(phrase, language, options.voiceHint);
+    if (!usedSpeech) {
+      await this.createHeadshotVoice(language);
+    }
+
+    this.headshotCount++;
+    console.log(`💀 Voz de headshot reproducida (${this.headshotCount} total)`);
+  }
+
+  async playHeadshotSound(options = {}) {
+    await this.headshotAchieved(options);
+  }
+
+  detectPreferredLanguage() {
+    if (typeof navigator !== 'undefined' && navigator.language) {
+      return navigator.language.toLowerCase();
+    }
+    return 'es-es';
+  }
+
+  trySpeechSynthesis(phrase, language, voiceHint) {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      return false;
+    }
+
+    try {
+      const utterance = new SpeechSynthesisUtterance(phrase);
+      utterance.lang = language || 'es-ES';
+      utterance.rate = language?.startsWith('es') ? 0.95 : 0.9;
+      utterance.pitch = language?.startsWith('es') ? 0.85 : 0.9;
+  utterance.volume = 1;
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length) {
+        const preferred = voices.find(v => voiceHint && v.name.toLowerCase().includes(voiceHint.toLowerCase()));
+        const languageMatch = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(language));
+        utterance.voice = preferred || languageMatch || voices[0];
+      }
+
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+      return true;
+    } catch (error) {
+      console.error('❌ Error al usar speechSynthesis:', error);
+      return false;
+    }
   }
 
   // Ajustar volumen general

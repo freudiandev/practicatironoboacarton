@@ -10,14 +10,20 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  /* Capa base: atardecer cálido quiteño */
-  background:
-    radial-gradient(120% 80% at 50% 20%, rgba(255,196,96,0.25), transparent 60%),
-    radial-gradient(100% 60% at 85% 10%, rgba(220,80,60,0.2), transparent 50%),
-    linear-gradient(140deg, #7a3a2a 0%, #b56a3a 35%, #caa56a 60%, #6b4032 100%);
-  /* Patrón sutil de azulejos coloniales */
-  background-blend-mode: overlay, screen, normal;
+  overflow-y: auto;
+  padding: 48px 18px;
+  box-sizing: border-box;
+  scrollbar-gutter: stable both-edges;
+  background: none;
   z-index: 1000;
+}
+
+.menu-hero {
+  position: absolute;
+  inset: 0;
+  background: url('../thumbnail.jpeg') center/cover no-repeat;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Textura/grano sutil en todo el fondo */
@@ -36,6 +42,34 @@
 .menu-screen::after {
   content: "";
   position: absolute;
+  @media (max-width: 768px) {
+    .menu-container {
+      width: min(95%, 540px);
+      padding: 26px 18px;
+    }
+
+    .menu-screen {
+      padding: 32px 12px 48px;
+      height: 100vh;
+    }
+
+    .menu-screen::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .menu-screen::-webkit-scrollbar-thumb {
+      background: rgba(255, 224, 138, 0.45);
+      border-radius: 6px;
+    }
+
+    .menu-screen::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .menu-container {
+      max-height: none;
+    }
+  }
   inset: 0;
   box-shadow: inset 0 0 220px 60px rgba(0,0,0,0.55);
   pointer-events: none;
@@ -59,6 +93,7 @@
     0 2px 0 rgba(255,255,255,0.4) inset,
     0 -2px 0 rgba(0,0,0,0.06) inset;
   position: relative;
+  z-index: 1;
 }
 
 /* Clavos decorativos tipo herrería colonial */
@@ -109,6 +144,41 @@
   flex-direction: column;
   gap: 15px;
   margin-top: 30px;
+}
+
+.menu-footer {
+  margin: 28px auto 0;
+  padding-top: 18px;
+  border-top: 2px dashed rgba(122, 26, 26, 0.32);
+  max-width: clamp(280px, 70%, 460px);
+  text-align: center;
+  color: #3a231a;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  background: linear-gradient(180deg, rgba(255, 247, 230, 0.35), rgba(255, 247, 230, 0));
+}
+
+.menu-footer h2 {
+  margin-bottom: 10px;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #7a1a1a;
+}
+
+.menu-footer p {
+  margin: 6px 0;
+}
+
+.menu-footer-link {
+  color: #1f6fb2;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.menu-footer-link:hover,
+.menu-footer-link:focus {
+  text-decoration: underline;
 }
 
 /* Botones estilo cartel de madera pintada */
@@ -200,6 +270,18 @@
 .highscores-list li {
   padding: 5px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.highscores-list li .date {
+  display: block;
+  font-size: 0.75em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 2px;
+}
+
+.highscores-list li.highlight {
+  color: #ffd700;
+  font-weight: 700;
 }
 
 .highscores-list li:nth-child(-n+3) {

@@ -43,6 +43,7 @@
   <div id="main-menu" class="menu-screen">
     <div class="menu-bunting" aria-hidden="true"></div>
     <div class="menu-backdrop-texture" aria-hidden="true"></div>
+    <div class="menu-hero" aria-hidden="true"></div>
     <div class="menu-container">
       <div class="pins" aria-hidden="true"></div>
       <h1 class="game-title">DOOM: Noboa de Cartón</h1>
@@ -51,6 +52,11 @@
         <button id="highscores-btn" class="menu-btn">PUNTAJES MÁS ALTOS</button>
         <button id="donate-btn" class="menu-btn">DONACIONES</button>
       </div>
+      <footer class="menu-footer" aria-label="Sobre el desarrollador">
+        <h2>Sobre el Desarrollador</h2>
+        <p>Alex Almeida es un desarrollador independiente comprometido con la creación de videojuegos que abordan temas sociales y políticos relevantes.</p>
+        <p>Síguelo en: <a href="https://www.instagram.com/freudiandev/" class="menu-footer-link" target="_blank" rel="noopener">@freudiandev</a></p>
+      </footer>
     </div>
   </div>
 
@@ -62,83 +68,122 @@
         <!-- Los puntajes se cargarán aquí -->
       </div>
       <button id="back-to-menu-btn" class="menu-btn">VOLVER AL MENÚ</button>
+      <footer class="menu-footer" aria-label="Sobre el desarrollador">
+        <h2>Sobre el Desarrollador</h2>
+        <p>Alex Almeida es un desarrollador independiente comprometido con la creación de videojuegos que abordan temas sociales y políticos relevantes.</p>
+        <p>Síguelo en: <a href="https://www.instagram.com/freudiandev/" class="menu-footer-link" target="_blank" rel="noopener">@freudiandev</a></p>
+      </footer>
     </div>
   </div>
 
   <!-- Pantalla de juego -->
   <div id="game-screen" class="hidden">
-    <!-- HUD del juego mejorado -->
-    <div id="game-hud">
-      <div class="hud-item">
-        <span class="hud-label">TIEMPO:</span>
-        <span id="timer-display" class="hud-value">0:00</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">KILLS:</span>
-        <span id="kills-display" class="hud-value">0</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">ENEMIGOS:</span>
-        <span id="enemy-count" class="hud-value">0</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">PUNTOS:</span>
-        <span id="score-display" class="hud-value">0</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">VIDA:</span>
-        <span id="health-display" class="hud-value">100</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">HEADSHOTS:</span>
-        <span id="headshot-counter" class="hud-value">0</span>
-      </div>
-    </div>
-    
     <!-- Popup de captura de mouse -->
-    <div id="mouse-capture-popup" class="mouse-capture-popup">
-      <h3>🎯 DOOM: Noboa de Cartón</h3>
-      <div class="click-icon">🖱️</div>
-      <p><strong>Haz clic en la pantalla</strong></p>
-      <p>para capturar el mouse y comenzar a jugar</p>
+    <div id="mouse-capture-popup" class="mouse-capture-popup" role="dialog" aria-live="polite" aria-modal="false">
+      <h3 id="mouse-capture-title">🎯 DOOM: Noboa de Cartón</h3>
+      <div class="click-icon" id="mouse-capture-icon">🖱️</div>
+      <p id="mouse-capture-primary" class="mouse-capture-primary"><strong>Haz clic en la pantalla</strong></p>
+      <p id="mouse-capture-secondary" class="mouse-capture-secondary">para capturar el mouse y comenzar a jugar.</p>
+      <p id="mouse-capture-escape" class="mouse-capture-escape">Presiona <span>ESC</span> para liberar el cursor cuando quieras.</p>
     </div>
     
     <!-- Layout del juego -->
     <div class="game-layout-improved">
-      <!-- Container del juego -->
-      <div id="game-container"></div>
-      
-      <!-- Panel derecho mejorado -->
-      <aside class="right-panel-improved">
-        <h3>🎮 Controles</h3>
-        <p><strong>WASD:</strong> Movimiento</p>
-        <p><strong>Mouse:</strong> Mirar</p>
-        <p><strong>Click:</strong> Disparar</p>
-        <p><strong>R:</strong> Recargar</p>
-        <p><strong>← →:</strong> Girar</p>
-        <p><strong>↑ ↓:</strong> Mirar arriba/abajo</p>
-        <p><strong>ESC:</strong> Menú</p>
-        
-        <h3>🎯 Objetivos</h3>
-        <p>• Elimina todos los enemigos</p>
-        <p>• Recoge munición (dorado)</p>
-        <p>• Recoge vida (rojo)</p>
-        <p>• Explora la casa-laberinto</p>
-        
-        <h3>📊 Estado</h3>
-        <div class="status-bar">
-          <div class="status-item">
-            <span>Vida:</span>
-            <div class="health-bar">
-              <div id="health-bar-fill" class="health-bar-fill"></div>
-            </div>
+      <aside id="hud-panel-left" class="hud-panel side-left">
+        <div class="hud-section hud-life">
+          <div class="section-title">VITALIDAD</div>
+          <div class="life-bar">
+            <div id="player-health-bar" class="life-bar-fill"></div>
           </div>
-          <div class="status-item">
-            <span>Munición:</span>
-            <span id="ammo-display">30/30</span>
+          <div class="life-values">
+            <span id="player-health-value">100</span>
+            <span class="life-max">/100</span>
+          </div>
+        </div>
+
+        <div class="hud-section hud-ammo">
+          <div class="section-title">ARMAMENTO</div>
+          <div class="info-row">
+            <span>Munición</span>
+            <span id="player-ammo">30</span>
+          </div>
+          <div class="info-row">
+            <span>Cartuchos</span>
+            <span id="player-magazines">6</span>
+          </div>
+        </div>
+
+        <div class="hud-section hud-minimap">
+          <div class="section-title">RADAR</div>
+          <canvas id="hud-minimap" width="220" height="220" aria-label="Minimapa"></canvas>
+          <div class="info-row coordinates">
+            <span>Coordenadas</span>
+            <span id="player-coordinates">0,0</span>
+          </div>
+        </div>
+
+        <div class="hud-section hud-stats">
+          <div class="section-title">ESTADÍSTICAS</div>
+          <div class="info-row">
+            <span>Tiempo</span>
+            <span id="hud-timer">0:00</span>
+          </div>
+          <div class="info-row">
+            <span>Enemigos abatidos</span>
+            <span id="hud-kills">0</span>
+          </div>
+          <div class="info-row">
+            <span>Headshots</span>
+            <span id="hud-headshots">0</span>
           </div>
         </div>
       </aside>
+
+      <!-- Container del juego -->
+      <div id="game-container"></div>
+      
+      <!-- HUD lateral derecho estilo cyberpunk -->
+      <aside id="hud-panel" class="hud-panel side-right">
+        <div class="hud-section hud-donation">
+          <div class="section-title">DONACIONES</div>
+          <div class="donation-qr-wrapper">
+            <img src="qrPichincha.jpg" alt="QR Banco Pichincha a nombre de Samantha Ayleen Rueda Chamorro" class="donation-qr-image" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="donation-qr-lightbox">
+            <p class="donation-note">Escanea el código QR con la app del Banco Pichincha para realizar tu aporte.</p>
+          </div>
+          <div class="donation-scroll">
+            <p class="donation-text">
+              <strong>Apoya al colectivo CiberPunk Ecuador</strong>: tu aporte impulsa nuevas intervenciones digitales, performance y videojuegos políticos.
+              ¡Dona 50 centavos, 75 centavos o lo que puedas para mantener viva la resistencia pixelada!
+              <span>Escanea el QR desde la app del banco o usa los datos directos de la cuenta.</span>
+              <span>Si estás en el exterior y quieres apoyar, puedes enviar a mi PayPal:</span>
+              <span><strong>samantharueda91@gmail.com</strong></span>
+            </p>
+            <div class="donation-bank-info">
+              <p><strong>Banco Pichincha</strong> · Cuenta de ahorro transaccional</p>
+              <p>Número: <strong>2206684682</strong></p>
+              <p>Cédula: <strong>1723625032</strong></p>
+              <p>Nombre: <strong>Samantha Ayleen Rueda Chamorro</strong></p>
+              <p>Mensaje: Para sostener al colectivo <strong>CiberPunk Ecuador</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div id="control-hints-overlay" class="control-hints-overlay hidden" aria-hidden="true">
+      <div class="control-hints-card" role="dialog" aria-modal="false" aria-labelledby="control-hints-title">
+        <h3 id="control-hints-title">Controles principales</h3>
+        <div id="control-hints-content" class="control-hints-content"></div>
+        <button type="button" class="control-hints-close" data-control-hints-dismiss>Entendido</button>
+      </div>
+    </div>
+
+    <div id="donation-qr-lightbox" class="donation-qr-lightbox hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="donation-qr-title">
+      <div class="donation-qr-lightbox__content">
+        <button type="button" class="donation-qr-close" data-donation-close>CERRAR</button>
+        <img src="qrPichincha.jpg" alt="Código QR ampliado del Banco Pichincha para donaciones" class="donation-qr-lightbox__image" id="donation-qr-expanded">
+        <p class="donation-qr-lightbox__title" id="donation-qr-title">Escanea el código en tamaño completo</p>
+      </div>
     </div>
 
     <!-- Controles móviles (aparecen solo en dispositivos táctiles) -->
@@ -192,6 +237,7 @@
   <!-- Sistemas de armas: efectos de balas y audio -->
   <script src="bullet-effects.js?v=20250818"></script>
   <script src="weapon-audio.js?v=20250818"></script>
+  <script src="texture-atlas.js?v=20250818"></script>
   
   <!-- Test inmediato de sistemas de armas -->
   <script>
@@ -232,6 +278,8 @@
       });
     }
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js" integrity="sha512-l9cEGoVYLRNvKcJsteVEh9UpAJZciV06P88eaJEqn3Ejj6inUeJ8V+RaH//RUW2KIiMzFxLpy0X58F3RrgPfGw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="assets/js/p5-centro-historico.js?v=20250818"></script>
   <!-- Luego cargar el juego y sus componentes -->
   <script src="game-all-in-one.js?v=20250818"></script>
   <script src="menu-manager.js?v=20250818"></script>
@@ -506,6 +554,88 @@
         } catch (e) {
           console.warn('Limpieza de botones de depuración falló:', e);
         }
+      }
+    });
+  
+  document.addEventListener('DOMContentLoaded', () => {
+  const nav = typeof navigator !== 'undefined' ? navigator : null;
+  const touchPoints = nav ? ((nav.maxTouchPoints || 0) + (nav.msMaxTouchPoints || 0)) : 0;
+  const isTouch = ('ontouchstart' in window) || touchPoints > 0;
+      const popup = document.getElementById('mouse-capture-popup');
+      if (popup) {
+        const icon = document.getElementById('mouse-capture-icon');
+        const primary = document.getElementById('mouse-capture-primary');
+        const secondary = document.getElementById('mouse-capture-secondary');
+        const escapeLine = document.getElementById('mouse-capture-escape');
+
+        if (isTouch) {
+          popup.classList.add('is-touch');
+          if (icon) icon.textContent = '☝️';
+          if (primary) primary.innerHTML = '<strong>Toca la pantalla</strong>';
+          if (secondary) secondary.textContent = 'para iniciar la partida y mostrar la mira roja.';
+        } else {
+          popup.classList.remove('is-touch');
+          if (icon) icon.textContent = '🖱️';
+          if (primary) primary.innerHTML = '<strong>Haz clic en la pantalla</strong>';
+          if (secondary) secondary.textContent = 'para capturar el mouse y comenzar la partida.';
+          if (escapeLine) escapeLine.style.display = 'block';
+        }
+      }
+
+      const overlay = document.getElementById('control-hints-overlay');
+      if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+
+      const qrImage = document.querySelector('.donation-qr-image');
+      const lightbox = document.getElementById('donation-qr-lightbox');
+      if (qrImage && lightbox) {
+        const closeButton = lightbox.querySelector('[data-donation-close]');
+        const lightboxImage = lightbox.querySelector('.donation-qr-lightbox__image');
+
+        const openLightbox = () => {
+          lightboxImage.src = qrImage.src;
+          lightbox.classList.remove('hidden');
+          lightbox.setAttribute('aria-hidden', 'false');
+          if (closeButton) {
+            closeButton.focus({ preventScroll: true });
+          }
+        };
+
+        const closeLightbox = () => {
+          if (lightbox.classList.contains('hidden')) {
+            return;
+          }
+          lightbox.classList.add('hidden');
+          lightbox.setAttribute('aria-hidden', 'true');
+          if (typeof qrImage.focus === 'function') {
+            qrImage.focus();
+          }
+        };
+
+        qrImage.addEventListener('click', openLightbox);
+        qrImage.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openLightbox();
+          }
+        });
+
+        if (closeButton) {
+          closeButton.addEventListener('click', closeLightbox);
+        }
+        lightbox.addEventListener('click', event => {
+          if (event.target === lightbox) {
+            closeLightbox();
+          }
+        });
+
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            closeLightbox();
+          }
+        });
       }
     });
   </script>

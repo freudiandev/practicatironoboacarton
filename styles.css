@@ -3,8 +3,14 @@
 body {
   margin: 0;
   padding: 0;
-  /* El fondo global será sobrepasado por el menú; mantener neutro */
-  background: #0b0b0b;
+  /* Fondo global con la miniatura para mantener coherencia visual */
+  background:
+    radial-gradient(140% 120% at 50% 20%, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.85)),
+    url('thumbnail.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   font-family: 'Arial', sans-serif;
   color: white;
   overflow: hidden;
@@ -225,10 +231,33 @@ body {
   line-height: 1.4;
 }
 
+.mouse-capture-secondary {
+  margin-top: 4px;
+}
+
+.mouse-capture-escape {
+  margin-top: 14px;
+  font-size: 0.95em;
+  color: #ffd86b;
+  letter-spacing: 0.04em;
+}
+
+.mouse-capture-escape span {
+  font-weight: 700;
+}
+
 .mouse-capture-popup .click-icon {
   font-size: 2em;
   margin: 15px 0;
   color: #ffa502;
+}
+
+.mouse-capture-popup.is-touch .mouse-capture-escape {
+  display: none;
+}
+
+.mouse-capture-popup.is-touch .mouse-capture-secondary {
+  margin-top: 10px;
 }
 
 /* === FIN DEL ARCHIVO === */

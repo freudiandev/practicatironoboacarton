@@ -7,6 +7,7 @@ window.GAME_CONFIG = {
   cellSize: 128, // Aumentado de 64 a 128 para espacios más grandes
   gridCols: 20, // Ajustado para el nuevo tamaño
   gridRows: 15,
+  defaultFov: Math.PI / 3,
   fov: Math.PI / 3,
   renderDistance: 1000, // Aumentado para el mapa más grande
   wallHeight: 128, // Aumentado proporcionalmente
@@ -21,11 +22,59 @@ window.GAME_CONFIG = {
   damage: 25,
   bulletSpeed: 10,
   mouseSensitivity: 0.001, // Reducido para menos sensibilidad
-  enemyHealth: 50,
+  enemyHealth: 100,
   maxWallDepth: 3,
   verticalLookSensitivity: 0.02, // Nueva configuración para mirar arriba/abajo
   enemyMinDistanceFromPlayer: 240, // Distancia mínima para que no se "pegue" al jugador
   showEnemyFallbackMarkers: false, // No mostrar marcadores de cuadrados rojos
+  renderQuality: 'high',
+  autoQuality: true,
+  qualityProfiles: {
+    ultra: {
+      columnStep: 1,
+      samplesPerColumn: 3,
+      enableTemporalJitter: false,
+      temporalJitterStrength: 0,
+      fov: Math.PI * 0.52,
+      distanceFade: 950,
+      maxDistance: 1100,
+      stepSize: 1.6,
+      maxLayers: 4
+    },
+    high: {
+      columnStep: 2,
+      samplesPerColumn: 2,
+      enableTemporalJitter: false,
+      temporalJitterStrength: 0,
+      fov: Math.PI * 0.45,
+      distanceFade: 900,
+      maxDistance: 1000,
+      stepSize: 1.8,
+      maxLayers: 3
+    },
+    medium: {
+      columnStep: 3,
+      samplesPerColumn: 1,
+      enableTemporalJitter: false,
+      temporalJitterStrength: 0,
+      fov: Math.PI * 0.4,
+      distanceFade: 820,
+      maxDistance: 900,
+      stepSize: 2.2,
+      maxLayers: 3
+    },
+    low: {
+      columnStep: 4,
+      samplesPerColumn: 1,
+      enableTemporalJitter: false,
+      temporalJitterStrength: 0,
+      fov: Math.PI * 0.33,
+      distanceFade: 750,
+      maxDistance: 800,
+      stepSize: 2.5,
+      maxLayers: 2
+    }
+  },
   // Ajustes de movimiento tipo "blanco de tiro"
   targetTrack: {
     amplitudeMinCells: 1.2,     // amplitud mínima en múltiplos de cellSize - aumentada para más recorrido
@@ -42,7 +91,12 @@ window.GAME_CONFIG = {
     minDistance: 240,           // distancia objetivo mínima (px)
     pushSpeed: 0.32,            // velocidad base de separación (px por tick aprox)
     damping: 0.85               // amortiguación para suavizar
-  }
+  },
+  // Ataques cuerpo a cuerpo
+  enemyMeleeRange: 180,
+  enemyMeleeCooldown: 1400,
+  enemyMeleeDamage: 15,
+  enemyBackstabAngle: 0.65
 };
 
 // Nuevo mapa tipo casa más espacioso
@@ -68,10 +122,15 @@ window.MAZE = [
 window.DoomGame = {
   canvas: null,
   ctx: null,
-  width: 800,
-  height: 600,
+  width: 1280,
+  height: 720,
   running: false,
   animationId: null,
+  frameId: 0,
+  raycastSettings: null,
+  temporalJitterPhase: 0,
+  performanceStats: null,
+  qualitySequence: ['ultra', 'high', 'medium', 'low'],
   
   // Game state
   score: 0,
@@ -87,6 +146,7 @@ window.DoomGame = {
     verticalLook: 0, // Nueva propiedad para mirar arriba/abajo
     health: 100,
     maxHealth: 100,
+  fov: GAME_CONFIG.fov,
     keys: {},
     keysPressTime: {}, // Para controlar sensibilidad
     ammo: 30,
@@ -105,6 +165,18 @@ window.DoomGame = {
   
   // Items system
   items: [],
+
+  // Feedback visual/kinético del jugador
+  damageOverlayAlpha: 0,
+  damageOverlayText: '',
+  damageOverlayTimer: 0,
+  cameraShakePower: 0,
+  cameraShakeDuration: 0,
+  cameraShakeDecay: 0.85,
+  lastUpdateTimestamp: 0,
+
+  // HUD data cache
+  hud: {},
   
   // Sound system
   sounds: {
@@ -121,6 +193,38 @@ window.DoomGame = {
     wall2: null,
     floor: null
   },
+  isTouch: false,
+  hasShownControlHints: false,
+  controlHints: null,
+  audioContext: null,
+  backgroundMusic: {
+    enabled: true,
+    playing: false,
+    gainNode: null,
+    cleanupTimer: null,
+    pendingStart: false,
+    tempo: 122 / 60,
+    sequence: [
+      { note: ['A3', 'E4', 'A4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['A3', 'C5', 'E5'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['F3', 'C4', 'A4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['F3', 'C4', 'G4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['D3', 'A3', 'F4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['E3', 'B3', 'G4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['C3', 'G3', 'E4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['E3', 'B3', 'F#4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['A3', 'E4', 'A4'], beats: 0.5, wave: 'sawtooth', detune: 6 },
+      { note: ['A3', 'C5', 'E5'], beats: 0.5, wave: 'sawtooth', detune: -6 },
+      { note: ['F3', 'C4', 'A4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['F3', 'D4', 'A4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['D3', 'A3', 'F4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['E3', 'B3', 'G4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['C3', 'G3', 'E4'], beats: 0.5, wave: 'sawtooth' },
+      { note: ['G2', 'D3', 'A3'], beats: 0.5, wave: 'sawtooth' }
+    ]
+  },
+  centroTexturesApplied: false,
+  skyBackdrop: null,
   
   init() {
     console.log('🎮 Inicializando DoomGame completo...');
@@ -150,17 +254,27 @@ window.DoomGame = {
       if (!this.ctx) {
         throw new Error('No se pudo obtener contexto 2D');
       }
+
+      this.ctx.imageSmoothingEnabled = false;
+
+      this.isTouch = this.isTouchDevice();
+      this.initControlHints();
       
       // Inicializar sistemas
   this.initSounds();
   this.initTextures();
   this.initWeaponSystems();
   this.setupControls();
+  this.initHUDPanel();
   // Spawnear enemigos SOLO cuando los sprites PNG estén listos
   this.spawnInitialEnemies();
   this.spawnItems();
-  // Alinear FOV del jugador con configuración para sprites
-  this.player.fov = GAME_CONFIG.fov;
+  // Configurar raycaster y FOV según perfil
+  this.configureRaycaster();
+
+      if (this.controlHints) {
+        this.showControlHints({ mode: this.isTouch ? 'touch' : 'desktop', autoHide: false, delay: 300 });
+      }
       
       // Hacer player global
       window.player = this.player;
@@ -179,20 +293,168 @@ window.DoomGame = {
     }
   },
   
+  getQualityProfile(name) {
+    if (!GAME_CONFIG.qualityProfiles) return null;
+    return GAME_CONFIG.qualityProfiles[name] || null;
+  },
+
+  configureRaycaster(overrides = {}) {
+    const defaults = {
+      columnStep: 4,
+      samplesPerColumn: 1,
+      enableTemporalJitter: false,
+      temporalJitterStrength: 0,
+      wallHeightConstant: 150,
+      distanceFade: 800,
+      maxDistance: 800,
+      stepSize: 2,
+      maxLayers: 3,
+      sampleSpread: null,
+      fov: GAME_CONFIG.fov || GAME_CONFIG.defaultFov || (Math.PI / 3)
+    };
+
+    const profile = this.getQualityProfile(GAME_CONFIG.renderQuality) || {};
+    const merged = Object.assign({}, defaults, profile, overrides || {});
+
+    if (!Number.isFinite(merged.fov) || merged.fov <= 0) {
+      merged.fov = GAME_CONFIG.defaultFov || (Math.PI / 3);
+    }
+
+    if (!Number.isFinite(merged.columnStep) || merged.columnStep <= 0) {
+      merged.columnStep = defaults.columnStep;
+    }
+
+    if (!Number.isFinite(merged.samplesPerColumn) || merged.samplesPerColumn < 1) {
+      merged.samplesPerColumn = defaults.samplesPerColumn;
+    }
+
+    if (!Number.isFinite(merged.distanceFade) || merged.distanceFade <= 0) {
+      merged.distanceFade = defaults.distanceFade;
+    }
+
+    if (!Number.isFinite(merged.maxDistance) || merged.maxDistance <= 0) {
+      merged.maxDistance = defaults.maxDistance;
+    }
+
+    if (!Number.isFinite(merged.stepSize) || merged.stepSize <= 0) {
+      merged.stepSize = defaults.stepSize;
+    }
+
+    if (!Number.isFinite(merged.maxLayers) || merged.maxLayers < 1) {
+      merged.maxLayers = defaults.maxLayers;
+    }
+
+    if (!Number.isFinite(merged.wallHeightConstant) || merged.wallHeightConstant <= 0) {
+      merged.wallHeightConstant = defaults.wallHeightConstant;
+    }
+
+    // Calcular spread angular para supersampling (radianes por muestra)
+    if (!Number.isFinite(merged.sampleSpread) || merged.sampleSpread <= 0) {
+      const baseWidth = merged.columnStep / Math.max(1, this.width);
+      merged.sampleSpread = baseWidth * merged.fov;
+    }
+
+    this.raycastSettings = merged;
+    this.player.fov = merged.fov;
+    GAME_CONFIG.fov = merged.fov;
+    this.temporalJitterPhase = 0;
+
+    return this.raycastSettings;
+  },
+
+  setRenderQuality(name, overrides = {}) {
+    if (!GAME_CONFIG.qualityProfiles || !GAME_CONFIG.qualityProfiles[name]) {
+      console.warn(`⚠️ Perfil de calidad '${name}' no encontrado. Se mantiene '${GAME_CONFIG.renderQuality}'.`);
+      return this.raycastSettings;
+    }
+
+    GAME_CONFIG.renderQuality = name;
+    return this.configureRaycaster(overrides);
+  },
+
+  updatePerformanceStats(deltaMs, currentTime) {
+    if (GAME_CONFIG.autoQuality === false || !Array.isArray(this.qualitySequence)) {
+      return;
+    }
+
+    if (!this.performanceStats) {
+      this.performanceStats = {
+        avgFrame: deltaMs,
+        smoothing: 0.12,
+        lastAdjust: currentTime,
+        cooldown: 3500,
+        samples: 1
+      };
+      return;
+    }
+
+    const stats = this.performanceStats;
+    stats.samples++;
+    stats.avgFrame += (deltaMs - stats.avgFrame) * (stats.smoothing || 0.12);
+
+    if (currentTime - stats.lastAdjust < (stats.cooldown || 3500)) {
+      return;
+    }
+
+    const avg = stats.avgFrame;
+    const qualityList = this.qualitySequence;
+    const currentQuality = GAME_CONFIG.renderQuality;
+    const currentIndex = qualityList.indexOf(currentQuality);
+
+    if (currentIndex === -1) return;
+
+    let targetQuality = null;
+
+    if (avg > 28 && currentIndex < qualityList.length - 1) {
+      targetQuality = qualityList[currentIndex + 1];
+    } else if (avg < 16 && currentIndex > 0) {
+      targetQuality = qualityList[currentIndex - 1];
+    }
+
+    if (targetQuality && targetQuality !== currentQuality) {
+      this.setRenderQuality(targetQuality);
+      stats.lastAdjust = currentTime;
+      stats.samples = 0;
+      stats.avgFrame = deltaMs;
+      if (window.console) {
+        console.log(`⚙️ Auto ajuste de calidad: ${currentQuality} → ${targetQuality} (avg ${avg.toFixed(1)} ms)`);
+      }
+    }
+  },
+
+  getWallTextureId(mapX, mapZ, cellValue) {
+    if (!this.wallTextureIds || this.wallTextureIds.length === 0) {
+      return 'wall_brick';
+    }
+
+    if (typeof cellValue === 'number' && cellValue >= 1 && cellValue < this.wallTextureIds.length) {
+      return this.wallTextureIds[cellValue] || this.wallTextureIds[0];
+    }
+
+    const index = Math.abs((mapX || 0) + (mapZ || 0)) % this.wallTextureIds.length;
+    return this.wallTextureIds[index] || this.wallTextureIds[0] || 'wall_brick';
+  },
+
   initSounds() {
     // Crear sonidos simples usando Web Audio API
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      const ctx = this.audioContext;
+
       this.sounds = {
-        shoot: () => this.playTone(audioContext, 400, 0.1),
-        hit: () => this.playTone(audioContext, 200, 0.2),
-        enemyDeath: () => this.playTone(audioContext, 150, 0.3),
-        footstep: () => this.playTone(audioContext, 100, 0.05),
-        reload: () => this.playTone(audioContext, 300, 0.3),
-        pickup: () => this.playTone(audioContext, 800, 0.2)
+        shoot: () => this.playTone(ctx, 400, 0.1),
+        hit: () => this.playTone(ctx, 200, 0.2),
+        enemyDeath: () => this.playTone(ctx, 150, 0.3),
+        footstep: () => this.playTone(ctx, 100, 0.05),
+        reload: () => this.playTone(ctx, 300, 0.3),
+        pickup: () => this.playTone(ctx, 800, 0.2)
       };
-      
+
+      this.initBackgroundMusic();
+
       console.log('🔊 Sistema de sonidos inicializado');
     } catch (error) {
       console.warn('⚠️ No se pudo inicializar audio:', error);
@@ -221,12 +483,100 @@ window.DoomGame = {
   },
   
   initTextures() {
-    // Crear texturas simples usando canvas
-    this.textures.wall1 = this.createBrickTexture('#8B4513', '#A0522D');
-    this.textures.wall2 = this.createBrickTexture('#696969', '#808080');
-    this.textures.floor = this.createFloorTexture('#654321');
-    
-    console.log('🎨 Texturas inicializadas');
+    this.textures = this.textures || {};
+
+    const fallback = {
+      wall_brick: this.createBrickTexture('#814030', '#c4774c'),
+      wall_stone: this.createBrickTexture('#3f3632', '#6a5b56'),
+      floor_cobble: this.createFloorTexture('#46332c')
+    };
+
+    this.textures.fallback = fallback;
+    this.wallTextureIds = ['wall_brick', 'wall_stone'];
+    this.floorTextureId = 'floor_cobble';
+
+    if (typeof TextureAtlas !== 'undefined') {
+      try {
+        this.textureAtlas = new TextureAtlas({
+          palette: {
+            deepTerracotta: '#7f3526',
+            warmClay: '#c0623c',
+            paleStucco: '#f4d9ba',
+            basaltStone: '#413532',
+            mossGreen: '#6f7b3d',
+            dawnBlue: '#9ab0c8',
+            brassAccent: '#d4a44b',
+            darkGrout: '#2d211e'
+          }
+        });
+
+        if (!this.textureAtlas.ready) {
+          this.textureAtlas.generateDefaultAtlas();
+        }
+      } catch (error) {
+        console.warn('⚠️ No se pudo iniciar TextureAtlas, usando fallbacks:', error);
+        this.textureAtlas = null;
+      }
+    } else {
+      console.warn('⚠️ TextureAtlas no disponible, usando texturas procedurales');
+    }
+
+    if (this.textureAtlas && this.textureAtlas.ready) {
+      console.log('🎨 Texturas inicializadas con atlas pixel art');
+    } else {
+      console.log('🎨 Texturas inicializadas con patrones procedurales');
+    }
+
+    this.attachCentroHistoricoTextures();
+  },
+
+  attachCentroHistoricoTextures() {
+    if (this.centroTexturesApplied) {
+      return;
+    }
+
+    const provider = typeof window !== 'undefined' ? window.CentroHistoricoTextures : null;
+    if (!provider) {
+      console.info('ℹ️ CentroHistoricoTextures no disponible en esta sesión; se usará el skybox genérico.');
+      return;
+    }
+
+    const apply = (assets) => {
+      if (!assets || this.centroTexturesApplied) {
+        return;
+      }
+
+      if (assets.sky) {
+        this.skyBackdrop = assets.sky;
+      }
+
+      if (!this.textures) {
+        this.textures = {};
+      }
+
+      if (assets.wallColonial) {
+        this.textures.wall_colonial = assets.wallColonial;
+      }
+      if (assets.wallArchway) {
+        this.textures.wall_archway = assets.wallArchway;
+      }
+      if (assets.floorStones) {
+        this.textures.floor_stones = assets.floorStones;
+        this.floorTextureId = 'floor_stones';
+      }
+
+      const baseWalls = ['wall_colonial', 'wall_archway', 'wall_stone', 'wall_brick'];
+      this.wallTextureIds = baseWalls.filter((key, idx) => baseWalls.indexOf(key) === idx);
+
+      this.centroTexturesApplied = true;
+      console.log('🏙️ Texturas del Centro Histórico aplicadas');
+    };
+
+    if (provider.isReady()) {
+      apply(provider.getTextures());
+    } else {
+      provider.whenReady(apply);
+    }
   },
   
   createBrickTexture(color1, color2) {
@@ -332,7 +682,8 @@ window.DoomGame = {
   },
   
   setupControls() {
-  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const isTouch = this.isTouchDevice();
+    this.isTouch = isTouch;
     document.addEventListener('keydown', (e) => {
       if (!this.player.keysPressTime[e.code]) {
         this.player.keysPressTime[e.code] = Date.now();
@@ -369,6 +720,29 @@ window.DoomGame = {
       }
     });
   },
+
+  initHUDPanel() {
+    const panel = {
+      timer: document.getElementById('hud-timer'),
+      kills: document.getElementById('hud-kills'),
+      headshots: document.getElementById('hud-headshots'),
+      healthValue: document.getElementById('player-health-value'),
+  healthMax: document.querySelector('#hud-panel .life-max') || document.querySelector('#hud-panel-left .life-max'),
+      healthBar: document.getElementById('player-health-bar'),
+      ammo: document.getElementById('player-ammo'),
+      magazines: document.getElementById('player-magazines'),
+      coordinates: document.getElementById('player-coordinates'),
+      minimapCanvas: document.getElementById('hud-minimap')
+    };
+
+    if (panel.minimapCanvas && panel.minimapCanvas.getContext) {
+      panel.minimapCtx = panel.minimapCanvas.getContext('2d');
+      panel.minimapPadding = 14;
+      panel.minimapCellSpan = 12;
+    }
+
+    this.hud = panel;
+  },
   
   // Configurar sistema de captura de mouse
   setupMouseCapture() {
@@ -380,10 +754,13 @@ window.DoomGame = {
       e.preventDefault();
       e.stopPropagation();
       
-      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      const isTouch = this.isTouch;
       
       if (isTouch) {
         // En móvil, disparar directamente
+        if (popup) popup.style.display = 'none';
+        this.hideControlHints();
+        this.resumeAudioContext();
         this.shoot();
         return;
       }
@@ -402,6 +779,10 @@ window.DoomGame = {
         // Mouse capturado - ocultar popup
         if (popup) popup.style.display = 'none';
         if (canvas) canvas.classList.add('mouse-captured');
+        if (!this.hasShownControlHints && this.controlHints) {
+          this.showControlHints({ mode: 'desktop', autoHide: true });
+        }
+        this.resumeAudioContext();
         console.log('🎯 Mouse capturado - Modo juego activado');
       } else {
         // Mouse liberado - mostrar popup
@@ -419,96 +800,331 @@ window.DoomGame = {
     // Inicializar estado - mostrar popup al inicio
     if (popup) popup.style.display = 'block';
   },
-  
-  spawnInitialEnemies() {
-    console.log('🎯 SPAWNING ENEMIES - DEBUG MODE');
-    console.log(`Player position: (${this.player.x}, ${this.player.z})`);
-    
-    // TEMPORAL: Crear un enemigo muy cerca del jugador para testing
-    const testEnemy = {
-      id: 999,
-      x: this.player.x + 200, // 200 pixels adelante
-      z: this.player.z,
-      health: 100,
-      angle: 0,
-      speed: 1.0,
-      lastMove: 0,
-      target: null,
-      state: 'target',
-      type: 'casual',
-      trackAxis: null,
-      trackMin: 0,
-      trackMax: 0,
-      trackDir: 1,
-      pauseAtEdge: false,
-      edgePauseRange: [250, 800],
-      nextResumeTime: 0,
-      hideAtEdges: false,
-      hidden: false,
-      hideDuration: 300,
-      sepVX: 0,
-      sepVZ: 0
+
+  isTouchDevice() {
+    return (
+      typeof window !== 'undefined' && (
+        'ontouchstart' in window ||
+        (typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0))
+      )
+    );
+  },
+
+  initControlHints() {
+    const overlay = document.getElementById('control-hints-overlay');
+    const content = document.getElementById('control-hints-content');
+    const closeBtn = overlay ? overlay.querySelector('[data-control-hints-dismiss]') : null;
+
+    if (!overlay || !content) {
+      console.warn('⚠️ Control hints overlay no encontrado');
+      return;
+    }
+
+    this.controlHints = {
+      overlay,
+      content,
+      closeBtn,
+      autoHideTimer: null,
+      mode: this.isTouch ? 'touch' : 'desktop'
     };
-    
-    this.enemies.push(testEnemy);
-    console.log(`✅ Test enemy created at (${testEnemy.x}, ${testEnemy.z})`);
-    
-    const spawnPoints = [
-      {x: 2 * 128, z: 2 * 128},
-      {x: 17 * 128, z: 2 * 128},
-      {x: 2 * 128, z: 12 * 128},
-      {x: 17 * 128, z: 12 * 128},
-      {x: 9 * 128, z: 6 * 128},
-      {x: 6 * 128, z: 9 * 128}
-    ];
-    
-    const types = ['casual', 'deportivo', 'presidencial'];
-    const minSpawnDist = 50; // TEMPORAL: Reducido para debug (era GAME_CONFIG.enemyMinDistanceFromPlayer || 240)
-    const speedByType = { casual: 0.9, deportivo: 1.4, presidencial: 1.1 };
-    spawnPoints.forEach((point, index) => {
-      if (this.isValidSpawnPoint(point.x, point.z)) {
-        // Saltar puntos demasiado cercanos al jugador
-        const dxp = point.x - this.player.x;
-        const dzp = point.z - this.player.z;
-        if (Math.hypot(dxp, dzp) < minSpawnDist * 1.1) {
-          console.log(`⚠️ Skipping spawn point ${index} - too close to player: ${Math.round(Math.hypot(dxp, dzp))} < ${minSpawnDist * 1.1}`);
-          return; // no spawnear tan cerca
-        }
-        console.log(`✅ Spawning enemy ${index} at (${point.x}, ${point.z}) - distance: ${Math.round(Math.hypot(dxp, dzp))}`);
-        const type = types[index % types.length];
-        const enemy = {
-          id: index,
-          x: point.x,
-          z: point.z,
-          health: GAME_CONFIG.enemyHealth,
-          angle: Math.random() * Math.PI * 2,
-          speed: speedByType[type] || GAME_CONFIG.enemySpeed,
-          lastMove: 0,
-          target: null,
-          state: 'target', // comportamiento "blanco de tiro"
-          type,
-          trackAxis: null,
-          trackMin: 0,
-          trackMax: 0,
-          trackDir: Math.random() < 0.5 ? -1 : 1,
-          // comportamiento de blanco de tiro
-          pauseAtEdge: true,
-          edgePauseRange: GAME_CONFIG.targetTrack.edgePauseMs || [250, 800],
-          nextResumeTime: 0,
-          hideAtEdges: Math.random() < (GAME_CONFIG.targetTrack.hideAtEdgesChance ?? 0.25),
-          hidden: false,
-          hideDuration: 300,
-          // variables para empuje/ separación suave
-          sepVX: 0,
-          sepVZ: 0
-        };
-        // Configurar la pista de movimiento lateral en el pasillo
-        this.setupTargetTrack(enemy);
-        this.enemies.push(enemy);
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        this.hideControlHints();
       }
     });
-    
-    console.log(`👾 ${this.enemies.length} enemigos spawneados`);
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.hideControlHints());
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && this.controlHints && !this.controlHints.overlay.classList.contains('hidden')) {
+        this.hideControlHints();
+      }
+    });
+  },
+
+  initBackgroundMusic() {
+    if (!this.audioContext || !this.backgroundMusic.enabled) {
+      return;
+    }
+
+    if (!this.backgroundMusic.gainNode) {
+      const gainNode = this.audioContext.createGain();
+      gainNode.gain.setValueAtTime(0.08, this.audioContext.currentTime);
+      gainNode.connect(this.audioContext.destination);
+      this.backgroundMusic.gainNode = gainNode;
+    }
+
+    if (!this.backgroundMusic.playing) {
+      if (this.audioContext.state === 'running') {
+        this.scheduleHymnLoop();
+      } else {
+        this.backgroundMusic.pendingStart = true;
+      }
+    }
+  },
+
+  noteToFrequency(note) {
+    const A4 = 440;
+    const noteMap = { C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 };
+    const match = /^([A-G])([b#]?)(\d)$/.exec(note);
+    if (!match) return A4;
+    const [, letter, accidental, octaveStr] = match;
+    const octave = parseInt(octaveStr, 10);
+    let semitoneOffset = noteMap[letter] + (octave - 4) * 12;
+    if (accidental === '#') semitoneOffset += 1;
+    if (accidental === 'b') semitoneOffset -= 1;
+    return A4 * Math.pow(2, semitoneOffset / 12);
+  },
+
+  scheduleHymnLoop(startTime = null) {
+    if (!this.audioContext || !this.backgroundMusic.gainNode || !this.backgroundMusic.enabled) return;
+
+    const ctx = this.audioContext;
+    if (ctx.state !== 'running') {
+      this.backgroundMusic.pendingStart = true;
+      return;
+    }
+    const { sequence, tempo } = this.backgroundMusic;
+    const beatDuration = 1 / tempo;
+    const now = ctx.currentTime;
+    let begin = startTime !== null ? startTime : now + 0.1;
+
+    const oscGainPairs = [];
+
+    sequence.forEach(entry => {
+      const duration = entry.beats * beatDuration;
+      const notes = Array.isArray(entry.note) ? entry.note : [entry.note];
+      const playableNotes = notes.filter(n => n && n !== 'REST');
+
+      if (playableNotes.length === 0) {
+        begin += duration;
+        return;
+      }
+
+      const baseGain = typeof entry.gain === 'number' ? entry.gain : 0.24;
+      const perVoiceGain = Math.max(0.04, baseGain / playableNotes.length);
+      const attack = Math.min(0.05, duration * 0.35);
+      const release = Math.min(0.12, duration * 0.45);
+      const sustainStart = Math.max(begin + attack, begin + duration - release);
+
+      playableNotes.forEach((noteName, voiceIndex) => {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        const frequency = this.noteToFrequency(noteName);
+
+        const waveConfig = entry.wave;
+        if (Array.isArray(waveConfig)) {
+          oscillator.type = waveConfig[voiceIndex % waveConfig.length];
+        } else {
+          oscillator.type = waveConfig || (voiceIndex % 2 === 0 ? 'sawtooth' : 'square');
+        }
+
+        oscillator.frequency.setValueAtTime(frequency, begin);
+
+        if (typeof entry.detune === 'number') {
+          const detuneDirection = voiceIndex % 2 === 0 ? 1 : -1;
+          oscillator.detune.setValueAtTime(entry.detune * detuneDirection, begin);
+        }
+
+        gainNode.gain.setValueAtTime(0.001, begin);
+        gainNode.gain.linearRampToValueAtTime(perVoiceGain, begin + attack);
+        gainNode.gain.linearRampToValueAtTime(perVoiceGain * 0.55, sustainStart);
+        gainNode.gain.setTargetAtTime(0.0001, begin + duration, 0.04);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.backgroundMusic.gainNode);
+
+        oscillator.start(begin);
+        oscillator.stop(begin + duration + 0.04);
+
+        oscGainPairs.push({ oscillator, gainNode });
+      });
+
+      begin += duration;
+    });
+
+    const totalDuration = sequence.reduce((sum, entry) => sum + entry.beats, 0) * beatDuration;
+    this.backgroundMusic.playing = true;
+
+    const rescheduleDelay = Math.max(0, (begin - now) * 1000 - 20);
+    this.backgroundMusic.cleanupTimer = setTimeout(() => {
+      oscGainPairs.splice(0, oscGainPairs.length);
+      if (this.backgroundMusic.enabled) {
+        this.scheduleHymnLoop(begin);
+      }
+    }, rescheduleDelay);
+  },
+
+  toggleBackgroundMusic(forceState = null) {
+    if (!this.audioContext || !this.backgroundMusic.gainNode) return;
+
+    if (forceState === true || (forceState === null && !this.backgroundMusic.enabled)) {
+      this.backgroundMusic.enabled = true;
+      this.backgroundMusic.playing = false;
+      this.backgroundMusic.pendingStart = false;
+      this.scheduleHymnLoop();
+      return;
+    }
+
+    if (forceState === false || (forceState === null && this.backgroundMusic.enabled)) {
+      this.backgroundMusic.enabled = false;
+      this.backgroundMusic.playing = false;
+      this.backgroundMusic.gainNode.gain.setTargetAtTime(0.0001, this.audioContext.currentTime, 0.6);
+      if (this.backgroundMusic.cleanupTimer) {
+        clearTimeout(this.backgroundMusic.cleanupTimer);
+        this.backgroundMusic.cleanupTimer = null;
+      }
+      this.backgroundMusic.pendingStart = false;
+    }
+  },
+
+  resumeAudioContext() {
+    if (!this.audioContext) return;
+
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume().then(() => {
+        if (this.backgroundMusic.enabled && !this.backgroundMusic.playing) {
+          this.scheduleHymnLoop();
+          this.backgroundMusic.pendingStart = false;
+        }
+      }).catch(err => {
+        console.warn('⚠️ No se pudo reanudar el contexto de audio:', err);
+      });
+    } else if (this.backgroundMusic.pendingStart && this.backgroundMusic.enabled && !this.backgroundMusic.playing) {
+      this.scheduleHymnLoop();
+      this.backgroundMusic.pendingStart = false;
+    }
+  },
+
+  updateControlHintsContent(mode = 'desktop') {
+    if (!this.controlHints) return;
+
+    const desktopHints = [
+      { action: 'W / A / S / D', detail: 'Moverte por el Centro Histórico' },
+      { action: 'Ratón', detail: 'Apuntar y mirar alrededor' },
+      { action: 'Click izquierdo', detail: 'Disparar' },
+      { action: 'R', detail: 'Recargar arma' },
+      { action: 'ESC', detail: 'Liberar mouse o abrir menú' }
+    ];
+
+    const touchHints = [
+      { action: 'Pad virtual', detail: 'Moverte por las calles de Quito' },
+      { action: '☝️ Toque y arrastre', detail: 'Apuntar y girar la cámara' },
+      { action: 'Botón rojo', detail: 'Disparar' },
+      { action: 'Icono recargar', detail: 'Recargar arma' },
+      { action: 'Botón menú', detail: 'Pausa o salir' }
+    ];
+
+    const data = mode === 'touch' ? touchHints : desktopHints;
+    const introText = mode === 'touch'
+      ? 'Toca la pantalla para iniciar la partida; la mira roja aparecerá al disparar.'
+      : 'Haz clic en el canvas para capturar el mouse. Presiona ESC para liberarlo cuando lo necesites.';
+
+    this.controlHints.mode = mode;
+    this.controlHints.content.innerHTML = [
+      `<p class="control-hints-intro">${introText}</p>`,
+      ...data.map(item => `<div class="control-hints-row"><span>${item.action}</span><span>${item.detail}</span></div>`)
+    ].join('');
+  },
+
+  showControlHints({ mode = this.isTouch ? 'touch' : 'desktop', autoHide = false, delay = 0 } = {}) {
+    if (!this.controlHints) return;
+
+    this.updateControlHintsContent(mode);
+    const { overlay } = this.controlHints;
+    if (!overlay) return;
+
+    clearTimeout(this.controlHints.autoHideTimer);
+
+    const reveal = () => {
+      overlay.classList.remove('hidden');
+      overlay.setAttribute('aria-hidden', 'false');
+      this.hasShownControlHints = true;
+
+      if (autoHide) {
+        this.controlHints.autoHideTimer = setTimeout(() => this.hideControlHints(), 6000);
+      }
+    };
+
+    if (delay > 0) {
+      setTimeout(reveal, delay);
+    } else {
+      reveal();
+    }
+  },
+
+  hideControlHints() {
+    if (!this.controlHints) return;
+    const { overlay } = this.controlHints;
+    if (!overlay) return;
+
+    overlay.classList.add('hidden');
+    overlay.setAttribute('aria-hidden', 'true');
+    clearTimeout(this.controlHints.autoHideTimer);
+    this.controlHints.autoHideTimer = null;
+  },
+  
+  spawnInitialEnemies() {
+    console.log('🎯 SPAWNING ENEMIES - DISTRIBUTED MODE');
+    console.log(`Player position: (${this.player.x}, ${this.player.z})`);
+
+    const desiredCount = Math.max(1, Math.min(GAME_CONFIG.maxEnemies ?? 4, 6));
+    const spawnPoints = this.generateDistributedSpawnPoints(desiredCount, {
+      minDistanceFromPlayer: GAME_CONFIG.enemyMinDistanceFromPlayer ?? 240,
+      minDistanceBetweenEnemies: (GAME_CONFIG.cellSize ?? 128) * 6,
+      relaxAttempts: 4,
+      relaxFactor: 0.8
+    });
+
+    if (!spawnPoints.length) {
+      console.warn('⚠️ No se pudieron generar puntos distribuidos, usando fallback de pasillos');
+      for (let i = 0; i < desiredCount; i++) {
+        this.spawnEnemyInCorridor();
+      }
+      console.log(`👾 ${this.enemies.length} enemigos spawneados (fallback)`);
+      return;
+    }
+
+    const types = ['casual', 'deportivo', 'presidencial'];
+    const speedByType = { casual: 0.9, deportivo: 1.4, presidencial: 1.1 };
+
+    spawnPoints.forEach((point, index) => {
+      const type = types[(this.nextEnemyTypeIndex + index) % types.length];
+      const enemy = {
+        id: Date.now() + index,
+        x: point.x,
+        z: point.z,
+        health: GAME_CONFIG.enemyHealth,
+        angle: Math.random() * Math.PI * 2,
+        speed: speedByType[type] || GAME_CONFIG.enemySpeed,
+        lastMove: 0,
+        target: null,
+        state: 'target',
+        type,
+        trackAxis: null,
+        trackMin: 0,
+        trackMax: 0,
+        trackDir: Math.random() < 0.5 ? -1 : 1,
+        pauseAtEdge: true,
+        edgePauseRange: GAME_CONFIG.targetTrack.edgePauseMs || [800, 1500],
+        nextResumeTime: 0,
+        hideAtEdges: Math.random() < (GAME_CONFIG.targetTrack.hideAtEdgesChance ?? 0.15),
+        hidden: false,
+        hideDuration: 300,
+        sepVX: 0,
+        sepVZ: 0
+      };
+
+      this.setupTargetTrack(enemy);
+      this.enemies.push(enemy);
+      console.log(`✅ Spawning ${type} at (${point.x.toFixed(0)}, ${point.z.toFixed(0)})`);
+    });
+
+    this.nextEnemyTypeIndex = (this.nextEnemyTypeIndex + spawnPoints.length) % types.length;
+    console.log(`👾 ${this.enemies.length} enemigos spawneados (distribuidos)`);
   },
   
   isValidSpawnPoint(x, z) {
@@ -521,6 +1137,108 @@ window.DoomGame = {
     }
     
     return MAZE[mapZ][mapX] === 0;
+  },
+
+  generateDistributedSpawnPoints(count, options = {}) {
+    const cellSize = GAME_CONFIG.cellSize ?? 128;
+    const cols = GAME_CONFIG.gridCols ?? MAZE[0].length;
+    const rows = GAME_CONFIG.gridRows ?? MAZE.length;
+
+    const minDistanceFromPlayer = options.minDistanceFromPlayer ?? (GAME_CONFIG.enemyMinDistanceFromPlayer ?? cellSize * 3);
+    const baseMinDistanceBetween = options.minDistanceBetweenEnemies ?? cellSize * 6;
+    const relaxAttempts = Math.max(1, options.relaxAttempts ?? 3);
+    const relaxFactor = Math.min(0.95, options.relaxFactor ?? 0.8);
+
+    const isFreeCell = (cx, cz) => (
+      cz >= 0 && cz < rows && cx >= 0 && cx < cols && MAZE[cz] && MAZE[cz][cx] === 0
+    );
+
+    const playerCellX = Math.floor(this.player.x / cellSize);
+    const playerCellZ = Math.floor(this.player.z / cellSize);
+
+    const candidates = [];
+    for (let z = 0; z < rows; z++) {
+      for (let x = 0; x < cols; x++) {
+        if (!isFreeCell(x, z)) continue;
+
+        const worldX = x * cellSize + cellSize / 2;
+        const worldZ = z * cellSize + cellSize / 2;
+        const distPlayer = Math.hypot(worldX - this.player.x, worldZ - this.player.z);
+        if (distPlayer < minDistanceFromPlayer) continue;
+
+        const freeL = isFreeCell(x - 1, z);
+        const freeR = isFreeCell(x + 1, z);
+        const freeU = isFreeCell(x, z - 1);
+        const freeD = isFreeCell(x, z + 1);
+
+        const horizontalCorridor = (freeL || freeR) && !(freeU || freeD);
+        const verticalCorridor = (freeU || freeD) && !(freeL || freeR);
+        const openRoom = [freeL, freeR, freeU, freeD].filter(Boolean).length >= 3;
+
+        const corridorScore = horizontalCorridor || verticalCorridor ? 2 : openRoom ? 1 : 0;
+        const distanceBonus = Math.min(1.5, distPlayer / (cellSize * 4));
+
+        candidates.push({
+          x: worldX,
+          z: worldZ,
+          cellX: x,
+          cellZ: z,
+          score: corridorScore + distanceBonus,
+          distPlayer
+        });
+      }
+    }
+
+    if (!candidates.length) {
+      console.warn('⚠️ No hay celdas candidatas para spawnear enemigos');
+      return [];
+    }
+
+    // Preferir corredores, pero mantener variedad
+    let filtered = candidates.filter(c => c.score >= 2.5);
+    if (!filtered.length) filtered = candidates.filter(c => c.score >= 1.5);
+    if (!filtered.length) filtered = candidates.slice();
+
+    const shuffle = array => {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    };
+
+    let bestSelection = [];
+    let currentMinSpacing = baseMinDistanceBetween;
+
+    for (let attempt = 0; attempt < relaxAttempts; attempt++) {
+      const pool = filtered.slice();
+      shuffle(pool);
+
+      const selection = [];
+      for (const candidate of pool) {
+        const isFarEnough = selection.every(other => Math.hypot(candidate.x - other.x, candidate.z - other.z) >= currentMinSpacing);
+        if (!isFarEnough) continue;
+        selection.push(candidate);
+        if (selection.length >= count) break;
+      }
+
+      if (selection.length > bestSelection.length) {
+        bestSelection = selection;
+        if (bestSelection.length >= count) break;
+      }
+
+      currentMinSpacing *= relaxFactor;
+    }
+
+    if (!bestSelection.length) {
+      console.warn('⚠️ No se logró una selección distribuida, devolviendo mejor esfuerzo');
+      return filtered.slice(0, Math.min(count, filtered.length));
+    }
+
+    if (bestSelection.length < count) {
+      console.warn(`⚠️ Solo se pudieron ubicar ${bestSelection.length} enemigos distribuidos de ${count} solicitados`);
+    }
+
+    return bestSelection.slice(0, count);
   },
   
   spawnItems() {
@@ -568,7 +1286,12 @@ window.DoomGame = {
     if (!this.running) return;
     
     const currentTime = Date.now();
+    const deltaMs = this.lastUpdateTimestamp ? (currentTime - this.lastUpdateTimestamp) : 16;
+    this.lastUpdateTimestamp = currentTime;
     this.gameTime = Math.floor((currentTime - this.gameStartTime) / 1000);
+    this.frameId = (this.frameId || 0) + 1;
+
+    this.updatePerformanceStats(deltaMs, currentTime);
     
     // Update player
     this.updatePlayer();
@@ -598,6 +1321,9 @@ window.DoomGame = {
     
     // Update items
     this.updateItems();
+
+  // Feedback visual de daño
+  this.updateDamageFeedback(deltaMs);
     
     // Update HUD
     this.updateHUD();
@@ -676,24 +1402,32 @@ window.DoomGame = {
     this.enemies.forEach(enemy => {
       if (enemy.health <= 0) return;
 
-      // Asegurar SIEMPRE el modo "blanco de tiro" y una pista válida
-      if (enemy.state !== 'target') {
+      if (!enemy.baseSpeed) {
+        enemy.baseSpeed = enemy.speed;
+      }
+      if (!enemy.state) {
         enemy.state = 'target';
       }
       if (!enemy.trackAxis) {
         this.setupTargetTrack(enemy);
       }
 
-      // Movimiento lateral por pasillos (target-track)
-      this.updateTargetBehavior(enemy, currentTime);
+      this.handleEnemyMeleeBehavior(enemy, currentTime);
     });
   },
   
-  enemyAttack(enemy) {
-    // Damage player
-    this.player.health -= 10;
-    this.sounds.hit();
-    
+  enemyAttack(enemy, options = {}) {
+    const damage = Math.max(1, options.damage ?? GAME_CONFIG.enemyMeleeDamage ?? 15);
+    this.player.health = Math.max(0, this.player.health - damage);
+
+    if (this.sounds && typeof this.sounds.hit === 'function') {
+      this.sounds.hit();
+    }
+
+    const backstab = options.backstab ?? this.isEnemyBehindPlayer(enemy);
+    this.player.lastDamageTime = options.currentTime ?? Date.now();
+    this.triggerPlayerDamageFeedback({ damage, backstab });
+
     if (this.player.health <= 0) {
       this.gameOver();
     }
@@ -714,57 +1448,196 @@ window.DoomGame = {
       return bullet.distance < 500;
     });
   },
+
+  getCrosshairPosition() {
+    return {
+      x: this.width / 2,
+      y: this.height / 2
+    };
+  },
+
+  computeAimTowardsCrosshair() {
+    const crosshair = this.getCrosshairPosition();
+    const fallbackWidth = (typeof window !== 'undefined' && Number.isFinite(window.innerWidth)) ? window.innerWidth : 1280;
+    const screenWidth = this.width || (this.canvas ? this.canvas.width : 0) || fallbackWidth;
+    const halfWidth = screenWidth / 2;
+    const horizontalOffset = crosshair.x - halfWidth;
+    const fov = this.player.fov || GAME_CONFIG.fov || (Math.PI / 3);
+    const offsetRatio = halfWidth !== 0 ? horizontalOffset / halfWidth : 0;
+    const aimOffset = Math.atan(offsetRatio * Math.tan(fov / 2));
+    return {
+      angle: this.player.angle + aimOffset,
+      aimOffset,
+      crosshair
+    };
+  },
+
+  getWeaponMuzzleScreenPosition() {
+    const weaponBaseX = this.width - 100;
+    const weaponBaseY = this.height - 80;
+    return {
+      x: weaponBaseX + 56,
+      y: weaponBaseY + 20
+    };
+  },
+
+  getEnemyHitZone(enemy, tolerance = 0) {
+    if (!enemy || !enemy.renderBounds || !enemy.isVisibleOnScreen) return null;
+
+    const bounds = enemy.renderBounds;
+    if (!bounds) return null;
+
+    const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (bounds.updatedAt && Math.abs(now - bounds.updatedAt) > 250) {
+      return null;
+    }
+
+    const { x, y } = this.getCrosshairPosition();
+    const pad = Math.max(0, tolerance);
+    const left = bounds.left - pad;
+    const right = bounds.right + pad;
+    const top = bounds.top - pad;
+    const bottom = bounds.bottom + pad;
+
+    if (x < left || x > right || y < top || y > bottom) {
+      return null;
+    }
+
+    const headTop = (bounds.headTop ?? bounds.top) - pad;
+    const headBottom = (bounds.headBottom ?? bounds.top) + pad;
+    const zone = (y >= headTop && y <= headBottom) ? 'head' : 'body';
+    return { zone, bounds };
+  },
+
+  getEnemyHitDistanceThreshold(enemy) {
+    if (enemy && enemy.renderBounds) {
+      const widthBased = Math.max(28, enemy.renderBounds.width * 0.45);
+      return Math.min(90, Math.max(widthBased, 45));
+    }
+    return 55;
+  },
+
+  applyKnockbackFromHit(enemy, angle, force = 15) {
+    if (!enemy) return;
+    const pushX = Math.cos(angle) * force;
+    const pushZ = Math.sin(angle) * force;
+    const newX = enemy.x + pushX;
+    const newZ = enemy.z + pushZ;
+    if (this.canMoveTo(newX, newZ)) {
+      enemy.x = newX;
+      enemy.z = newZ;
+    }
+  },
+
+  registerEnemyHit(enemy, zone = 'body', context = {}) {
+    if (!enemy) return;
+
+    const currentFrame = this.frameId || 0;
+    if (!context.force && enemy.__lastHitFrame === currentFrame) {
+      return;
+    }
+    enemy.__lastHitFrame = currentFrame;
+
+    if (!enemy.maxHealth || enemy.maxHealth < enemy.health) {
+      enemy.maxHealth = GAME_CONFIG.enemyHealth || enemy.health || 100;
+    }
+
+    const enemyIndex = (context.enemyIndex !== undefined) ? context.enemyIndex : this.enemies.indexOf(enemy);
+    const damage = zone === 'head' ? 100 : 20;
+    enemy.health -= damage;
+
+    if (zone === 'head') {
+      console.log(`💀 HEADSHOT registrado. Daño ${damage}. Vida restante: ${enemy.health}`);
+    } else {
+      console.log(`🎯 Impacto registrado (${zone}). Daño ${damage}. Vida restante: ${enemy.health}`);
+    }
+
+    if (this.sounds && typeof this.sounds.hit === 'function') {
+      try {
+        this.sounds.hit();
+      } catch (error) {
+        console.error('❌ Error reproduciendo sonido de impacto:', error);
+      }
+    }
+
+    if (this.bulletEffects) {
+      if (zone === 'head' && typeof this.bulletEffects.createBloodBurst === 'function') {
+        this.bulletEffects.createBloodBurst(enemy.x, enemy.z, enemy.y || 64);
+      } else if (typeof this.bulletEffects.createBloodEffect === 'function') {
+        this.bulletEffects.createBloodEffect(enemy.x, enemy.z);
+      }
+    }
+
+    const knockbackAngle = (context.knockbackAngle !== undefined)
+      ? context.knockbackAngle
+      : (context.bullet && typeof context.bullet.angle === 'number')
+        ? context.bullet.angle
+        : this.player.angle;
+    const knockbackForce = (context.knockbackForce !== undefined)
+      ? context.knockbackForce
+      : (zone === 'head' ? 22 : 15);
+
+    this.applyKnockbackFromHit(enemy, knockbackAngle, knockbackForce);
+
+    if (zone === 'head') {
+      this.headshots = (this.headshots || 0) + 1;
+      if (typeof this.updateHeadshotCounter === 'function') {
+        this.updateHeadshotCounter();
+      }
+      if (this.weaponAudio && typeof this.weaponAudio.playHeadshotSound === 'function') {
+        try {
+          this.weaponAudio.playHeadshotSound();
+        } catch (error) {
+          console.error('❌ Error reproduciendo voz de headshot:', error);
+        }
+      }
+      if (this.bulletEffects && typeof this.bulletEffects.createHeadshotEffect === 'function') {
+        this.bulletEffects.createHeadshotEffect();
+      }
+    }
+
+    if (enemy.health <= 0) {
+      if (typeof this.enemyDeath === 'function') {
+        this.enemyDeath(enemy, enemyIndex);
+      }
+    }
+  },
   
   checkCollisions() {
-    // Bullet vs Enemy collisions
-    this.bullets.forEach((bullet, bulletIndex) => {
-      this.enemies.forEach((enemy, enemyIndex) => {
-        if (enemy.health <= 0 || enemy.hidden) return;
-        
+    // Bullet vs Enemy collisions usando bounding boxes proyectados
+    for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
+      const bullet = this.bullets[bulletIndex];
+      if (!bullet) continue;
+
+      let bulletConsumed = false;
+
+      for (let enemyIndex = 0; enemyIndex < this.enemies.length; enemyIndex++) {
+        const enemy = this.enemies[enemyIndex];
+        if (!enemy || enemy.health <= 0 || enemy.hidden) continue;
+
         const dx = bullet.x - enemy.x;
         const dz = bullet.z - enemy.z;
         const distance = Math.sqrt(dx * dx + dz * dz);
-        
-        // Aumentar radio de colisión para mejor jugabilidad
-        if (distance < 35) {
-          // ¡IMPACTO!
-          const damage = GAME_CONFIG.damage;
-          enemy.health -= damage;
-          console.log(`🎯 ¡IMPACTO! Enemigo recibe ${damage} de daño. Vida restante: ${enemy.health}`);
-          
-          // Remover la bala
-          bullet.active = false;
-          this.bullets.splice(bulletIndex, 1);
-          
-          // Efectos visuales y sonoros del impacto
-          this.sounds.hit();
-          
-          // Crear efectos de sangre si está disponible el sistema avanzado
-          if (this.bulletEffects) {
-            this.bulletEffects.createBloodBurst(enemy.x, enemy.z, enemy.y || 64);
-          }
-          
-          // Empujar al enemigo ligeramente hacia atrás
-          const pushForce = 15;
-          const pushX = Math.cos(bullet.angle) * pushForce;
-          const pushZ = Math.sin(bullet.angle) * pushForce;
-          
-          // Verificar que la nueva posición sea válida antes de empujar
-          const newX = enemy.x + pushX;
-          const newZ = enemy.z + pushZ;
-          if (this.canMoveTo(newX, newZ)) {
-            enemy.x = newX;
-            enemy.z = newZ;
-          }
-          
-          // Verificar si el enemigo murió
-          if (enemy.health <= 0) {
-            console.log('💀 ¡ENEMIGO ELIMINADO!');
-            this.enemyDeath(enemy, enemyIndex);
-          }
-        }
-      });
-    });
+        if (distance > this.getEnemyHitDistanceThreshold(enemy)) continue;
+
+        const hitInfo = this.getEnemyHitZone(enemy, 6);
+        if (!hitInfo) continue;
+
+        this.registerEnemyHit(enemy, hitInfo.zone, {
+          enemyIndex,
+          bullet,
+          knockbackAngle: bullet.angle
+        });
+
+        bulletConsumed = true;
+        break;
+      }
+
+      if (bulletConsumed) {
+        bullet.active = false;
+        this.bullets.splice(bulletIndex, 1);
+      }
+    }
     
     // Player vs Item collisions
     this.items.forEach((item, index) => {
@@ -803,6 +1676,168 @@ window.DoomGame = {
       }
     });
   },
+
+  updateDamageFeedback(deltaMs) {
+    if (this.damageOverlayAlpha > 0) {
+      const fade = deltaMs / 700;
+      this.damageOverlayAlpha = Math.max(0, this.damageOverlayAlpha - fade);
+    }
+
+    if (this.damageOverlayTimer > 0) {
+      this.damageOverlayTimer = Math.max(0, this.damageOverlayTimer - deltaMs);
+      if (this.damageOverlayTimer === 0) {
+        this.damageOverlayText = '';
+      }
+    }
+
+    if (this.cameraShakeDuration > 0) {
+      this.cameraShakeDuration = Math.max(0, this.cameraShakeDuration - deltaMs);
+      if (this.cameraShakeDuration === 0) {
+        this.cameraShakePower = 0;
+      }
+    }
+  },
+
+  renderMinimap() {
+    const hud = this.hud || {};
+    const canvas = hud.minimapCanvas;
+    const ctx = hud.minimapCtx;
+    if (!canvas || !ctx || !window.MAZE || !window.GAME_CONFIG) {
+      return;
+    }
+
+  const { gridCols, gridRows, cellSize } = window.GAME_CONFIG;
+  const padding = hud.minimapPadding ?? 14;
+  const width = canvas.width;
+  const height = canvas.height;
+  const usableWidth = width - padding * 2;
+  const usableHeight = height - padding * 2;
+  const viewCells = hud.minimapCellSpan ?? 12;
+  const viewWorldWidth = cellSize * viewCells;
+  const halfViewWorld = viewWorldWidth / 2;
+  const scale = Math.min(usableWidth / viewWorldWidth, usableHeight / viewWorldWidth);
+  const mapSide = viewWorldWidth * scale;
+  const mapLeft = (width - mapSide) / 2;
+  const mapTop = (height - mapSide) / 2;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const bgGradient = ctx.createLinearGradient(0, 0, width, height);
+    bgGradient.addColorStop(0, '#12043a');
+    bgGradient.addColorStop(0.5, '#230d5a');
+    bgGradient.addColorStop(1, '#360b67');
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = 'rgba(12, 18, 42, 0.88)';
+    ctx.fillRect(mapLeft, mapTop, mapSide, mapSide);
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(mapLeft, mapTop, mapSide, mapSide);
+  ctx.clip();
+
+  const minWorldX = this.player.x - halfViewWorld;
+  const maxWorldX = this.player.x + halfViewWorld;
+  const minWorldZ = this.player.z - halfViewWorld;
+  const maxWorldZ = this.player.z + halfViewWorld;
+
+  const startCol = Math.max(0, Math.floor(minWorldX / cellSize) - 1);
+  const endCol = Math.min(gridCols - 1, Math.ceil(maxWorldX / cellSize) + 1);
+  const startRow = Math.max(0, Math.floor(minWorldZ / cellSize) - 1);
+  const endRow = Math.min(gridRows - 1, Math.ceil(maxWorldZ / cellSize) + 1);
+
+    ctx.fillStyle = 'rgba(255, 0, 170, 0.55)';
+    for (let z = startRow; z <= endRow; z++) {
+      if (z < 0 || z >= gridRows) continue;
+      for (let x = startCol; x <= endCol; x++) {
+        if (x < 0 || x >= gridCols) continue;
+        if (window.MAZE[z][x] !== 1) continue;
+        const worldX = x * cellSize;
+        const worldZ = z * cellSize;
+        const screenX = centerX + (worldX - this.player.x) * scale;
+        const screenY = centerY + (worldZ - this.player.z) * scale;
+        ctx.fillRect(screenX, screenY, cellSize * scale, cellSize * scale);
+      }
+    }
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    const firstGridX = Math.floor((minWorldX - cellSize) / cellSize) * cellSize;
+    const lastGridX = Math.ceil((maxWorldX + cellSize) / cellSize) * cellSize;
+    for (let worldX = firstGridX; worldX <= lastGridX; worldX += cellSize) {
+      const screenX = centerX + (worldX - this.player.x) * scale;
+      ctx.beginPath();
+      ctx.moveTo(screenX, centerY - halfViewWorld * scale - cellSize * scale);
+      ctx.lineTo(screenX, centerY + halfViewWorld * scale + cellSize * scale);
+      ctx.stroke();
+    }
+
+    const firstGridZ = Math.floor((minWorldZ - cellSize) / cellSize) * cellSize;
+    const lastGridZ = Math.ceil((maxWorldZ + cellSize) / cellSize) * cellSize;
+    for (let worldZ = firstGridZ; worldZ <= lastGridZ; worldZ += cellSize) {
+      const screenY = centerY + (worldZ - this.player.z) * scale;
+      ctx.beginPath();
+      ctx.moveTo(centerX - halfViewWorld * scale - cellSize * scale, screenY);
+      ctx.lineTo(centerX + halfViewWorld * scale + cellSize * scale, screenY);
+      ctx.stroke();
+    }
+
+    // Jugador en centro
+    const playerRadius = Math.max(5, Math.min(12, 0.35 * cellSize * scale));
+    ctx.fillStyle = '#00fff5';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, playerRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#00fff5';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.lineTo(
+      centerX + Math.cos(this.player.angle) * 32 * scale,
+      centerY + Math.sin(this.player.angle) * 32 * scale
+    );
+    ctx.stroke();
+
+    this.enemies.forEach(enemy => {
+      if (!enemy || enemy.health <= 0 || enemy.hidden) return;
+      const dx = enemy.x - this.player.x;
+      const dz = enemy.z - this.player.z;
+      if (Math.abs(dx) > halfViewWorld || Math.abs(dz) > halfViewWorld) return;
+      const ex = centerX + dx * scale;
+      const ez = centerY + dz * scale;
+      const radius = Math.max(4, Math.min(10, 0.28 * cellSize * scale));
+      ctx.fillStyle = 'rgba(255, 64, 144, 0.9)';
+      ctx.beginPath();
+      ctx.arc(ex, ez, radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.restore();
+
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, width - 2, height - 2);
+  },
+
+  triggerPlayerDamageFeedback({ damage = 15, backstab = false } = {}) {
+    const baseAlpha = 0.55;
+    const bonusAlpha = backstab ? 0.2 : 0.1;
+    const scaledAlpha = Math.min(0.25, damage / 120);
+    this.damageOverlayAlpha = Math.min(1, baseAlpha + bonusAlpha + scaledAlpha);
+
+    const baseText = 'El cartón Noboa te está golpeando';
+    this.damageOverlayText = backstab ? `${baseText} por la espalda` : baseText;
+    this.damageOverlayTimer = 900 + (backstab ? 400 : 0);
+
+    const shakeBase = backstab ? 6 : 4;
+    this.cameraShakePower = Math.max(this.cameraShakePower, shakeBase);
+    this.cameraShakeDuration = Math.max(this.cameraShakeDuration, 320 + (backstab ? 180 : 0));
+  },
   
   enemyDeath(enemy, index) {
     this.sounds.enemyDeath();
@@ -836,7 +1871,9 @@ window.DoomGame = {
     console.log(`💥 ¡DISPARO! Munición restante: ${this.player.ammo}`);
     
     // Calcular dirección exacta hacia el centro de la cruz (crosshair)
-    const shootAngle = this.player.angle; // Ángulo exacto hacia donde mira el jugador
+    const aimData = this.computeAimTowardsCrosshair();
+    const shootAngle = aimData.angle; // Ángulo ajustado hacia la cruz
+    const crosshair = aimData.crosshair;
     const verticalLook = this.player.verticalLook; // Mirada vertical
     
     // Usar el nuevo sistema de efectos de balas
@@ -847,7 +1884,15 @@ window.DoomGame = {
           this.player.x,
           this.player.z,
           shootAngle,
-          verticalLook
+          verticalLook,
+          {
+            canvasWidth: this.width,
+            canvasHeight: this.height,
+            crosshair,
+            muzzle: this.getWeaponMuzzleScreenPosition(),
+            fov: this.player.fov,
+            timestamp: currentTime
+          }
         );
         console.log('✅ Bala creada (nuevo sistema):', result);
       } catch (error) {
@@ -893,39 +1938,59 @@ window.DoomGame = {
   },
   
   updateHUD() {
-    // Update HUD elements
-    const timerDisplay = document.getElementById('timer-display');
-    const killsDisplay = document.getElementById('kills-display');
-    const enemyCount = document.getElementById('enemy-count');
-    
-    if (timerDisplay) {
+    const hud = this.hud || {};
+
+    if (hud.healthValue) {
+      const hp = Math.max(0, Math.round(this.player.health));
+      hud.healthValue.textContent = hp.toString();
+    }
+
+    if (hud.healthMax) {
+      hud.healthMax.textContent = `/${this.player.maxHealth}`;
+    }
+
+    if (hud.healthBar) {
+      const ratio = Math.max(0, Math.min(1, this.player.health / this.player.maxHealth));
+      hud.healthBar.style.width = `${Math.max(6, ratio * 100)}%`;
+      hud.healthBar.classList.toggle('low', ratio < 0.35);
+    }
+
+    if (hud.ammo) {
+      hud.ammo.textContent = `${this.player.ammo}/${this.player.maxAmmo}`;
+    }
+
+    if (hud.magazines) {
+      const reserve = Math.max(0, this.player.maxAmmo - this.player.ammo);
+      hud.magazines.textContent = reserve.toString();
+    }
+
+    if (hud.timer) {
       const minutes = Math.floor(this.gameTime / 60);
       const seconds = this.gameTime % 60;
-      timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      hud.timer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
-    
-    if (killsDisplay) {
-      killsDisplay.textContent = this.kills.toString();
+
+    if (hud.kills) {
+      hud.kills.textContent = this.kills.toString();
     }
-    
-    if (enemyCount) {
-      const aliveEnemies = this.enemies.filter(e => e.health > 0).length;
-      const currentTime = performance.now();
-      const nextSpawnIn = Math.max(0, GAME_CONFIG.spawnCooldown - (currentTime - this.enemySpawnTimer));
-      const nextSpawnSeconds = Math.ceil(nextSpawnIn / 1000);
-      
-      if (aliveEnemies < GAME_CONFIG.maxEnemies && nextSpawnIn > 0) {
-        enemyCount.textContent = `${aliveEnemies}/${GAME_CONFIG.maxEnemies} (Next: ${nextSpawnSeconds}s)`;
-      } else {
-        enemyCount.textContent = `${aliveEnemies}/${GAME_CONFIG.maxEnemies}`;
-      }
+
+    if (hud.headshots) {
+      hud.headshots.textContent = (this.headshots || 0).toString();
     }
+
+    if (hud.coordinates) {
+      const cell = GAME_CONFIG.cellSize || 128;
+      const coordX = (this.player.x / cell).toFixed(1);
+      const coordZ = (this.player.z / cell).toFixed(1);
+      hud.coordinates.textContent = `${coordX}, ${coordZ}`;
+    }
+
+    this.renderMinimap();
   },
   
   updateHeadshotCounter() {
-    const headshotDisplay = document.getElementById('headshot-counter');
-    if (headshotDisplay) {
-      headshotDisplay.textContent = this.headshots.toString();
+    if (this.hud && this.hud.headshots) {
+      this.hud.headshots.textContent = this.headshots.toString();
     }
   },
   
@@ -944,39 +2009,102 @@ window.DoomGame = {
   
   gameWin() {
     this.running = false;
-    this.showGameEnd('¡VICTORIA!', `Puntuación: ${this.score}`, '#00FF00');
+    const playerName = this.promptForPlayerName(false);
+    this.showGameEnd('¡VICTORIA!', `Puntuación: ${this.score}`, '#00FF00', playerName, 'win');
   },
   
   gameOver() {
     this.running = false;
-    this.showGameEnd('GAME OVER', `Puntuación: ${this.score}`, '#FF0000');
+    const playerName = this.promptForPlayerName(true);
+    this.showGameEnd('GAME OVER', `Puntuación: ${this.score}`, '#FF0000', playerName, 'loss');
   },
   
-  showGameEnd(title, subtitle, color) {
-    // Save score
-    this.saveScore();
+  showGameEnd(title, subtitle, color, playerName = null, outcome = 'loss') {
+    const safeName = playerName || this.promptForPlayerName(false);
+    this.saveScore(safeName, outcome);
     
     setTimeout(() => {
-      alert(`${title}\n${subtitle}\nKills: ${this.kills}\nTiempo: ${this.gameTime}s`);
+      const summary = [
+        title,
+        subtitle,
+        `Jugador: ${safeName}`,
+        `Kills: ${this.kills}`,
+        `Tiempo: ${this.gameTime}s`
+      ].join('\n');
+      alert(summary);
       if (window.MenuManager) {
         window.MenuManager.showMainMenu();
       }
     }, 100);
   },
   
-  saveScore() {
+  promptForPlayerName(forcePrompt = true) {
+    const storageKey = 'doomLastPlayerName';
+    let lastName = '';
+    try {
+      lastName = localStorage.getItem(storageKey) || '';
+    } catch (error) {
+      console.warn('No se pudo leer el nombre previo del jugador:', error);
+      lastName = '';
+    }
+
+    let resolvedName = lastName;
+    if (forcePrompt) {
+      const fallback = lastName || 'Corredor Ciber';
+      let inputName = null;
+      try {
+        inputName = prompt('Ingresa tu nombre para registrar tu puntaje:', fallback);
+      } catch (error) {
+        console.warn('No se pudo solicitar el nombre del jugador:', error);
+      }
+
+      if (inputName !== null && typeof inputName === 'string') {
+        resolvedName = inputName.trim();
+      } else if (!lastName) {
+        resolvedName = '';
+      }
+    }
+
+    if (!resolvedName) {
+      resolvedName = forcePrompt ? 'Anónimo' : (lastName || 'Anónimo');
+    }
+
+    if (resolvedName.length > 24) {
+      resolvedName = resolvedName.slice(0, 24);
+    }
+
+    try {
+      localStorage.setItem(storageKey, resolvedName);
+    } catch (error) {
+      console.warn('No se pudo guardar el nombre del jugador:', error);
+    }
+
+    return resolvedName;
+  },
+  
+  saveScore(playerName, outcome = 'loss') {
     try {
       const scores = JSON.parse(localStorage.getItem('doomHighscores') || '[]');
-      scores.push({
+      const safeName = (playerName || 'Anónimo').toString();
+      const entry = {
         score: this.score,
         kills: this.kills,
         time: this.gameTime,
         date: new Date().toLocaleDateString(),
-        name: 'Player'
+        savedAt: Date.now(),
+        name: safeName,
+        outcome
+      };
+
+      scores.push(entry);
+      scores.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if ((b.kills || 0) !== (a.kills || 0)) return (b.kills || 0) - (a.kills || 0);
+        if ((a.time || 0) !== (b.time || 0)) return (a.time || 0) - (b.time || 0);
+        return (a.savedAt || 0) - (b.savedAt || 0);
       });
-      
-      scores.sort((a, b) => b.score - a.score);
-      localStorage.setItem('doomHighscores', JSON.stringify(scores.slice(0, 10)));
+
+      localStorage.setItem('doomHighscores', JSON.stringify(scores.slice(0, 20)));
     } catch (error) {
       console.warn('No se pudo guardar puntuación:', error);
     }
@@ -1003,26 +2131,30 @@ window.DoomGame = {
   render() {
     if (!this.running || !this.ctx) return;
     
-    // 1. Limpiar pantalla completamente en negro
     this.ctx.fillStyle = '#000';
     this.ctx.fillRect(0, 0, this.width, this.height);
-    
-    // 2. Renderizar cielo como rectángulo horizontal en la parte superior
+
+    let shakeX = 0;
+    let shakeY = 0;
+    if (this.cameraShakePower > 0) {
+      const shakeAngle = Math.random() * Math.PI * 2;
+      shakeX = Math.cos(shakeAngle) * this.cameraShakePower;
+      shakeY = Math.sin(shakeAngle) * this.cameraShakePower;
+      this.cameraShakePower *= this.cameraShakeDecay;
+      if (this.cameraShakePower < 0.2 && this.cameraShakeDuration <= 0) {
+        this.cameraShakePower = 0;
+      }
+    }
+
+    this.ctx.save();
+    this.ctx.translate(shakeX, shakeY);
+
     this.renderSky();
-    
-    // 3. Renderizar suelo como rectángulo horizontal en la parte inferior
     this.renderFloor();
-    
-    // 4. Renderizar paredes (encima del cielo y suelo)
     this.renderWalls();
-    
-    // 5. Render sprites (enemies and items)
     this.renderSprites();
-    
-    // 5.5. Render bullets (sistema fallback)
     this.renderBullets();
-    
-    // 6. Render bullet effects
+
     if (this.bulletEffects) {
       try {
         this.bulletEffects.render(this.ctx, this.width, this.height);
@@ -1030,27 +2162,57 @@ window.DoomGame = {
         console.error('❌ Error renderizando efectos de balas:', error);
       }
     }
-    
-    // 7. Crosshair (siempre al frente)
+
+    this.ctx.restore();
+
     this.renderCrosshair();
-    
-    // 8. Debug info expandida
     this.renderDebugInfo();
-    
-    // 9. Weapon display (siempre al frente)
     this.renderWeapon();
+    this.renderDamageOverlay();
   },
   
   renderSky() {
     // NUEVO: Cielo que se mueve con verticalLook
     const verticalOffset = this.player.verticalLook * this.height * 0.6;
     const skyHeight = this.height / 2 + verticalOffset;
-    
+    const skyTexture = this.skyBackdrop || (this.textures ? this.textures.sky_quito : null);
+
+    if (skyTexture && skyHeight > 0) {
+      const ctx = this.ctx;
+      const baseHeight = Math.max(this.height * 0.52, skyHeight);
+      const aspect = skyTexture.width / skyTexture.height;
+      const targetHeight = Math.min(this.height, baseHeight * 1.05);
+      const targetWidth = targetHeight * aspect;
+
+      const twoPi = Math.PI * 2;
+      const normalizedAngle = ((this.player.angle % twoPi) + twoPi) % twoPi;
+      let offsetX = -(normalizedAngle / twoPi) * targetWidth;
+      const destY = -verticalOffset * 0.45;
+
+      ctx.imageSmoothingEnabled = false;
+
+      while (offsetX > 0) {
+        offsetX -= targetWidth;
+      }
+
+      for (let x = offsetX; x < this.width; x += targetWidth) {
+        ctx.drawImage(
+          skyTexture,
+          Math.round(x),
+          Math.round(destY),
+          Math.round(targetWidth),
+          Math.round(targetHeight)
+        );
+      }
+
+      return;
+    }
+
     if (skyHeight > 0) {
       const gradient = this.ctx.createLinearGradient(0, 0, 0, skyHeight);
       gradient.addColorStop(0, '#2a3d5a');
       gradient.addColorStop(1, '#1a2a3a');
-      
+
       this.ctx.fillStyle = gradient;
       this.ctx.fillRect(0, 0, this.width, Math.max(0, skyHeight));
     }
@@ -1061,156 +2223,325 @@ window.DoomGame = {
     const verticalOffset = this.player.verticalLook * this.height * 0.6;
     const floorTop = this.height / 2 + verticalOffset;
     const floorHeight = this.height - floorTop;
-    
+    const floorTexture = this.textures ? (this.textures.floor_stones || this.textures.floor_cobble) : null;
+
+    if (floorTexture && floorHeight > 0 && floorTop < this.height) {
+      const ctx = this.ctx;
+      const pattern = ctx.createPattern(floorTexture, 'repeat');
+      ctx.save();
+      ctx.translate(0, Math.max(0, floorTop));
+      ctx.fillStyle = pattern;
+      ctx.fillRect(0, 0, this.width, floorHeight);
+      ctx.restore();
+      return;
+    }
+
     if (floorHeight > 0 && floorTop < this.height) {
       const gradient = this.ctx.createLinearGradient(0, floorTop, 0, this.height);
       gradient.addColorStop(0, '#2a1f15');
       gradient.addColorStop(1, '#1a120c');
-      
+
       this.ctx.fillStyle = gradient;
       this.ctx.fillRect(0, Math.max(0, floorTop), this.width, floorHeight);
     }
   },
   
   castMultipleRays(startX, startZ, angle) {
-    const stepSize = 2;
-    const maxDistance = 800;
-    const hits = [];
-    let currentDistance = 0;
-    
-    // Verificar que MAZE esté disponible
-    if (!window.MAZE || !window.GAME_CONFIG) {
+    const settings = this.raycastSettings || {};
+    const stepSize = settings.stepSize || 2;
+    const maxDistance = settings.maxDistance || 800;
+    const maxLayers = settings.maxLayers || 3;
+    const gameConfig = window.GAME_CONFIG;
+    const maze = window.MAZE;
+
+    if (!maze || !gameConfig) {
       console.warn('MAZE o GAME_CONFIG no disponible');
       return [{ distance: maxDistance, hit: false, side: null }];
     }
-    
-    while (currentDistance < maxDistance && hits.length < 3) {
-      let foundHit = false;
-      
-      // Buscar la siguiente pared desde la posición actual
-      for (let distance = currentDistance; distance < maxDistance; distance += stepSize) {
-        const x = startX + Math.cos(angle) * distance;
-        const z = startZ + Math.sin(angle) * distance;
-        
-        const mapX = Math.floor(x / window.GAME_CONFIG.cellSize);
-        const mapZ = Math.floor(z / window.GAME_CONFIG.cellSize);
-        
-        // Verificar límites del array antes de acceder
-        if (mapX < 0 || mapX >= window.GAME_CONFIG.gridCols ||
-            mapZ < 0 || mapZ >= window.GAME_CONFIG.gridRows ||
-            !window.MAZE[mapZ] || window.MAZE[mapZ][mapX] === 1) {
-          
-          // Determinar qué lado de la pared fue golpeado
-          const prevX = startX + Math.cos(angle) * (distance - stepSize);
-          const prevZ = startZ + Math.sin(angle) * (distance - stepSize);
-          const prevMapX = Math.floor(prevX / window.GAME_CONFIG.cellSize);
-          const prevMapZ = Math.floor(prevZ / window.GAME_CONFIG.cellSize);
-          
+
+    const cellSize = gameConfig.cellSize || 128;
+    const gridCols = gameConfig.gridCols || (maze[0] ? maze[0].length : 0);
+    const gridRows = gameConfig.gridRows || maze.length;
+
+    const hits = [];
+    const cosAngle = Math.cos(angle);
+    const sinAngle = Math.sin(angle);
+
+    let distance = 0;
+    let x = startX;
+    let z = startZ;
+
+    const stepForward = () => {
+      distance += stepSize;
+      x += cosAngle * stepSize;
+      z += sinAngle * stepSize;
+    };
+
+    const modulo = (value) => {
+      if (!Number.isFinite(value)) return 0;
+      return ((value % 1) + 1) % 1;
+    };
+
+    while (distance < maxDistance && hits.length < maxLayers) {
+      let hitDetected = false;
+
+      while (distance < maxDistance) {
+        stepForward();
+
+        const mapX = Math.floor(x / cellSize);
+        const mapZ = Math.floor(z / cellSize);
+
+        const outOfBounds = mapX < 0 || mapX >= gridCols || mapZ < 0 || mapZ >= gridRows;
+        const cellRow = outOfBounds ? null : maze[mapZ];
+        const cellValue = outOfBounds || !cellRow ? 1 : cellRow[mapX];
+        const isWall = outOfBounds || cellValue === 1;
+
+        if (isWall) {
+          const prevX = x - cosAngle * stepSize;
+          const prevZ = z - sinAngle * stepSize;
+          const prevMapX = Math.floor(prevX / cellSize);
+          const prevMapZ = Math.floor(prevZ / cellSize);
           const side = (mapX !== prevMapX) ? 'vertical' : 'horizontal';
-          
-          hits.push({ distance, hit: true, side });
-          
-          // Buscar una abertura después de esta pared para continuar el rayo
-          let found_opening = false;
-          for (let skip = distance + window.GAME_CONFIG.cellSize; skip < distance + window.GAME_CONFIG.cellSize * 2; skip += stepSize) {
-            const skipX = startX + Math.cos(angle) * skip;
-            const skipZ = startZ + Math.sin(angle) * skip;
-            const skipMapX = Math.floor(skipX / window.GAME_CONFIG.cellSize);
-            const skipMapZ = Math.floor(skipZ / window.GAME_CONFIG.cellSize);
-            
-            if (skipMapX >= 0 && skipMapX < window.GAME_CONFIG.gridCols &&
-                skipMapZ >= 0 && skipMapZ < window.GAME_CONFIG.gridRows &&
-                window.MAZE[skipMapZ] && window.MAZE[skipMapZ][skipMapX] === 0) {
-              currentDistance = skip;
-              found_opening = true;
+
+          const textureSource = side === 'vertical' ? prevZ / cellSize : prevX / cellSize;
+          const textureU = modulo(textureSource);
+          const textureId = this.getWallTextureId(mapX, mapZ, cellValue);
+
+          hits.push({
+            distance,
+            hit: true,
+            side,
+            mapX,
+            mapZ,
+            cellValue,
+            textureId,
+            textureU
+          });
+
+          let foundOpening = false;
+          let skipDistance = distance;
+          const maxSkip = distance + cellSize * 2;
+
+          while (skipDistance < maxSkip && skipDistance < maxDistance) {
+            skipDistance += cellSize * 0.5;
+            const skipX = startX + cosAngle * skipDistance;
+            const skipZ = startZ + sinAngle * skipDistance;
+            const skipMapX = Math.floor(skipX / cellSize);
+            const skipMapZ = Math.floor(skipZ / cellSize);
+
+            if (
+              skipMapX >= 0 && skipMapX < gridCols &&
+              skipMapZ >= 0 && skipMapZ < gridRows &&
+              maze[skipMapZ] && maze[skipMapZ][skipMapX] === 0
+            ) {
+              distance = skipDistance;
+              x = skipX;
+              z = skipZ;
+              foundOpening = true;
               break;
             }
           }
-          
-          if (!found_opening) {
-            // No hay abertura, terminar
-            break;
+
+          if (!foundOpening) {
+            distance = maxDistance;
           }
-          
-          foundHit = true;
+
+          hitDetected = true;
           break;
         }
       }
-      
-      if (!foundHit) {
+
+      if (!hitDetected) {
         break;
       }
     }
-    
-    // Si no hay hits, devolver un hit por defecto
+
     if (hits.length === 0) {
       hits.push({ distance: maxDistance, hit: false, side: null });
     }
-    
+
     return hits;
   },
 
   renderWalls() {
-    // Verificar que el contexto esté disponible
-    if (!this.ctx) return;
-    
-    // Renderizar paredes con verificación de errores
-    for (let screenX = 0; screenX < this.width; screenX += 4) { // Aumentado step para performance
-      const rayAngle = this.player.angle + (screenX - this.width/2) * 0.001;
-      
-      try {
-        const hits = this.castMultipleRays(this.player.x, this.player.z, rayAngle);
-        
-        // Renderizar desde la pared más lejana hasta la más cercana
-        hits.reverse().forEach((hit, index) => {
-          if (hit.distance > 0 && hit.hit) {
-            const wallHeight = (this.height * 150) / hit.distance; // Ajustado para paredes más altas
-            
-            // NUEVO: Aplicar offset vertical basado en verticalLook
-            const verticalOffset = this.player.verticalLook * this.height * 0.6;
-            const wallTop = (this.height - wallHeight) / 2 + verticalOffset;
-            const wallBottom = wallTop + wallHeight;
-            
-            const clampedTop = Math.max(0, wallTop);
-            const clampedBottom = Math.min(this.height, wallBottom);
-            const clampedHeight = clampedBottom - clampedTop;
-            
-            if (clampedHeight > 0) {
-              const depthFactor = Math.max(0.1, 1 - index * 0.3);
-              const distanceFactor = Math.max(0.2, 1 - hit.distance / 800);
-              const brightness = depthFactor * distanceFactor;
-              
-              let baseColor;
-              if (hit.side === 'horizontal') {
-                baseColor = index === 0 ? [139, 69, 19] : [100, 50, 15];
-              } else {
-                baseColor = index === 0 ? [101, 67, 33] : [70, 45, 20];
-              }
-              
-              const wallColor = `rgb(${Math.floor(baseColor[0] * brightness)}, ${Math.floor(baseColor[1] * brightness)}, ${Math.floor(baseColor[2] * brightness)})`;
-              
-              this.ctx.fillStyle = wallColor;
-              this.ctx.fillRect(screenX, clampedTop, 4, clampedHeight);
-              
-              if (index === hits.length - 1 && hit.distance < 200) {
-                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-                this.ctx.fillRect(screenX, clampedTop, 2, Math.min(4, clampedHeight));
-                if (clampedHeight > 8) {
-                  this.ctx.fillRect(screenX, clampedBottom - 4, 2, 4);
-                }
-              }
-            }
-          }
-        });
-      } catch (error) {
-        console.warn('Error en renderWalls para screenX:', screenX, error);
-        this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(screenX, 0, 4, this.height);
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const settings = this.raycastSettings || this.configureRaycaster();
+    const columnStep = settings.columnStep || 4;
+    const samplesPerColumn = Math.max(1, Math.round(settings.samplesPerColumn || 1));
+    const fov = this.player.fov || GAME_CONFIG.fov || (Math.PI / 3);
+    const tanHalfFov = Math.tan(fov / 2);
+    const invWidth = 1 / this.width;
+    const temporalJitter = (settings.enableTemporalJitter && settings.temporalJitterStrength)
+      ? ((this.frameId || 0) % 2 ? 1 : -1) * settings.temporalJitterStrength
+      : 0;
+
+    const previousSmoothing = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+
+    for (let screenX = 0; screenX < this.width; screenX += columnStep) {
+      const remaining = this.width - screenX;
+      const columnWidth = Math.min(columnStep, remaining);
+      const sampleWidth = columnWidth / samplesPerColumn;
+
+      for (let sampleIndex = 0; sampleIndex < samplesPerColumn; sampleIndex++) {
+        const sampleCenter = screenX + sampleWidth * (sampleIndex + 0.5);
+        const cameraX = (2 * sampleCenter * invWidth) - 1;
+        const viewAngle = Math.atan(cameraX * tanHalfFov);
+        const rayAngle = this.player.angle + viewAngle + temporalJitter;
+        const sampleStart = sampleCenter - sampleWidth / 2;
+
+        this.renderWallSample(sampleStart, sampleWidth, rayAngle, settings);
       }
+    }
+
+    ctx.imageSmoothingEnabled = previousSmoothing;
+  },
+
+  drawWallTextureColumn({ screenX, width, top, height, textureId, textureU, brightness, hit }) {
+    const ctx = this.ctx;
+    if (height <= 0 || !ctx) return false;
+
+    const clampBrightness = Number.isFinite(brightness) ? Math.max(0, Math.min(1, brightness)) : 1;
+    const shade = 1 - clampBrightness;
+    const alphaShade = Math.min(0.95, Math.max(0, shade));
+
+    const drawShade = () => {
+      if (alphaShade <= 0) return;
+      ctx.fillStyle = `rgba(0, 0, 0, ${alphaShade})`;
+      ctx.fillRect(screenX, top, width, height);
+    };
+
+    const normalizedU = ((textureU % 1) + 1) % 1;
+
+    if (this.textureAtlas && typeof this.textureAtlas.getSlice === 'function') {
+      const slice = this.textureAtlas.getSlice(textureId, normalizedU);
+      if (slice) {
+        try {
+          ctx.drawImage(
+            this.textureAtlas.canvas,
+            slice.sx,
+            slice.sy,
+            slice.sw,
+            slice.sh,
+            screenX,
+            top,
+            width,
+            height
+          );
+          drawShade();
+          return true;
+        } catch (error) {
+          console.warn('Error dibujando textura desde atlas:', error);
+        }
+      }
+    }
+
+    const fallback = this.textures && this.textures.fallback;
+    const fallbackTexture = fallback && (fallback[textureId] || fallback.wall_brick || fallback.wall_stone);
+    if (fallbackTexture) {
+      try {
+        const sx = Math.floor(normalizedU * (fallbackTexture.width - 1));
+        ctx.drawImage(
+          fallbackTexture,
+          sx,
+          0,
+          1,
+          fallbackTexture.height,
+          screenX,
+          top,
+          width,
+          height
+        );
+        drawShade();
+        return true;
+      } catch (error) {
+        console.warn('Error dibujando textura de respaldo:', error);
+      }
+    }
+
+    return false;
+  },
+
+  renderWallSample(screenXStart, columnWidth, rayAngle, settings) {
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    try {
+      const hits = this.castMultipleRays(this.player.x, this.player.z, rayAngle);
+      if (!hits || !hits.length) return;
+
+      const verticalOffset = this.player.verticalLook * this.height * 0.6;
+      const wallConstant = settings.wallHeightConstant || 150;
+      const distanceFade = settings.distanceFade || settings.maxDistance || 800;
+
+      const layers = hits.slice().reverse();
+      layers.forEach((hit, index) => {
+        if (!hit || !hit.hit || !Number.isFinite(hit.distance) || hit.distance <= 0) return;
+
+        const distance = Math.max(1, hit.distance);
+        const wallHeight = (this.height * wallConstant) / distance;
+        const wallTop = (this.height - wallHeight) / 2 + verticalOffset;
+        const wallBottom = wallTop + wallHeight;
+
+        const clampedTop = Math.max(0, wallTop);
+        const clampedBottom = Math.min(this.height, wallBottom);
+        const clampedHeight = clampedBottom - clampedTop;
+
+        if (clampedHeight <= 0) return;
+
+        const depthFactor = Math.max(0.1, 1 - index * 0.3);
+        const distanceFactor = Math.max(0.18, 1 - distance / distanceFade);
+        const brightness = Math.min(1, depthFactor * distanceFactor);
+
+        const textureId = hit.textureId || this.getWallTextureId(hit.mapX, hit.mapZ, hit.cellValue);
+        const textureU = Number.isFinite(hit.textureU) ? hit.textureU : 0;
+
+        const drawn = this.drawWallTextureColumn({
+          screenX: screenXStart,
+          width: columnWidth,
+          top: clampedTop,
+          height: clampedHeight,
+          textureId,
+          textureU,
+          brightness,
+          hit
+        });
+
+        if (!drawn) {
+          const baseColor = hit.side === 'horizontal'
+            ? (index === 0 ? [139, 69, 19] : [100, 50, 15])
+            : (index === 0 ? [101, 67, 33] : [70, 45, 20]);
+
+          const r = Math.floor(baseColor[0] * brightness);
+          const g = Math.floor(baseColor[1] * brightness);
+          const b = Math.floor(baseColor[2] * brightness);
+
+          ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+          ctx.fillRect(screenXStart, clampedTop, columnWidth, clampedHeight);
+        }
+
+        if (index === layers.length - 1 && distance < 200) {
+          const highlightHeight = Math.min(4, clampedHeight);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+          ctx.fillRect(screenXStart, clampedTop, columnWidth * 0.6, highlightHeight);
+          if (clampedHeight > 8) {
+            ctx.fillRect(screenXStart, clampedBottom - highlightHeight, columnWidth * 0.6, highlightHeight);
+          }
+        }
+      });
+    } catch (error) {
+      console.warn('Error en renderWalls para ángulo:', rayAngle, error);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(screenXStart, 0, columnWidth, this.height);
     }
   },
 
   renderDebugInfo() {
+    if (!window.__DEBUG_MODE__) {
+      return;
+    }
     this.ctx.fillStyle = '#00FF00';
     this.ctx.font = '12px monospace';
     this.ctx.textAlign = 'left';
@@ -1225,6 +2556,13 @@ window.DoomGame = {
       `Enemigos: ${this.enemies.filter(e => e.health > 0).length}`,
       `Balas: ${this.bullets.length}`
     ];
+
+    if (this.raycastSettings) {
+      info.push(
+        `Calidad: ${GAME_CONFIG.renderQuality} | step ${this.raycastSettings.columnStep}px | muestras ${this.raycastSettings.samplesPerColumn}`,
+        `FOV: ${(this.player.fov * 180 / Math.PI).toFixed(0)}°`
+      );
+    }
       
     info.forEach((line, index) => {
       this.ctx.fillText(line, 10, 20 + index * 15);
@@ -1248,6 +2586,26 @@ window.DoomGame = {
     this.ctx.font = '14px Arial';
     this.ctx.textAlign = 'center';
     this.ctx.fillText(`${this.player.ammo}`, weaponX + 40, weaponY + 35);
+  },
+
+  renderDamageOverlay() {
+    if (this.damageOverlayAlpha > 0) {
+      this.ctx.save();
+      this.ctx.fillStyle = `rgba(128, 0, 255, ${Math.min(0.85, this.damageOverlayAlpha)})`;
+      this.ctx.fillRect(0, 0, this.width, this.height);
+      this.ctx.restore();
+    }
+
+    if (this.damageOverlayTimer > 0 && this.damageOverlayText) {
+      this.ctx.save();
+      this.ctx.font = 'bold 32px Arial';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+      const percent = Math.min(1, this.damageOverlayTimer / 900);
+      const yOffset = (1 - percent) * 40;
+      this.ctx.fillText(this.damageOverlayText, this.width / 2, this.height * 0.32 + yOffset);
+      this.ctx.restore();
+    }
   },
   
   renderSprites() {
@@ -1513,6 +2871,152 @@ window.DoomGame = {
     }
   },
 
+  handleEnemyMeleeBehavior(enemy, currentTime) {
+    if (enemy.health <= 0) return;
+
+    if (enemy.hidden) {
+      this.updateTargetBehavior(enemy, currentTime);
+      return;
+    }
+
+  const meleeRange = GAME_CONFIG.enemyMeleeRange || 92;
+  const chargeRange = meleeRange + Math.max(60, meleeRange * 0.25);
+    const cooldown = GAME_CONFIG.enemyMeleeCooldown || 1400;
+    const dx = this.player.x - enemy.x;
+    const dz = this.player.z - enemy.z;
+    const distance = Math.hypot(dx, dz);
+
+    enemy.nextMeleeTime = enemy.nextMeleeTime || 0;
+
+    if (enemy.state === 'retreating') {
+      if (!enemy.retreatVector || !Number.isFinite(enemy.retreatVector.x) || !Number.isFinite(enemy.retreatVector.z)) {
+        const norm = Math.max(distance, 0.0001);
+        enemy.retreatVector = { x: -dx / norm, z: -dz / norm };
+      }
+
+      const retreatSpeed = (enemy.baseSpeed || enemy.speed || 1) * 1.8 + 0.4;
+      this.moveEnemyWithCollision(enemy, enemy.retreatVector.x * retreatSpeed, enemy.retreatVector.z * retreatSpeed);
+      enemy.angle = Math.atan2(-enemy.retreatVector.z, -enemy.retreatVector.x);
+
+      if (currentTime >= (enemy.retreatUntil || 0) || distance >= meleeRange * 1.8) {
+        enemy.state = 'target';
+        enemy.retreatVector = null;
+      }
+      return;
+    }
+
+    if (enemy.state === 'charging') {
+      if (!enemy.chargeDirection || !Number.isFinite(enemy.chargeDirection)) {
+        enemy.chargeDirection = Math.atan2(dz, dx);
+      }
+
+      const dirX = Math.cos(enemy.chargeDirection);
+      const dirZ = Math.sin(enemy.chargeDirection);
+      const chargeSpeed = (enemy.baseSpeed || enemy.speed || 1) * 3.2 + 0.6;
+      this.moveEnemyWithCollision(enemy, dirX * chargeSpeed, dirZ * chargeSpeed);
+      enemy.angle = enemy.chargeDirection;
+
+      const newDx = this.player.x - enemy.x;
+      const newDz = this.player.z - enemy.z;
+      const newDistance = Math.hypot(newDx, newDz);
+
+      if (newDistance <= meleeRange) {
+        const backstab = this.isEnemyBehindPlayer(enemy);
+        this.enemyAttack(enemy, {
+          damage: GAME_CONFIG.enemyMeleeDamage || 15,
+          backstab,
+          currentTime
+        });
+
+        enemy.nextMeleeTime = currentTime + cooldown;
+        enemy.state = 'retreating';
+        const norm = Math.max(newDistance, 0.0001);
+        enemy.retreatVector = { x: -newDx / norm, z: -newDz / norm };
+        enemy.retreatUntil = currentTime + 600;
+        return;
+      }
+
+      if ((currentTime - (enemy.chargeStart || currentTime) > 650) || newDistance > chargeRange * 1.6) {
+        enemy.state = 'target';
+      }
+
+      return;
+    }
+
+    // Comportamiento base de blanco de tiro
+    this.updateTargetBehavior(enemy, currentTime);
+
+    if (distance <= chargeRange && currentTime >= enemy.nextMeleeTime) {
+      enemy.state = 'charging';
+      enemy.chargeStart = currentTime;
+      enemy.chargeDirection = Math.atan2(dz, dx);
+    }
+  },
+
+  moveEnemyWithCollision(enemy, moveX, moveZ) {
+    let moved = false;
+
+    if (Number.isFinite(moveX) && moveX !== 0) {
+      const nextX = enemy.x + moveX;
+      if (this.canMoveTo(nextX, enemy.z)) {
+        enemy.x = nextX;
+        moved = true;
+      }
+    }
+
+    if (Number.isFinite(moveZ) && moveZ !== 0) {
+      const nextZ = enemy.z + moveZ;
+      if (this.canMoveTo(enemy.x, nextZ)) {
+        enemy.z = nextZ;
+        moved = true;
+      }
+    }
+
+    if (moved) {
+      const skipClamp = enemy.state === 'charging' || enemy.state === 'retreating';
+      if (!skipClamp) {
+        this.clampEnemyToTrack(enemy);
+      }
+    }
+
+    return moved;
+  },
+
+  clampEnemyToTrack(enemy) {
+    if (!enemy || !enemy.trackAxis) return;
+
+    if (enemy.trackAxis === 'x') {
+      if (Number.isFinite(enemy.trackMin)) {
+        enemy.x = Math.max(enemy.trackMin, enemy.x);
+      }
+      if (Number.isFinite(enemy.trackMax)) {
+        enemy.x = Math.min(enemy.trackMax, enemy.x);
+      }
+    } else {
+      if (Number.isFinite(enemy.trackMin)) {
+        enemy.z = Math.max(enemy.trackMin, enemy.z);
+      }
+      if (Number.isFinite(enemy.trackMax)) {
+        enemy.z = Math.min(enemy.trackMax, enemy.z);
+      }
+    }
+  },
+
+  isEnemyBehindPlayer(enemy) {
+    if (!enemy) return false;
+
+    const dx = enemy.x - this.player.x;
+    const dz = enemy.z - this.player.z;
+    const distance = Math.hypot(dx, dz);
+    if (distance === 0) return true;
+
+    const forwardX = Math.cos(this.player.angle);
+    const forwardZ = Math.sin(this.player.angle);
+    const dot = (dx / distance) * forwardX + (dz / distance) * forwardZ;
+    const threshold = (GAME_CONFIG.enemyBackstabAngle !== undefined) ? GAME_CONFIG.enemyBackstabAngle : 0.65;
+    return dot < -Math.abs(threshold);
+  },
+
   // Actualiza el movimiento tipo "blanco de tiro" con pausas y posible ocultamiento en extremos
   updateTargetBehavior(enemy, currentTime) {
     // Si está en pausa/oculto, esperar
@@ -1683,11 +3187,13 @@ window.DoomGame = {
     const worldX = spot.x * cell + cell / 2;
     const worldZ = spot.z * cell + cell / 2;
 
+    const baseHealth = GAME_CONFIG.enemyHealth || 100;
     const enemy = {
       id: Date.now(),
       x: worldX,
       z: worldZ,
-      health: GAME_CONFIG.enemyHealth,
+      health: baseHealth,
+      maxHealth: baseHealth,
       angle: 0,
       speed: speedByType[type] || GAME_CONFIG.enemySpeed,
       lastMove: 0,
@@ -1704,7 +3210,12 @@ window.DoomGame = {
       nextResumeTime: 0,
       hideAtEdges: Math.random() < (GAME_CONFIG.targetTrack.hideAtEdgesChance ?? 0.15),
       hidden: false,
-      hideDuration: 300
+      hideDuration: 300,
+      nextMeleeTime: 0,
+      chargeStart: 0,
+      chargeDirection: 0,
+      retreatUntil: 0,
+      retreatVector: null
     };
     
     this.setupTargetTrack(enemy);
