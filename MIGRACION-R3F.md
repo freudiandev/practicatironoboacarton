@@ -167,11 +167,11 @@ Usar `@react-three/drei`:
 - [ ] Decidir estrategia:
   - A) mantener p5 solo como generador offscreen (bundle grande)
   - B) portar a Canvas 2D puro (recomendado para performance/bundle)
-- [ ] Generar:
+- [x] Generar (Canvas 2D puro → CanvasTexture):
   - skybox panorámico (canvas → `CanvasTexture`)
   - wall tiles colonial / archway
   - floor stones
-- [ ] Aplicación:
+- [x] Aplicación:
   - paredes instanciadas usan `map/normal/emissive`
   - skybox como esfera/cilindro invertido o “big quad” con UV wrap
 
@@ -199,14 +199,14 @@ Usar `@react-three/drei`:
 - [ ] Iluminación:
   - fog volumétrica “barata” (fogExp2 + luces)
   - faroles coloniales (point lights) + flicker
-  - “apagón” como evento que setea intensidades a 0 y deja solo emissive (ojos/enfoque)
+  - [x] “apagón” MVP: apaga luces y baja emissive, con flag HUD (mejorable a “ojos”)
 
 ### 8) Innovación B — “La Política del Power-Up”
-- [ ] Reemplazar ítems genéricos por 3 power-ups:
+- [x] Reemplazar ítems genéricos por 3 power-ups (MVP):
   - `ConsultaPopular` (Smart Bomb): elimina enemigos visibles / en rango
   - `IVA15` (trampa): +puntos por kill pero drain de vida por segundo
   - `ApagonNacional` (evento): blackout periódico con ventana de tensión
-- [ ] Spawns: rareza, cooldowns, UI de estado y feedback visual/sonoro
+- [x] Spawns + UI mínima (MVP): pickups en mapa + banner/flags HUD + efectos base
 - [ ] Balance: definir duración y contras para que no rompa el loop
 
 ### 9) Innovación C — Multiplayer P2P sin servidor (PeerJS/WebRTC)

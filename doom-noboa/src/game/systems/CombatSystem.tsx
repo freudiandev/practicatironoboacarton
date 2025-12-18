@@ -21,6 +21,7 @@ function getEnemyIdFromObject(obj: THREE.Object3D): string | null {
 export function CombatSystem({ enemiesGroupName = 'enemies' }: CombatSystemProps) {
   const { camera, scene } = useThree()
   const gameState = useGameStore((s) => s.gameState)
+  const isTouch = useGameStore((s) => s.isTouch)
   const ammo = useGameStore((s) => s.ammo)
   const spendAmmo = useGameStore((s) => s.spendAmmo)
   const updateEnemy = useGameStore((s) => s.updateEnemy)
@@ -39,12 +40,12 @@ export function CombatSystem({ enemiesGroupName = 'enemies' }: CombatSystemProps
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return
       if (gameState !== 'playing') return
-      if (!document.pointerLockElement) return
+      if (!isTouch && !document.pointerLockElement) return
       fireRequested.current = true
     }
     window.addEventListener('mousedown', onMouseDown)
     return () => window.removeEventListener('mousedown', onMouseDown)
-  }, [gameState])
+  }, [gameState, isTouch])
 
   // Hook del botón táctil FIRE (TouchControls) todavía no dispara por sí mismo:
   // usamos la misma variable de estado para poder conectarlo luego sin reescribir el sistema.

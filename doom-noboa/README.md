@@ -19,6 +19,13 @@ npm run dev
 - La UI es responsive y respeta safe-areas (`env(safe-area-inset-*)`).
 - En dispositivos táctiles aparece un **joystick virtual** (izq) + **área de swipe** (der) para mirar.
 - En portrait se muestra una sugerencia para rotar a horizontal (no bloqueante).
+- Ambientación “Centro Histórico” (procedural): skybox panorámico + paredes/piso coloniales generados en Canvas y aplicados como `CanvasTexture`.
+
+## Power-ups (MVP)
+
+- `Consulta Popular`: elimina enemigos (smart bomb).
+- `IVA 15%`: duplica puntaje por un tiempo, pero drena vida.
+- `Apagón Nacional`: apaga luces (blackout) por unos segundos.
 
 ## Estructura recomendada
 

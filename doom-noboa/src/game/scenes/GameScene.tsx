@@ -13,6 +13,7 @@ import { TimeSystem } from '../systems/TimeSystem'
 import { GamepadController } from '../input/useGamepad'
 import { useCentroHistoricoTextures } from '../textures/useCentroHistoricoTextures'
 import { useGameStore } from '../store/useGameStore'
+import { PowerUpSystem } from '../systems/PowerUpSystem'
 
 export function GameScene() {
   const neonKeyLight = useRef<THREE.PointLight>(null)
@@ -55,9 +56,13 @@ export function GameScene() {
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime()
     const pulse = 0.55 + Math.sin(t * 1.8) * 0.25
-    if (neonKeyLight.current) neonKeyLight.current.intensity = 10 * pulse
-    if (neonFillLight.current) neonFillLight.current.intensity = 7 * (0.65 + Math.cos(t * 1.3) * 0.25)
-    wallMaterial.emissiveIntensity = 0.18 + pulse * 0.45
+    const blackoutUntil = useGameStore.getState().blackoutUntil
+    const blackout = blackoutUntil && Date.now() < blackoutUntil
+
+    // Blackout: apagar luces, dejar algo de emissive en paredes (neón “residual”).
+    if (neonKeyLight.current) neonKeyLight.current.intensity = blackout ? 0.15 : 10 * pulse
+    if (neonFillLight.current) neonFillLight.current.intensity = blackout ? 0.1 : 7 * (0.65 + Math.cos(t * 1.3) * 0.25)
+    wallMaterial.emissiveIntensity = blackout ? 0.06 : (0.18 + pulse * 0.45)
 
     // Mantener skybox centrado en el jugador (sin parallax al caminar).
     if (skyRef.current) {
@@ -78,6 +83,7 @@ export function GameScene() {
       <EnemySystem />
       <CombatSystem />
       <TimeSystem />
+      <PowerUpSystem />
 
       <fogExp2 attach="fog" args={['#070012', 0.065]} />
       <color attach="background" args={['#070012']} />

@@ -24,6 +24,15 @@ export type HighScoreEntry = {
   savedAt: number
 }
 
+export type PowerUpType = 'consulta_popular' | 'iva_15' | 'apagon_nacional'
+
+export type PowerUpPickup = {
+  id: string
+  type: PowerUpType
+  position: { x: number; y: number; z: number }
+  active: boolean
+}
+
 type GameStore = {
   gameState: GameState
   health: number
@@ -36,6 +45,11 @@ type GameStore = {
   startedAt: number | null
   timeSeconds: number
   enemies: Enemy[]
+  pickups: PowerUpPickup[]
+  blackoutUntil: number
+  ivaUntil: number
+  scoreMultiplier: number
+  banner: { text: string; until: number }
 
   isTouch: boolean
   pointerLocked: boolean
@@ -61,6 +75,11 @@ type GameStore = {
   updateEnemy: (id: string, patch: Partial<Enemy>) => void
   killEnemy: (id: string) => void
   removeEnemy: (id: string) => void
+  setPickups: (pickups: PowerUpPickup[]) => void
+  pickupPowerup: (id: string) => void
+  setBlackoutUntil: (until: number) => void
+  setIvaUntil: (until: number) => void
+  showBanner: (text: string, ms?: number) => void
 
   highscores: HighScoreEntry[]
   addHighscore: (entry: Omit<HighScoreEntry, 'savedAt'>) => void
@@ -81,6 +100,11 @@ export const useGameStore = create<GameStore>()(
       startedAt: null,
       timeSeconds: 0,
       enemies: [],
+      pickups: [],
+      blackoutUntil: 0,
+      ivaUntil: 0,
+      scoreMultiplier: 1,
+      banner: { text: '', until: 0 },
 
       isTouch: false,
       pointerLocked: false,
@@ -115,7 +139,11 @@ export const useGameStore = create<GameStore>()(
           headshots: 0,
           startedAt: Date.now(),
           timeSeconds: 0,
-          enemies: []
+          enemies: [],
+          pickups: [],
+          blackoutUntil: 0,
+          ivaUntil: 0,
+          scoreMultiplier: 1
         })),
       endRun: (outcome) => {
         const s = get()
@@ -137,7 +165,7 @@ export const useGameStore = create<GameStore>()(
         set((s) => ({
           ammo: s.maxAmmo
         })),
-      addScore: (amount) => set((s) => ({ score: s.score + amount })),
+      addScore: (amount) => set((s) => ({ score: s.score + Math.round(amount * (s.scoreMultiplier || 1)) })),
       addKill: () => set((s) => ({ kills: s.kills + 1 })),
       setEnemies: (enemies) => set({ enemies }),
       updateEnemy: (id, patch) =>
@@ -151,6 +179,15 @@ export const useGameStore = create<GameStore>()(
           )
         })),
       removeEnemy: (id) => set((s) => ({ enemies: s.enemies.filter((e) => e.id !== id) })),
+
+      setPickups: (pickups) => set({ pickups }),
+      pickupPowerup: (id) =>
+        set((s) => ({
+          pickups: s.pickups.map((p) => (p.id === id ? { ...p, active: false } : p))
+        })),
+      setBlackoutUntil: (until) => set({ blackoutUntil: until }),
+      setIvaUntil: (until) => set({ ivaUntil: until }),
+      showBanner: (text, ms = 2200) => set({ banner: { text, until: Date.now() + ms } }),
 
       highscores: [],
       addHighscore: (entry) =>
