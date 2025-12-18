@@ -1,5 +1,7 @@
 # DOOM: Noboa de Cartón (R3F)
 
+#Juégalo ahora en pc, celular, etc: https://freudiandev.github.io/practicatironoboacarton/
+
 FPS retro “Cardboard Cyberpunk” ambientado en el Centro Histórico de Quito, migrado a una arquitectura moderna:
 
 - **Vite** (SPA estático)
