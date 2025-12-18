@@ -72,7 +72,6 @@ type GameStore = {
   lastShotUntil: number
   recoil: number
   hurtUntil: number
-  quality: 'high' | 'low'
 
   isTouch: boolean
   pointerLocked: boolean
@@ -89,7 +88,6 @@ type GameStore = {
 
   setGameState: (state: GameState) => void
   setIsTouch: (value: boolean) => void
-  setQuality: (quality: 'high' | 'low') => void
   setPointerLocked: (locked: boolean) => void
   setGamepadActive: (active: boolean) => void
   setFireHeld: (held: boolean) => void
@@ -159,7 +157,6 @@ export const useGameStore = create<GameStore>()(
       lastShotUntil: 0,
       recoil: 0,
       hurtUntil: 0,
-      quality: 'high',
 
       isTouch: false,
       pointerLocked: false,
@@ -176,7 +173,6 @@ export const useGameStore = create<GameStore>()(
 
       setGameState: (state) => set({ gameState: state }),
       setIsTouch: (value) => set({ isTouch: value }),
-      setQuality: (quality) => set({ quality }),
       setPointerLocked: (locked) => set({ pointerLocked: locked }),
       setGamepadActive: (active) => set({ gamepadActive: active }),
       setFireHeld: (held) => set({ fireHeld: held }),

@@ -251,12 +251,11 @@ function buildStoneFloor(tile = 128) {
   return tex
 }
 
-export function generateCentroHistoricoTextures(options?: { lowRes?: boolean }): CentroHistoricoTextures {
-  const low = Boolean(options?.lowRes)
-  const sky = buildSky(low ? 768 : 1024, low ? 384 : 512)
-  const wallColonial = buildFacade(low ? 112 : 128)
-  const wallArchway = buildArchway(low ? 112 : 128)
-  const floorStones = buildStoneFloor(low ? 112 : 128)
-  const mountainDetail = buildSky(low ? 384 : 512, low ? 192 : 256)
+export function generateCentroHistoricoTextures(): CentroHistoricoTextures {
+  const sky = buildSky(1024, 512)
+  const wallColonial = buildFacade(128)
+  const wallArchway = buildArchway(128)
+  const floorStones = buildStoneFloor(128)
+  const mountainDetail = buildSky(512, 256)
   return { sky, wallColonial, wallArchway, floorStones, mountainDetail }
 }

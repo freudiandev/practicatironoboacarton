@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import { useGameStore } from '../store/useGameStore'
-import { useState } from 'react'
 
 type MusicMode = 'menu' | 'calm' | 'combat' | 'blackout'
 
@@ -59,7 +58,6 @@ export function BackgroundMusic() {
   const blackoutUntil = useGameStore((s) => s.blackoutUntil)
   const enemiesAlive = useGameStore((s) => s.enemies.some((e) => e.alive))
   const health = useGameStore((s) => s.health)
-  const [unlocked, setUnlocked] = useState(false)
 
   const ctxRef = useRef<AudioContext | null>(null)
   const masterRef = useRef<GainNode | null>(null)
@@ -88,7 +86,6 @@ export function BackgroundMusic() {
     const onFirst = async () => {
       try {
         await ensureContext()
-        setUnlocked(true)
       } catch {
         // ignore
       } finally {
@@ -114,7 +111,7 @@ export function BackgroundMusic() {
             ? 'combat'
             : 'calm'
 
-    if (nextMode === modeRef.current && intervalRef.current) return
+    if (nextMode === modeRef.current) return
     modeRef.current = nextMode
 
     const stopPattern = () => {
@@ -171,12 +168,12 @@ export function BackgroundMusic() {
     }
 
     stopPattern()
-    if (unlocked) void startPattern(nextMode)
+    void startPattern(nextMode)
 
     return () => {
       stopPattern()
     }
-  }, [blackoutUntil, enemiesAlive, gameState, unlocked])
+  }, [blackoutUntil, enemiesAlive, gameState])
 
   return null
 }
