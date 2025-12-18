@@ -5,6 +5,10 @@ export type KeyState = {
   KeyA: boolean
   KeyS: boolean
   KeyD: boolean
+  ArrowUp: boolean
+  ArrowDown: boolean
+  ArrowLeft: boolean
+  ArrowRight: boolean
   ShiftLeft: boolean
 }
 
@@ -13,6 +17,10 @@ const DEFAULT_KEYS: KeyState = {
   KeyA: false,
   KeyS: false,
   KeyD: false,
+  ArrowUp: false,
+  ArrowDown: false,
+  ArrowLeft: false,
+  ArrowRight: false,
   ShiftLeft: false
 }
 
@@ -41,4 +49,3 @@ export function useKeyboard() {
 
   return pressed
 }
-

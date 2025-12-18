@@ -86,6 +86,14 @@ export function PlayerController() {
 
     if (!locked && !isTouch && !gamepadActive) return
 
+    // Look con teclas de flecha (rotación sin movimiento).
+    const lookSpeed = 1.3 * delta
+    if (keys.ArrowLeft) yaw.current += lookSpeed
+    if (keys.ArrowRight) yaw.current -= lookSpeed
+    if (keys.ArrowUp) pitch.current += lookSpeed * 0.75
+    if (keys.ArrowDown) pitch.current -= lookSpeed * 0.75
+    pitch.current = Math.max(-SETTINGS.player.pitchClamp, Math.min(SETTINGS.player.pitchClamp, pitch.current))
+
     const speed = SETTINGS.player.moveSpeed * (keys.ShiftLeft ? SETTINGS.player.sprintMultiplier : 1)
     const desired = velocity.current
     desired.set(0, 0, 0)

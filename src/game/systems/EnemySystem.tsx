@@ -106,7 +106,17 @@ export function EnemySystem() {
       // Melee si está en rango y cooldown listo.
       if (dist < meleeRange && now >= ai.nextMeleeAt) {
         ai.nextMeleeAt = now + meleeCooldownMs
-        damagePlayer(SETTINGS.enemyAI.melee.damage)
+
+        // Backstab: más daño si el jugador mira hacia otro lado.
+        const playerYaw = playerPose.yaw
+        const enemyYaw = Math.atan2(dz, dx)
+        let yawDiff = playerYaw - enemyYaw
+        while (yawDiff > Math.PI) yawDiff -= Math.PI * 2
+        while (yawDiff < -Math.PI) yawDiff += Math.PI * 2
+        const facingAway = Math.abs(yawDiff) < Math.PI * 0.4
+
+        const dmg = facingAway ? 18 : SETTINGS.enemyAI.melee.damage
+        damagePlayer(dmg)
         if (useGameStore.getState().health <= 0) {
           useGameStore.getState().endRun('loss')
         }

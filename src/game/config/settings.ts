@@ -34,18 +34,18 @@ export const SETTINGS = {
       minDistance: 2.2
     },
     melee: {
-      range: 0.9,
-      cooldownMs: 1300,
-      damage: 12
+      range: 1.2,
+      cooldownMs: 1200,
+      damage: 15
     },
     charge: {
-      range: 2.4,
-      speedMultiplier: 3.1,
-      durationMs: 650
+      range: 2.8,
+      speedMultiplier: 3.25,
+      durationMs: 720
     },
     retreat: {
-      speedMultiplier: 2.0,
-      durationMs: 520
+      speedMultiplier: 2.1,
+      durationMs: 640
     }
   }
 } as const

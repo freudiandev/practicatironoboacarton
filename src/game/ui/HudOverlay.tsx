@@ -21,6 +21,7 @@ export function HudOverlay() {
   const hitMarkerUntil = useGameStore((s) => s.hitMarkerUntil)
   const reloadUntil = useGameStore((s) => s.reloadUntil)
   const toggleHelp = useGameStore((s) => s.toggleHelp)
+  const showCrosshairHot = muzzleUntil > Date.now()
 
   const hintSubtitle = useMemo(() => {
     if (isTouch) return 'Toca para jugar (controles táctiles)'
@@ -83,7 +84,7 @@ export function HudOverlay() {
 
       {gameState === 'playing' && (pointerLocked || isTouch) && (
         <>
-          <div className="hud-crosshair" aria-hidden />
+          <div className={`hud-crosshair ${showCrosshairHot ? 'hot' : ''}`} aria-hidden />
           {muzzleUntil > Date.now() && <div className="hud-muzzle" aria-hidden />}
           {hitMarkerUntil > Date.now() && <div className="hud-hitmarker" aria-hidden />}
         </>
