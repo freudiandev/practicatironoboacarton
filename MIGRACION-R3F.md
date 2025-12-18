@@ -21,31 +21,37 @@ Este documento es el plan maestro para migrar **DOOM: Noboa de Cartón** (raycas
 
 ## Estado actual (ya implementado)
 
-En `doom-noboa/` ya existe:
-- Vite + React TS + `three`, `@react-three/fiber`, `@react-three/drei`, `zustand`, `@react-three/rapier`
+El juego ya está **migrado y unificado en la raíz** (ya no hay un subproyecto separado):
+- Vite + React TS + `three`, `@react-three/fiber`, `@react-three/drei`, `zustand`
 - `MAZE` y render instanciado:
-  - `doom-noboa/src/game/config/maze.ts`
-  - `doom-noboa/src/game/render/MazeInstanced.tsx`
-- Escena base con fog y luces neon:
-  - `doom-noboa/src/game/scenes/GameScene.tsx`
-- Material base “cartón cyberpunk” con normal corrugado procedimental:
-  - `doom-noboa/src/game/textures/cardboardCyberpunk.ts`
-- Settings/tuning inicial:
-  - `doom-noboa/src/game/config/settings.ts`
-- Store Zustand con persist de highscores (inicial):
-  - `doom-noboa/src/game/store/useGameStore.ts`
-- FPS Controller (desktop + touch):
-  - Pointer lock + WASD + colisión grid: `doom-noboa/src/game/entities/PlayerController.tsx`
-  - Joystick + lookpad táctil: `doom-noboa/src/game/ui/TouchControls.tsx`
-- HUD mínimo responsive (crosshair + stats + hints) con safe areas:
-  - `doom-noboa/src/game/ui/HudOverlay.tsx`
+  - `src/game/config/maze.ts`
+  - `src/game/render/MazeInstanced.tsx`
+- Escena base con fog, neón, skybox y blackout:
+  - `src/game/scenes/GameScene.tsx`
+- Material “Cardboard Cyberpunk” + texturas Centro Histórico (Canvas → `CanvasTexture`):
+  - `src/game/textures/cardboardCyberpunk.ts`
+  - `src/game/textures/centroHistoricoGenerator.ts`
+  - `src/game/textures/useCentroHistoricoTextures.ts`
+- FPS Controller (desktop + touch + gamepad):
+  - `src/game/entities/PlayerController.tsx`
+  - `src/game/ui/TouchControls.tsx`
+  - `src/game/input/useGamepad.ts`
+- Combate + audio + feedback:
+  - `src/game/systems/CombatSystem.tsx`
+  - `src/game/audio/useWeaponAudio.ts`
+- IA con target-track/charge/retreat + disolve al morir:
+  - `src/game/systems/EnemySystem.tsx`
+  - `src/game/entities/EnemyBillboard.tsx`
+- Satira in-game (banners + pancartas):
+  - `src/game/satire/powerupCopy.ts`
+  - `src/game/render/PostersInstanced.tsx`
 
 ## Arquitectura objetivo (propuesta)
 
 Carpetas (la base ya está creada):
 
 ```
-doom-noboa/src/
+src/
   game/
     config/              # settings y data (MAZE, tuning)
     store/               # Zustand: slices y persist
@@ -108,11 +114,11 @@ Usar `@react-three/drei`:
 6. **M6 — Paridad + Polishing**: balance, UX, performance, QA, deploy.
 
 ### 0) Base del proyecto
-- [x] Crear subproyecto Vite + React TS (`doom-noboa/`)
+- [x] Crear base Vite + React TS (unificada en raíz)
 - [x] Instalar deps R3F + drei + zustand + rapier
 - [x] Implementar `MAZE` → `InstancedMesh`
 - [x] Material base “Cardboard Cyberpunk” (canvas textures + normal corrugado)
-- [ ] Mover sprites PNG legacy a `doom-noboa/public/` o `doom-noboa/src/assets/` (decidir estrategia)
+- [x] Mover sprites PNG a `public/sprites/`
 - [x] Añadir un `Settings` central (`game/config/settings.ts`) para tuning (FOV, speed, sens, fireRate)
 - [ ] Centralizar “world scale” y cámara (FOV/near/far) en settings y evitar magic numbers en `App.tsx`/`GameScene.tsx`
 
@@ -156,7 +162,7 @@ Usar `@react-three/drei`:
 - [ ] Condiciones de victoria/derrota (paridad legacy): win si no quedan enemigos; loss si HP=0
 
 ### 4) Audio (hook `useWeaponAudio`) + música
-- [ ] Portar `weapon-audio.js` a `doom-noboa/src/game/audio/useWeaponAudio.ts`
+- [x] Portar `weapon-audio.js` a `src/game/audio/useWeaponAudio.ts`
 - [ ] Unificar política de “audio unlock” (primer input desbloquea AudioContext)
 - [ ] Voces headshot:
   - SpeechSynthesis si existe
@@ -210,10 +216,10 @@ Usar `@react-three/drei`:
 - [ ] Balance: definir duración y contras para que no rompa el loop
 
 ### 9) Innovación C — Multiplayer P2P sin servidor (PeerJS/WebRTC)
-- [ ] Añadir dependencia `peerjs`
-- [ ] UI host/join:
-  - host crea `peerId`
-  - join ingresa code / escanea QR (móvil)
+- [x] Añadir dependencia `peerjs`
+- [x] UI host/join + QR:
+  - host crea `peerId` + QR/link
+  - join ingresa code (o link `?join=...`)
 - [ ] Protocolo de red (mensajes):
   - `playerState` (pos/rot/vel + inputs)
   - `shots` (timestamp + seed)
@@ -263,7 +269,7 @@ Usar `@react-three/drei`:
 
 ## Entregables finales esperados
 
-- `doom-noboa/` como SPA jugable, con:
+- SPA en la raíz (Vite) como jugable, con:
   - nivel instanciado + texturas retro
   - enemigos billboard + combate + disintegración
   - HUD/menús + highscores persistidos

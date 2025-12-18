@@ -13,8 +13,11 @@ function App() {
   const setNetMode = useGameStore((s) => s.setNetMode)
 
   useEffect(() => {
+    type NavigatorWithMsTouchPoints = Navigator & { msMaxTouchPoints?: number }
     const nav = typeof navigator !== 'undefined' ? navigator : null
-    const touchPoints = nav ? ((nav.maxTouchPoints || 0) + (((nav as any).msMaxTouchPoints as number) || 0)) : 0
+    const touchPoints = nav
+      ? (nav.maxTouchPoints || 0) + (((nav as NavigatorWithMsTouchPoints).msMaxTouchPoints || 0))
+      : 0
     const coarse = typeof window !== 'undefined' && window.matchMedia
       ? window.matchMedia('(pointer: coarse)').matches
       : false

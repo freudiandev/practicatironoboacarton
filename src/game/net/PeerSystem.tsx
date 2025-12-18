@@ -6,7 +6,7 @@ import type { NetMessage, PoseMessage } from './types'
 
 function isPoseMessage(v: unknown): v is PoseMessage {
   if (!v || typeof v !== 'object') return false
-  const m = v as any
+  const m = v as Record<string, unknown>
   return (
     m.t === 'pose' &&
     typeof m.x === 'number' &&
@@ -90,7 +90,8 @@ export function PeerSystem() {
       conn.on('error', (err) => {
         setConnected(false)
         setRemotePose(null)
-        setStatus(`Error: ${String((err as any)?.type || err)}`)
+        const t = (err as { type?: unknown } | null)?.type
+        setStatus(`Error: ${String(typeof t === 'string' ? t : err)}`)
       })
       conn.on('data', (data: unknown) => {
         if (isPoseMessage(data)) {
@@ -123,14 +124,14 @@ export function PeerSystem() {
     })
 
     peer.on('error', (err) => {
-      setStatus(`Error PeerJS: ${String((err as any)?.type || err)}`)
+      const t = (err as { type?: unknown } | null)?.type
+      setStatus(`Error PeerJS: ${String(typeof t === 'string' ? t : err)}`)
       setConnected(false)
     })
 
     return () => {
       cleanup()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [joinId, mode, setConnected, setPeerId, setRemotePose, setStatus])
 
   useFrame(() => {

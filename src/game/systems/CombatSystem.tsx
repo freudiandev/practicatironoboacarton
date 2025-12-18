@@ -12,7 +12,7 @@ type CombatSystemProps = {
 function getEnemyIdFromObject(obj: THREE.Object3D): string | null {
   let current: THREE.Object3D | null = obj
   while (current) {
-    const id = (current as any).userData?.enemyId
+    const id = (current.userData as { enemyId?: unknown } | undefined)?.enemyId
     if (typeof id === 'string') return id
     current = current.parent
   }

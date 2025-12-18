@@ -1,5 +1,46 @@
 # Documentación del proyecto — DOOM: Noboa de Cartón
 
+> Estado actual (2025-12): la **versión principal** del juego ya está migrada a **Vite + React + React Three Fiber (R3F) + Zustand** (render GPU).  
+> El motor original de raycasting Canvas 2D se conserva únicamente como histórico en `legacy/raycast/`.
+
+## 0) Versión actual (R3F/GPU) — Arquitectura y features
+
+### Stack
+- **Vite + React + TypeScript** (SPA estática)
+- **Three.js + React Three Fiber + drei** (render 3D en GPU)
+- **Zustand** (estado del juego + `persist` para highscores)
+- **PeerJS (WebRTC)** (multiplayer P2P sin servidor) + **QR** para join
+- **Web Audio API** (audio sintético de arma)
+
+### Render y mundo
+- Nivel desde matriz `MAZE` renderizado como `InstancedMesh` (paredes): `src/game/render/MazeInstanced.tsx`
+- Estética “Centro Histórico de Quito”: texturas procedurales Canvas → `CanvasTexture` + skybox:  
+  - `src/game/textures/centroHistoricoGenerator.ts`  
+  - `src/game/textures/useCentroHistoricoTextures.ts`
+- Estética “Cardboard Cyberpunk”: material de pared con normal corrugado + emissive: `src/game/textures/cardboardCyberpunk.ts`
+- Pancartas/cárteles satíricos pegados en paredes (instanced planes): `src/game/render/PostersInstanced.tsx`
+
+### Gameplay (singleplayer)
+- Control FPS con colisión por grid: `src/game/entities/PlayerController.tsx`
+- Enemigos sprite/billboard + disolve shader al morir:  
+  - `src/game/entities/EnemyBillboard.tsx`  
+  - `src/game/render/dissolveMaterial.ts`
+- Combate hitscan + recoil + muzzle flash + hitmarker + reload: `src/game/systems/CombatSystem.tsx`
+- Power-ups satíricos + blackout: `src/game/systems/PowerUpSystem.tsx`
+- Copy satírico (banners, titulares, flavor): `src/game/satire/powerupCopy.ts`
+
+### UI/UX (responsive)
+- HUD responsive + safe areas: `src/game/ui/HudOverlay.tsx`, `src/game/ui/hud.css`
+- Controles móviles (joystick/lookpad + FIRE/RLD): `src/game/ui/TouchControls.tsx`, `src/game/ui/touch.css`
+- Menú + highscores + panel P2P: `src/game/ui/MenuOverlay.tsx`, `src/game/ui/MultiplayerPanel.tsx`
+
+### Multiplayer (MVP)
+- Sistema de red: `src/game/net/PeerSystem.tsx`
+- Protocolo: `src/game/net/types.ts`
+- “Ghost” del jugador remoto: `src/game/entities/RemotePlayerGhost.tsx`
+
+## 1) Qué es este proyecto (LEGACY: Canvas raycasting)
+
 ## 1) Qué es este proyecto
 
 **DOOM: Noboa de Cartón** es un juego web estilo FPS retro, inspirado en DOOM, construido sobre un **motor de raycasting 2D** (pseudo-3D) dibujado en un **Canvas 2D**. Incluye:
@@ -11,7 +52,7 @@
 - Soporte responsive + controles móviles (botonera táctil).
 - Generación procedural de texturas/skybox vía `p5.js` (Centro Histórico).
 
-## 2) Tecnologías y APIs usadas
+## 2) Tecnologías y APIs usadas (LEGACY)
 
 ### Frontend
 - **HTML5** (`index.html`, `donaciones.html`)
@@ -37,7 +78,7 @@
   - `doomLastPlayerName` (último nombre)
   - `asset_version_map_v1` (cache-busting de CSS, ver `auto-version.js`)
 
-## 3) Estructura del proyecto
+## 3) Estructura del proyecto (LEGACY)
 
 ### Archivos principales
 - `index.html`: layout del juego, HUD, menús, orden de carga de scripts y verificación de sistemas.
@@ -455,35 +496,18 @@ El proyecto está preparado para hosting estático (ej. GitHub Pages).
 
 Hay una guía práctica de desarrollo, debug y pipeline de assets en: `CONTRIBUTING.md`
 
-## 22) Migración a Vite + React + R3F + Zustand (WIP)
+## 22) Migración a Vite + React + R3F + Zustand (COMPLETADA / en evolución)
 
-Este repo contiene una migración en curso hacia un render 100% GPU y una arquitectura moderna, con estos objetivos (del brief):
+La migración dejó de ser un “subproyecto”: el juego ya corre en la raíz como app Vite (GPU-first).  
+El plan/roadmap vivo para lo que falta pulir y extender está en: `MIGRACION-R3F.md`.
 
-- Eliminar el raycasting CPU (Canvas 2D) y reemplazarlo por **Three.js/R3F**.
-- Convertir `MAZE` en **InstancedMesh** (cubos) para render del nivel con draw calls mínimos.
-- Mantener enemigos como “sprites” 2D en mundo 3D usando **Billboards**.
-- Mover el estado global a **Zustand** (incluye persist de highscores).
-- Portar audio a hooks (`useWeaponAudio`) y texturas procedurales a **CanvasTexture**.
-- Agregar innovaciones: estética “Cardboard Cyberpunk”, power-ups satíricos, P2P sin servidor (WebRTC/PeerJS) y soporte Gamepad.
+### Deploy (GitHub Pages)
 
-### Estado actual
+- Build: `npm run build` genera `dist/`.
+- GitHub Pages se despliega vía **GitHub Actions**: `.github/workflows/pages.yml`.
+- Importante en Pages: `vite.config.ts` ajusta `base` a `/<repo>/` en producción para que carguen assets y rutas.
 
-La base del proyecto nuevo está en `doom-noboa/` y ya incluye:
+### Legacy archivado
 
-- Render R3F con escena inicial y niebla: `doom-noboa/src/game/scenes/GameScene.tsx`
-- Laberinto `MAZE` → `InstancedMesh` (paredes): `doom-noboa/src/game/render/MazeInstanced.tsx`
-- Texturas procedurales “cartón” (albedo + normal corrugado + emissive): `doom-noboa/src/game/textures/cardboardCyberpunk.ts`
-- Store inicial Zustand (highscores persistidos): `doom-noboa/src/game/store/useGameStore.ts`
-- UX móvil (WIP): HUD responsive + joystick/lookpad táctil: `doom-noboa/src/game/ui/TouchControls.tsx`
-- Player controller FPS (desktop + touch) con colisión grid: `doom-noboa/src/game/entities/PlayerController.tsx`
-
-### Qué falta (alto nivel)
-
-Todavía no se implementó (entre otros):
-- Player controller FPS (PointerLock + movimiento) y colisiones/physics.
-- Enemigos reales como billboards con sprites Noboa, AI, daño y “disintegración” shader.
-- Sistema de armas, hitscan/proyectiles, VFX (muzzle flash) y HUD (React).
-- Power-ups “política del power-up”, evento “apagón nacional”.
-- Multiplayer P2P (PeerJS) y control por Gamepad API.
-
-El plan completo de tareas está en: `MIGRACION-R3F.md`
+- El motor Canvas + raycasting ya no es la versión publicada.
+- Se conserva únicamente por referencia en `legacy/raycast/` (código, ideas y assets históricos).

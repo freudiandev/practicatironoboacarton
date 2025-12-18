@@ -21,7 +21,9 @@ export function useWeaponAudio(): WeaponAudio {
 
   const ensureContext = useCallback(async () => {
     if (!ctxRef.current) {
-      const Ctx = window.AudioContext || (window as any).webkitAudioContext
+      type WebkitWindow = Window & { webkitAudioContext?: typeof AudioContext }
+      const Ctx = window.AudioContext || (window as WebkitWindow).webkitAudioContext
+      if (!Ctx) throw new Error('AudioContext not available')
       ctxRef.current = new Ctx()
       masterRef.current = ctxRef.current.createGain()
       masterRef.current.gain.value = 0.7
@@ -175,4 +177,3 @@ export function useWeaponAudio(): WeaponAudio {
 
   return { unlock, playShot, playHit, playHeadshot }
 }
-

@@ -19,5 +19,13 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // R3F/Three.js es intencionalmente mutable (camera/materials/textures) y vive en loops (useFrame).
+      // Estas reglas son demasiado estrictas para este tipo de app.
+      'react-hooks/purity': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])

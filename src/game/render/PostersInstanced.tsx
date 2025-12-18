@@ -97,7 +97,6 @@ function generatePlacements(seed: number, maxPosters: number) {
 
 export function PostersInstanced() {
   const meshesRef = useRef<THREE.InstancedMesh[]>([])
-  const materialsRef = useRef<THREE.MeshStandardMaterial[]>([])
 
   const { textures, placementsByTexture } = useMemo(() => {
     const seed = 1337
@@ -138,7 +137,7 @@ export function PostersInstanced() {
   }, [])
 
   const materials = useMemo(() => {
-    const mats = textures.map((tex) => {
+    return textures.map((tex) => {
       const mat = new THREE.MeshStandardMaterial({
         map: tex,
         roughness: 0.92,
@@ -148,8 +147,6 @@ export function PostersInstanced() {
       })
       return mat
     })
-    materialsRef.current = mats
-    return mats
   }, [textures])
 
   useLayoutEffect(() => {
@@ -178,7 +175,7 @@ export function PostersInstanced() {
     const blackout = blackoutUntil && Date.now() < blackoutUntil
 
     // Blackout “real”: posters casi invisibles (solo algo de emissive en modo normal).
-    for (const mat of materialsRef.current) {
+    for (const mat of materials) {
       mat.emissiveIntensity = blackout ? 0 : 0.24
     }
   })
@@ -190,7 +187,6 @@ export function PostersInstanced() {
         if (count <= 0) return null
         return (
           <instancedMesh
-            // eslint-disable-next-line react/no-array-index-key
             key={`poster_${idx}`}
             ref={(m) => {
               if (!m) return
