@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useGameStore } from '../store/useGameStore'
+import { useWeaponAudio } from '../audio/useWeaponAudio'
 
 type CombatSystemProps = {
   enemiesGroupName?: string
@@ -25,6 +26,7 @@ export function CombatSystem({ enemiesGroupName = 'enemies' }: CombatSystemProps
   const updateEnemy = useGameStore((s) => s.updateEnemy)
   const addScore = useGameStore((s) => s.addScore)
   const addKill = useGameStore((s) => s.addKill)
+  const weaponAudio = useWeaponAudio()
 
   const fireRequested = useRef(false)
   const lastShotAt = useRef(0)
@@ -60,6 +62,7 @@ export function CombatSystem({ enemiesGroupName = 'enemies' }: CombatSystemProps
     const ok = spendAmmo(1)
     if (!ok) return
     lastShotAt.current = now
+    void weaponAudio.playShot()
 
     // Raycast desde centro de pantalla.
     raycaster.setFromCamera(screenCenter, camera)
@@ -91,10 +94,14 @@ export function CombatSystem({ enemiesGroupName = 'enemies' }: CombatSystemProps
       addScore(isHeadshot ? 160 : 100)
       if (isHeadshot) {
         useGameStore.setState((s) => ({ headshots: s.headshots + 1 }))
+        void weaponAudio.playHeadshot()
+      } else {
+        void weaponAudio.playHit()
       }
     } else {
       updateEnemy(enemyId, { health: nextHp })
       addScore(isHeadshot ? 30 : 10)
+      void weaponAudio.playHit()
     }
   })
 

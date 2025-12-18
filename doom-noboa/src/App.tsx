@@ -5,6 +5,7 @@ import { HudOverlay } from './game/ui/HudOverlay'
 import { TouchControls } from './game/ui/TouchControls'
 import { useEffect } from 'react'
 import { useGameStore } from './game/store/useGameStore'
+import { MenuOverlay } from './game/ui/MenuOverlay'
 
 function App() {
   const setIsTouch = useGameStore((s) => s.setIsTouch)
@@ -23,6 +24,7 @@ function App() {
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <HudOverlay />
       <TouchControls />
+      <MenuOverlay />
       <Canvas
         dpr={[1, 2]}
         gl={{ antialias: false, powerPreference: 'high-performance' }}

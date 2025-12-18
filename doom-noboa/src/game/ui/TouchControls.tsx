@@ -10,6 +10,7 @@ export function TouchControls() {
   const isTouch = useGameStore((s) => s.isTouch)
   const setMoveAxis = useGameStore((s) => s.setMoveAxis)
   const setLookAxis = useGameStore((s) => s.setLookAxis)
+  const gameState = useGameStore((s) => s.gameState)
   const [portrait, setPortrait] = useState(false)
 
   const joyRef = useRef<HTMLDivElement | null>(null)
@@ -119,8 +120,17 @@ export function TouchControls() {
         <div ref={stickRef} className="tc-stick" />
       </div>
 
-      {/* Botón de disparo (todavía no conectado a combate) */}
-      <div className="tc-shoot" aria-label="Disparar">
+      {/* Botón de disparo (MVP: simula un click de mouse para reutilizar el sistema actual). */}
+      <div
+        className="tc-shoot"
+        aria-label="Disparar"
+        onPointerDown={(e) => {
+          e.preventDefault()
+          if (gameState !== 'playing') return
+          const evt = new MouseEvent('mousedown', { button: 0 })
+          window.dispatchEvent(evt)
+        }}
+      >
         {shootLabel}
       </div>
 
@@ -135,4 +145,3 @@ export function TouchControls() {
     </div>
   )
 }
-

@@ -5,6 +5,7 @@ import './hud.css'
 export function HudOverlay() {
   const pointerLocked = useGameStore((s) => s.pointerLocked)
   const isTouch = useGameStore((s) => s.isTouch)
+  const gameState = useGameStore((s) => s.gameState)
   const health = useGameStore((s) => s.health)
   const ammo = useGameStore((s) => s.ammo)
   const headshots = useGameStore((s) => s.headshots)
@@ -53,6 +54,7 @@ export function HudOverlay() {
         </div>
       )}
 
+      {gameState === 'playing' && (
       <div className="hud-panel" aria-label="HUD">
         <div className="hud-item">
           <span className="hud-label">VIDA</span>
@@ -75,6 +77,7 @@ export function HudOverlay() {
           <span className="hud-value">{headshots}</span>
         </div>
       </div>
+      )}
     </div>
   )
 }
