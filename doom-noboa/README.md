@@ -43,6 +43,19 @@ src/
 - `src/App.tsx`: crea el `<Canvas />` de R3F y monta `<GameScene />`.
 - `src/game/scenes/GameScene.tsx`: renderiza nivel + look & feel “Cardboard Cyberpunk”.
 
+## Controles
+
+Desktop:
+- Click en pantalla: captura mouse (Pointer Lock)
+- `W/A/S/D`: moverse
+- `Shift`: correr
+- `ESC`: liberar cursor
+
+Móvil:
+- Joystick (izquierda): moverse
+- Swipe (derecha): mirar
+- Se recomienda horizontal (aparece aviso en portrait)
+
 ## Maze → InstancedMesh
 
 El corazón del render de nivel es `src/game/render/MazeInstanced.tsx`, que:

@@ -30,8 +30,15 @@ En `doom-noboa/` ya existe:
   - `doom-noboa/src/game/scenes/GameScene.tsx`
 - Material base “cartón cyberpunk” con normal corrugado procedimental:
   - `doom-noboa/src/game/textures/cardboardCyberpunk.ts`
+- Settings/tuning inicial:
+  - `doom-noboa/src/game/config/settings.ts`
 - Store Zustand con persist de highscores (inicial):
   - `doom-noboa/src/game/store/useGameStore.ts`
+- FPS Controller (desktop + touch):
+  - Pointer lock + WASD + colisión grid: `doom-noboa/src/game/entities/PlayerController.tsx`
+  - Joystick + lookpad táctil: `doom-noboa/src/game/ui/TouchControls.tsx`
+- HUD mínimo responsive (crosshair + stats + hints) con safe areas:
+  - `doom-noboa/src/game/ui/HudOverlay.tsx`
 
 ## Arquitectura objetivo (propuesta)
 
@@ -43,6 +50,7 @@ doom-noboa/src/
     config/              # settings y data (MAZE, tuning)
     store/               # Zustand: slices y persist
     input/               # teclado, mouse, gamepad
+    physics/             # colisiones (grid / rapier)
     net/                 # PeerJS/WebRTC sync
     audio/               # hooks WebAudio (weapon, ambience)
     textures/            # generadores y loaders (CanvasTexture, atlas)
@@ -90,13 +98,23 @@ Usar `@react-three/drei`:
 
 > Notación: `[x]` hecho, `[ ]` pendiente. Orden sugerido para minimizar re-trabajo.
 
+## Milestones (recomendado)
+
+1. **M1 — Core Loop Singleplayer**: moverse + disparar + matar + ganar/perder + highscores.
+2. **M2 — Visual “Cardboard Cyberpunk” PRO**: shader walls + disolve enemigo + blackout.
+3. **M3 — Power-ups Satíricos**: Consulta Popular / IVA 15% / Apagón Nacional.
+4. **M4 — Multiplayer P2P MVP**: host/join + sync player poses + disparos.
+5. **M5 — Gamepad**: mapeo completo + remapeo básico.
+6. **M6 — Paridad + Polishing**: balance, UX, performance, QA, deploy.
+
 ### 0) Base del proyecto
 - [x] Crear subproyecto Vite + React TS (`doom-noboa/`)
 - [x] Instalar deps R3F + drei + zustand + rapier
 - [x] Implementar `MAZE` → `InstancedMesh`
 - [x] Material base “Cardboard Cyberpunk” (canvas textures + normal corrugado)
 - [ ] Mover sprites PNG legacy a `doom-noboa/public/` o `doom-noboa/src/assets/` (decidir estrategia)
-- [ ] Añadir un `Settings` central (`game/config/settings.ts`) para tuning (FOV, speed, sens, fireRate)
+- [x] Añadir un `Settings` central (`game/config/settings.ts`) para tuning (FOV, speed, sens, fireRate)
+- [ ] Centralizar “world scale” y cámara (FOV/near/far) en settings y evitar magic numbers en `App.tsx`/`GameScene.tsx`
 
 ### 1) Control y cámara FPS (single player)
 - [x] Implementar Pointer Lock + mouse look (desktop)
@@ -106,12 +124,13 @@ Usar `@react-three/drei`:
 - [ ] Colisiones robustas con Rapier (cápsula + colliders) (opcional, upgrade)
 - [x] Soporte móvil básico (joystick/drag look) manteniendo teclado/mouse
 - [x] Añadir crosshair y “capture hint” (equivalente al popup legacy)
+- [ ] Conectar botón táctil `FIRE` a disparo (y añadir “tap to shoot” opcional en lookpad)
+- [ ] Añadir control de sensibilidad y toggles (invert Y, sens) en settings + UI
 
 ### 2) Estado de juego (Zustand)
 - [x] Store inicial con highscores persistidos
 - [ ] Completar `useGameStore` con gameplay real:
-  - `player: { pos, rot, vel }`
-  - `health/ammo/score/kills/gameTime`
+  - `health/ammo/score/kills/gameTime` (ya parcial)
   - `inventory/powerUps`
   - `events: blackoutActive, blackoutUntil`
 - [ ] Separar store en slices (player/combat/enemies/ui/net) para escalar sin monolito
@@ -128,12 +147,13 @@ Usar `@react-three/drei`:
   - target tracking lateral (tipo “blanco de tiro”)
   - charge + melee + retreat
 - [ ] Sistema de disparo:
-  - hitscan (raycast) desde cámara al centro (retro FPS)
-  - o proyectil simple (menos exacto, más VFX)
+  - hitscan (raycast) desde cámara al centro (retro FPS) (recomendado)
+  - proyectil simple (opcional; útil si quieres balística visible)
 - [ ] Headshot/bodyshot:
   - bounding box “en mundo” + zonas relativas (cabeza = 20–25% superior del billboard)
   - opcional: máscara de colisión con 2 colliders (head/body) si usas Rapier
 - [ ] Knockback y feedback de hit
+- [ ] Condiciones de victoria/derrota (paridad legacy): win si no quedan enemigos; loss si HP=0
 
 ### 4) Audio (hook `useWeaponAudio`) + música
 - [ ] Portar `weapon-audio.js` a `doom-noboa/src/game/audio/useWeaponAudio.ts`
@@ -156,9 +176,10 @@ Usar `@react-three/drei`:
   - skybox como esfera/cilindro invertido o “big quad” con UV wrap
 
 ### 6) UI/HUD (React)
-- [ ] HUD React overlay (DOM) con:
+- [x] HUD mínimo responsive (stats + crosshair + hints) (hecho)
+- [ ] HUD completo (paridad legacy) con:
   - vida (bar)
-  - ammo
+  - ammo + cargadores/reserva (si aplica)
   - timer
   - kills/headshots
 - [ ] Minimapa:

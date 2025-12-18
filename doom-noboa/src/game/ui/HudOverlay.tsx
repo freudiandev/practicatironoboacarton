@@ -7,6 +7,7 @@ export function HudOverlay() {
   const isTouch = useGameStore((s) => s.isTouch)
   const health = useGameStore((s) => s.health)
   const ammo = useGameStore((s) => s.ammo)
+  const headshots = useGameStore((s) => s.headshots)
   const score = useGameStore((s) => s.score)
   const kills = useGameStore((s) => s.kills)
   const [showTouchHint, setShowTouchHint] = useState(false)
@@ -68,6 +69,10 @@ export function HudOverlay() {
         <div className="hud-item">
           <span className="hud-label">KILLS</span>
           <span className="hud-value">{kills}</span>
+        </div>
+        <div className="hud-item">
+          <span className="hud-label">HEAD</span>
+          <span className="hud-value">{headshots}</span>
         </div>
       </div>
     </div>

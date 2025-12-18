@@ -7,6 +7,8 @@ import { WORLD } from '../config/world'
 import { PlayerController } from '../entities/PlayerController'
 import { MazeInstanced } from '../render/MazeInstanced'
 import { createCardboardWallMaterial } from '../textures/cardboardCyberpunk'
+import { EnemySystem } from '../systems/EnemySystem'
+import { CombatSystem } from '../systems/CombatSystem'
 
 export function GameScene() {
   const neonKeyLight = useRef<THREE.PointLight>(null)
@@ -52,6 +54,8 @@ export function GameScene() {
   return (
     <>
       <PlayerController />
+      <EnemySystem />
+      <CombatSystem />
 
       <fogExp2 attach="fog" args={['#070012', 0.065]} />
       <color attach="background" args={['#070012']} />

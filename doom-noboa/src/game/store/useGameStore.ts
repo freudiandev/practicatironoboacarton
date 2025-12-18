@@ -12,6 +12,7 @@ export type Enemy = {
   health: number
   maxHealth: number
   alive: boolean
+  dissolve: number
 }
 
 export type HighScoreEntry = {
@@ -31,6 +32,9 @@ type GameStore = {
   maxAmmo: number
   score: number
   kills: number
+  headshots: number
+  startedAt: number | null
+  timeSeconds: number
   enemies: Enemy[]
 
   isTouch: boolean
@@ -45,13 +49,18 @@ type GameStore = {
   setPlayerPose: (pose: Partial<GameStore['playerPose']>) => void
   setMoveAxis: (axis: Partial<GameStore['moveAxis']>) => void
   setLookAxis: (axis: Partial<GameStore['lookAxis']>) => void
+  startRun: () => void
+  endRun: (outcome: 'win' | 'loss') => void
   damage: (amount: number) => void
   heal: (amount: number) => void
   spendAmmo: (amount: number) => boolean
+  reload: () => void
   addScore: (amount: number) => void
   addKill: () => void
   setEnemies: (enemies: Enemy[]) => void
+  updateEnemy: (id: string, patch: Partial<Enemy>) => void
   killEnemy: (id: string) => void
+  removeEnemy: (id: string) => void
 
   highscores: HighScoreEntry[]
   addHighscore: (entry: Omit<HighScoreEntry, 'savedAt'>) => void
@@ -68,6 +77,9 @@ export const useGameStore = create<GameStore>()(
       maxAmmo: 30,
       score: 0,
       kills: 0,
+      headshots: 0,
+      startedAt: null,
+      timeSeconds: 0,
       enemies: [],
 
       isTouch: false,
@@ -93,6 +105,23 @@ export const useGameStore = create<GameStore>()(
         set((s) => ({ moveAxis: { x: axis.x ?? s.moveAxis.x, z: axis.z ?? s.moveAxis.z } })),
       setLookAxis: (axis) =>
         set((s) => ({ lookAxis: { x: axis.x ?? s.lookAxis.x, y: axis.y ?? s.lookAxis.y } })),
+      startRun: () =>
+        set((s) => ({
+          gameState: 'playing',
+          health: s.maxHealth,
+          ammo: s.maxAmmo,
+          score: 0,
+          kills: 0,
+          headshots: 0,
+          startedAt: Date.now(),
+          timeSeconds: 0,
+          enemies: []
+        })),
+      endRun: (outcome) => {
+        const s = get()
+        if (s.gameState !== 'playing') return
+        set({ gameState: outcome === 'win' ? 'win' : 'gameover' })
+      },
       damage: (amount) =>
         set((s) => ({ health: Math.max(0, s.health - Math.max(0, amount)) })),
       heal: (amount) =>
@@ -104,15 +133,24 @@ export const useGameStore = create<GameStore>()(
         set({ ammo: current - a })
         return true
       },
+      reload: () =>
+        set((s) => ({
+          ammo: s.maxAmmo
+        })),
       addScore: (amount) => set((s) => ({ score: s.score + amount })),
       addKill: () => set((s) => ({ kills: s.kills + 1 })),
       setEnemies: (enemies) => set({ enemies }),
+      updateEnemy: (id, patch) =>
+        set((s) => ({
+          enemies: s.enemies.map((e) => (e.id === id ? { ...e, ...patch } : e))
+        })),
       killEnemy: (id) =>
         set((s) => ({
           enemies: s.enemies.map((e) =>
             e.id === id ? { ...e, alive: false, health: 0 } : e
           )
         })),
+      removeEnemy: (id) => set((s) => ({ enemies: s.enemies.filter((e) => e.id !== id) })),
 
       highscores: [],
       addHighscore: (entry) =>

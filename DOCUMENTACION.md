@@ -475,6 +475,7 @@ La base del proyecto nuevo está en `doom-noboa/` y ya incluye:
 - Texturas procedurales “cartón” (albedo + normal corrugado + emissive): `doom-noboa/src/game/textures/cardboardCyberpunk.ts`
 - Store inicial Zustand (highscores persistidos): `doom-noboa/src/game/store/useGameStore.ts`
 - UX móvil (WIP): HUD responsive + joystick/lookpad táctil: `doom-noboa/src/game/ui/TouchControls.tsx`
+- Player controller FPS (desktop + touch) con colisión grid: `doom-noboa/src/game/entities/PlayerController.tsx`
 
 ### Qué falta (alto nivel)
 
