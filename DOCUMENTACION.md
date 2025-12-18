@@ -454,3 +454,34 @@ El proyecto está preparado para hosting estático (ej. GitHub Pages).
 ## 21) Contribución
 
 Hay una guía práctica de desarrollo, debug y pipeline de assets en: `CONTRIBUTING.md`
+
+## 22) Migración a Vite + React + R3F + Zustand (WIP)
+
+Este repo contiene una migración en curso hacia un render 100% GPU y una arquitectura moderna, con estos objetivos (del brief):
+
+- Eliminar el raycasting CPU (Canvas 2D) y reemplazarlo por **Three.js/R3F**.
+- Convertir `MAZE` en **InstancedMesh** (cubos) para render del nivel con draw calls mínimos.
+- Mantener enemigos como “sprites” 2D en mundo 3D usando **Billboards**.
+- Mover el estado global a **Zustand** (incluye persist de highscores).
+- Portar audio a hooks (`useWeaponAudio`) y texturas procedurales a **CanvasTexture**.
+- Agregar innovaciones: estética “Cardboard Cyberpunk”, power-ups satíricos, P2P sin servidor (WebRTC/PeerJS) y soporte Gamepad.
+
+### Estado actual
+
+La base del proyecto nuevo está en `doom-noboa/` y ya incluye:
+
+- Render R3F con escena inicial y niebla: `doom-noboa/src/game/scenes/GameScene.tsx`
+- Laberinto `MAZE` → `InstancedMesh` (paredes): `doom-noboa/src/game/render/MazeInstanced.tsx`
+- Texturas procedurales “cartón” (albedo + normal corrugado + emissive): `doom-noboa/src/game/textures/cardboardCyberpunk.ts`
+- Store inicial Zustand (highscores persistidos): `doom-noboa/src/game/store/useGameStore.ts`
+
+### Qué falta (alto nivel)
+
+Todavía no se implementó (entre otros):
+- Player controller FPS (PointerLock + movimiento) y colisiones/physics.
+- Enemigos reales como billboards con sprites Noboa, AI, daño y “disintegración” shader.
+- Sistema de armas, hitscan/proyectiles, VFX (muzzle flash) y HUD (React).
+- Power-ups “política del power-up”, evento “apagón nacional”.
+- Multiplayer P2P (PeerJS) y control por Gamepad API.
+
+El plan completo de tareas está en: `MIGRACION-R3F.md`

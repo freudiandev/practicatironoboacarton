@@ -1,10 +1,12 @@
 import './App.css'
 import { Canvas } from '@react-three/fiber'
 import { GameScene } from './game/scenes/GameScene'
+import { HudOverlay } from './game/ui/HudOverlay'
 
 function App() {
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      <HudOverlay />
       <Canvas
         dpr={[1, 2]}
         gl={{ antialias: false, powerPreference: 'high-performance' }}

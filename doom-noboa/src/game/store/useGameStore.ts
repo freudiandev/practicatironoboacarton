@@ -33,7 +33,12 @@ type GameStore = {
   kills: number
   enemies: Enemy[]
 
+  pointerLocked: boolean
+  playerPose: { x: number; y: number; z: number; yaw: number; pitch: number }
+
   setGameState: (state: GameState) => void
+  setPointerLocked: (locked: boolean) => void
+  setPlayerPose: (pose: Partial<GameStore['playerPose']>) => void
   damage: (amount: number) => void
   heal: (amount: number) => void
   spendAmmo: (amount: number) => boolean
@@ -59,7 +64,21 @@ export const useGameStore = create<GameStore>()(
       kills: 0,
       enemies: [],
 
+      pointerLocked: false,
+      playerPose: { x: 0, y: 1.6, z: 0, yaw: 0, pitch: 0 },
+
       setGameState: (state) => set({ gameState: state }),
+      setPointerLocked: (locked) => set({ pointerLocked: locked }),
+      setPlayerPose: (pose) =>
+        set((s) => ({
+          playerPose: {
+            x: pose.x ?? s.playerPose.x,
+            y: pose.y ?? s.playerPose.y,
+            z: pose.z ?? s.playerPose.z,
+            yaw: pose.yaw ?? s.playerPose.yaw,
+            pitch: pose.pitch ?? s.playerPose.pitch
+          }
+        })),
       damage: (amount) =>
         set((s) => ({ health: Math.max(0, s.health - Math.max(0, amount)) })),
       heal: (amount) =>
@@ -98,4 +117,3 @@ export const useGameStore = create<GameStore>()(
     }
   )
 )
-

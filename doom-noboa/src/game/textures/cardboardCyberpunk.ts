@@ -117,7 +117,6 @@ export function createCorrugationNormalMap(size = 128) {
   for (let y = 0; y < size; y++) {
     const jitter = (Math.sin(y * 0.2) + Math.random() * 0.25) * 0.25
     for (let x = 0; x < size; x++) {
-      const h = Math.sin(x * freq + jitter)
       const dhdx = Math.cos(x * freq + jitter) * freq
       const nx = -dhdx * strength
       const ny = 0
@@ -162,4 +161,3 @@ export function createCardboardWallMaterial() {
 
   return { material, textures: { map, normalMap, emissiveMap } }
 }
-

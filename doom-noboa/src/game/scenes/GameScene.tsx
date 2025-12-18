@@ -4,6 +4,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { GRID_COLS, GRID_ROWS } from '../config/maze'
 import { WORLD } from '../config/world'
+import { PlayerController } from '../entities/PlayerController'
 import { MazeInstanced } from '../render/MazeInstanced'
 import { createCardboardWallMaterial } from '../textures/cardboardCyberpunk'
 
@@ -11,9 +12,9 @@ export function GameScene() {
   const neonKeyLight = useRef<THREE.PointLight>(null)
   const neonFillLight = useRef<THREE.PointLight>(null)
 
-  const { wallMaterial } = useMemo(() => {
-    const { material } = createCardboardWallMaterial()
-    return { wallMaterial: material }
+  const { wallMaterial, wallTextures } = useMemo(() => {
+    const { material, textures } = createCardboardWallMaterial()
+    return { wallMaterial: material, wallTextures: textures }
   }, [])
 
   const floorMaterial = useMemo(() => {
@@ -30,9 +31,12 @@ export function GameScene() {
   useEffect(() => {
     return () => {
       wallMaterial.dispose()
+      wallTextures.map.dispose()
+      wallTextures.normalMap.dispose()
+      wallTextures.emissiveMap.dispose()
       floorMaterial.dispose()
     }
-  }, [floorMaterial, wallMaterial])
+  }, [floorMaterial, wallMaterial, wallTextures])
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime()
@@ -47,6 +51,8 @@ export function GameScene() {
 
   return (
     <>
+      <PlayerController />
+
       <fogExp2 attach="fog" args={['#070012', 0.065]} />
       <color attach="background" args={['#070012']} />
 
@@ -97,4 +103,3 @@ export function GameScene() {
     </>
   )
 }
-
