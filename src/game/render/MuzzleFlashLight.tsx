@@ -23,6 +23,7 @@ export function MuzzleFlashLight() {
 
     // En blackout el flash es el “único” key light momentáneo.
     light.intensity = active ? (blackout ? 18 : 12) : 0
+    light.distance = active ? 8.5 : 0
   })
 
   return (

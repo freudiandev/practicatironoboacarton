@@ -103,8 +103,8 @@ export function PostersInstanced() {
 
     const t: THREE.Texture[] = []
 
-    // 4 titulares + 2 “propagandas” de power-ups.
-    for (let i = 0; i < 4; i++) {
+    // Más titulares (satírico) + propagandas power-ups.
+    for (let i = 0; i < 6; i++) {
       t.push(
         createSatirePosterTexture({
           seed: seed + i * 97,
@@ -128,8 +128,15 @@ export function PostersInstanced() {
         subtitle: powerupBanner('iva_15')
       })
     )
+    t.push(
+      createSatirePosterTexture({
+        seed: seed + 1117,
+        headline: 'Apagón “Nacional”',
+        subtitle: 'Otra ronda de cortes cortesía del gobierno.'
+      })
+    )
 
-    const placements = generatePlacements(seed, 18)
+    const placements = generatePlacements(seed, 28)
     const byTexture: PosterPlacement[][] = Array.from({ length: t.length }, () => [])
     for (const p of placements) byTexture[p.textureIndex % t.length].push(p)
 

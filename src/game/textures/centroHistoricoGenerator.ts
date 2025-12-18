@@ -26,6 +26,7 @@ export type CentroHistoricoTextures = {
   wallColonial: THREE.CanvasTexture
   wallArchway: THREE.CanvasTexture
   floorStones: THREE.CanvasTexture
+  mountainDetail: THREE.CanvasTexture
 }
 
 function lerp(a: number, b: number, t: number) {
@@ -45,10 +46,10 @@ function buildSky(width = 1024, height = 512) {
   const { canvas, ctx } = createCanvas(width, height)
 
   // Amanecer andino: gradiente vertical.
-  const topA: [number, number, number] = [45, 27, 76]
-  const topB: [number, number, number] = [81, 59, 130]
-  const botA: [number, number, number] = [81, 59, 130]
-  const botB: [number, number, number] = [241, 178, 107]
+  const topA: [number, number, number] = [32, 20, 54]
+  const topB: [number, number, number] = [74, 52, 118]
+  const botA: [number, number, number] = [98, 74, 154]
+  const botB: [number, number, number] = [242, 182, 121]
 
   for (let y = 0; y < height; y++) {
     const t = y / height
@@ -58,17 +59,17 @@ function buildSky(width = 1024, height = 512) {
     fillRect(ctx, 0, y, width, 1, c, 1)
   }
 
-  // Cordillera.
-  ctx.fillStyle = '#3d2a5e'
+  // Cordillera alta.
+  ctx.fillStyle = '#2f1f45'
   ctx.beginPath()
   ctx.moveTo(0, height)
   const peaks = [
-    { x: -120, h: 220 },
-    { x: 60, h: 280 },
-    { x: 280, h: 260 },
-    { x: 600, h: 320 },
-    { x: 860, h: 240 },
-    { x: 1080, h: 280 }
+    { x: -80, h: 320 },
+    { x: 120, h: 380 },
+    { x: 320, h: 340 },
+    { x: 580, h: 410 },
+    { x: 840, h: 330 },
+    { x: 1100, h: 390 }
   ]
   peaks.forEach((p, i) => {
     const xx = p.x
@@ -87,13 +88,13 @@ function buildSky(width = 1024, height = 512) {
 
   ctx.fillStyle = '#362447'
   const structures = [
-    { x: 70, w: 120, h: 90 },
-    { x: 230, w: 80, h: 70 },
-    { x: 340, w: 100, h: 80 },
-    { x: 470, w: 140, h: 110 },
-    { x: 650, w: 110, h: 95 },
-    { x: 800, w: 90, h: 75 },
-    { x: 920, w: 120, h: 85 }
+    { x: 40, w: 110, h: 88 },
+    { x: 200, w: 120, h: 108 },
+    { x: 360, w: 140, h: 100 },
+    { x: 520, w: 130, h: 120 },
+    { x: 700, w: 120, h: 110 },
+    { x: 860, w: 130, h: 95 },
+    { x: 1000, w: 120, h: 105 }
   ]
   for (const s of structures) {
     ctx.fillRect(s.x, skylineY - s.h, s.w, s.h)
@@ -106,10 +107,11 @@ function buildSky(width = 1024, height = 512) {
     ctx.arc(cx, cy, r, 0, Math.PI * 2)
     ctx.fill()
   }
-  circle(520, skylineY - 65, 30)
-  circle(685, skylineY - 55, 24)
-  ctx.fillRect(105, skylineY - 160, 24, 160)
-  ctx.fillRect(128, skylineY - 140, 20, 140)
+  circle(520, skylineY - 72, 34)
+  circle(685, skylineY - 62, 26)
+  circle(310, skylineY - 58, 20)
+  ctx.fillRect(105, skylineY - 170, 24, 170)
+  ctx.fillRect(128, skylineY - 150, 20, 150)
 
   // Nubes pixel.
   const clouds = [
@@ -253,6 +255,6 @@ export function generateCentroHistoricoTextures(): CentroHistoricoTextures {
   const wallColonial = buildFacade(128)
   const wallArchway = buildArchway(128)
   const floorStones = buildStoneFloor(128)
-  return { sky, wallColonial, wallArchway, floorStones }
+  const mountainDetail = buildSky(512, 256)
+  return { sky, wallColonial, wallArchway, floorStones, mountainDetail }
 }
-

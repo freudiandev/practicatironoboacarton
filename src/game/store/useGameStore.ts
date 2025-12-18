@@ -38,7 +38,7 @@ export type HighScoreEntry = {
   savedAt: number
 }
 
-export type PowerUpType = 'consulta_popular' | 'iva_15' | 'apagon_nacional'
+export type PowerUpType = 'consulta_popular' | 'iva_15' | 'apagon_nacional' | 'iva_trampa' | 'capsula_salud'
 
 export type PowerUpPickup = {
   id: string

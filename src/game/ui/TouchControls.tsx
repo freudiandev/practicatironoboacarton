@@ -91,7 +91,7 @@ export function TouchControls() {
     lastLook.current = { x: e.clientX, y: e.clientY }
 
     // lookAxis se interpreta como delta por frame; PlayerController lo “consume” y resetea.
-    setLookAxis({ x: dx, y: dy })
+    setLookAxis({ x: dx * 1.35, y: dy * 1.35 })
   }
 
   const onLookUp = (e: React.PointerEvent) => {

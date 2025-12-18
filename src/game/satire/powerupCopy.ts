@@ -8,6 +8,10 @@ export function powerupLabel(type: PowerUpType) {
       return 'El IVA al 15%'
     case 'apagon_nacional':
       return 'Apagón Nacional'
+    case 'iva_trampa':
+      return 'IVA +15% (Trampa)'
+    case 'capsula_salud':
+      return 'Cápsula ¿Salud?'
     default:
       return 'Power-Up'
   }
@@ -24,6 +28,10 @@ export function powerupBanner(type: PowerUpType) {
       return 'IVA 15%: más puntos… pero tu vida paga el recargo.'
     case 'apagon_nacional':
       return 'Apagón Nacional: se apagan las luces, queda el neón y el miedo.'
+    case 'iva_trampa':
+      return 'IVA +15% sorpresa: tu HP baja, tu factura sube.'
+    case 'capsula_salud':
+      return 'Cápsula: ¿cura o recorte? Solo hay una forma de saberlo.'
     default:
       return 'Power-Up activado.'
   }

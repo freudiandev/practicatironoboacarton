@@ -19,7 +19,7 @@ function mulberry32(seed: number) {
 }
 
 function pickType(i: number): PowerUpType {
-  const list: PowerUpType[] = ['consulta_popular', 'iva_15', 'apagon_nacional']
+  const list: PowerUpType[] = ['consulta_popular', 'iva_15', 'apagon_nacional', 'iva_trampa', 'capsula_salud']
   return list[i % list.length]
 }
 
@@ -82,6 +82,26 @@ function applyPowerup(type: PowerUpType) {
     useGameStore.setState({ blackoutUntil: now + 12000 })
     return
   }
+
+  if (type === 'iva_trampa') {
+    state.damage(15)
+    state.showBanner('El gobierno sube el IVA 15% y te cuesta 15 HP.', 2800)
+    if (state.health <= 0) state.endRun('loss')
+    return
+  }
+
+  if (type === 'capsula_salud') {
+    // 50/50: cura 30 o daña 10.
+    if (Math.random() < 0.5) {
+      state.heal(30)
+      state.showBanner('Milagro: una cápsula sí cura (+30 HP).', 2400)
+    } else {
+      state.damage(10)
+      state.showBanner('Recorte en salud: pierdes 10 HP.', 2600)
+      if (state.health <= 0) state.endRun('loss')
+    }
+    return
+  }
 }
 
 export function PowerUpSystem() {
@@ -123,6 +143,15 @@ export function PowerUpSystem() {
       if (state.blackoutUntil !== 0) useGameStore.setState({ blackoutUntil: 0 })
     }
 
+    // Evento apagón aleatorio más frecuente (tensión política).
+    if (!state.blackoutUntil || now >= state.blackoutUntil) {
+      if (rand() < 0.0009) {
+        const until = now + 9000
+        useGameStore.setState({ blackoutUntil: until })
+        state.showBanner('Apagón: el gobierno de Daniel Noboa otra vez deja sin luz.', 3200)
+      }
+    }
+
     // Pickup collisions
     for (const p of pickups) {
       if (!p.active) continue
@@ -143,18 +172,52 @@ export function PowerUpSystem() {
         .filter((p) => p.active)
         .map((p) => {
           const color =
-            p.type === 'consulta_popular' ? '#ffd700' : p.type === 'iva_15' ? '#ff00aa' : '#00fff0'
+            p.type === 'consulta_popular'
+              ? '#ffd700'
+              : p.type === 'iva_15'
+              ? '#ff00aa'
+              : p.type === 'apagon_nacional'
+              ? '#00fff0'
+              : p.type === 'iva_trampa'
+              ? '#ff3300'
+              : '#00c8ff'
           return (
-            <mesh key={p.id} position={[p.position.x, p.position.y, p.position.z]}>
-              <sphereGeometry args={[0.18, 12, 12]} />
-              <meshStandardMaterial
-                color={color}
-                emissive={color}
-                emissiveIntensity={1.1}
-                roughness={0.2}
-                metalness={0.1}
-              />
-            </mesh>
+            <group key={p.id} position={[p.position.x, p.position.y, p.position.z]}>
+              {p.type === 'capsula_salud' ? (
+                <mesh>
+                  <capsuleGeometry args={[0.16, 0.3, 8, 12]} />
+                  <meshStandardMaterial
+                    color={color}
+                    emissive={color}
+                    emissiveIntensity={0.8}
+                    roughness={0.3}
+                    metalness={0.1}
+                  />
+                </mesh>
+              ) : p.type === 'iva_trampa' ? (
+                <mesh>
+                  <torusGeometry args={[0.22, 0.08, 10, 28]} />
+                  <meshStandardMaterial
+                    color={color}
+                    emissive={color}
+                    emissiveIntensity={1.2}
+                    roughness={0.25}
+                    metalness={0.15}
+                  />
+                </mesh>
+              ) : (
+                <mesh>
+                  <sphereGeometry args={[0.18, 12, 12]} />
+                  <meshStandardMaterial
+                    color={color}
+                    emissive={color}
+                    emissiveIntensity={1.1}
+                    roughness={0.2}
+                    metalness={0.1}
+                  />
+                </mesh>
+              )}
+            </group>
           )
         })}
     </group>
