@@ -66,6 +66,126 @@
   gap: 8px;
 }
 
+.menu-net {
+  margin-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.menu-net h3 {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(0, 255, 240, 0.85);
+}
+
+.menu-net-row {
+  display: flex;
+  gap: 8px;
+}
+
+.menu-btn.tiny {
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.menu-btn.active {
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 2px rgba(0, 255, 240, 0.12);
+}
+
+.menu-net-card {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(14, 6, 26, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: grid;
+  gap: 8px;
+}
+
+.menu-net-line {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.menu-net-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.menu-net-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 240, 0.18);
+  background: rgba(5, 0, 12, 0.6);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+
+.menu-net-input:focus {
+  border-color: rgba(255, 0, 170, 0.35);
+  box-shadow: 0 0 0 2px rgba(255, 0, 170, 0.14);
+}
+
+.menu-net-qr {
+  display: grid;
+  place-items: center;
+  padding: 8px 0;
+}
+
+.menu-net-qr img {
+  width: 220px;
+  height: 220px;
+  image-rendering: pixelated;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.menu-net-hint {
+  font-size: 12px;
+  opacity: 0.86;
+  line-height: 1.35;
+}
+
+.menu-net-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.88;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.dot.ok {
+  background: rgba(0, 255, 240, 0.85);
+  box-shadow: 0 0 10px rgba(0, 255, 240, 0.35);
+}
+
+.dot.warn {
+  background: rgba(255, 0, 170, 0.75);
+  box-shadow: 0 0 10px rgba(255, 0, 170, 0.3);
+}
+
 .menu-scores h3 {
   margin: 0;
   font-size: 12px;
@@ -95,4 +215,3 @@
   opacity: 0.82;
   text-align: center;
 }
-

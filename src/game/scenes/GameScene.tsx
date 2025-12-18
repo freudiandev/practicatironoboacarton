@@ -8,6 +8,7 @@ import { PlayerController } from '../entities/PlayerController'
 import { RemotePlayerGhost } from '../entities/RemotePlayerGhost'
 import { MazeInstanced } from '../render/MazeInstanced'
 import { MuzzleFlashLight } from '../render/MuzzleFlashLight'
+import { PostersInstanced } from '../render/PostersInstanced'
 import { createCardboardWallMaterial } from '../textures/cardboardCyberpunk'
 import { EnemySystem } from '../systems/EnemySystem'
 import { CombatSystem } from '../systems/CombatSystem'
@@ -19,6 +20,7 @@ import { PowerUpSystem } from '../systems/PowerUpSystem'
 import { PeerSystem } from '../net/PeerSystem'
 
 export function GameScene() {
+  const ambientRef = useRef<THREE.AmbientLight>(null)
   const neonKeyLight = useRef<THREE.PointLight>(null)
   const neonFillLight = useRef<THREE.PointLight>(null)
   const skyRef = useRef<THREE.Mesh>(null)
@@ -63,6 +65,7 @@ export function GameScene() {
     const blackout = blackoutUntil && Date.now() < blackoutUntil
 
     // Blackout: apagar luces, dejar algo de emissive en paredes (neón “residual”).
+    if (ambientRef.current) ambientRef.current.intensity = blackout ? 0.02 : 0.18
     if (neonKeyLight.current) neonKeyLight.current.intensity = blackout ? 0.15 : 10 * pulse
     if (neonFillLight.current) neonFillLight.current.intensity = blackout ? 0.1 : 7 * (0.65 + Math.cos(t * 1.3) * 0.25)
     wallMaterial.emissiveIntensity = blackout ? 0.06 : (0.18 + pulse * 0.45)
@@ -93,7 +96,7 @@ export function GameScene() {
       <fogExp2 attach="fog" args={['#070012', 0.065]} />
       <color attach="background" args={['#070012']} />
 
-      <ambientLight intensity={0.18} />
+      <ambientLight ref={ambientRef} intensity={0.18} />
       <MuzzleFlashLight />
       <pointLight
         ref={neonKeyLight}
@@ -122,6 +125,7 @@ export function GameScene() {
       </mesh>
 
       <MazeInstanced material={wallMaterial} />
+      <PostersInstanced />
 
       <Grid
         position={[0, 0.001, 0]}

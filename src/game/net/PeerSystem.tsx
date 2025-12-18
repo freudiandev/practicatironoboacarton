@@ -64,9 +64,7 @@ export function PeerSystem() {
     cleanup()
     setStatus(mode === 'host' ? 'Creando sala…' : 'Conectando…')
 
-    const peer = new Peer(undefined, {
-      debug: 0
-    })
+    const peer = new Peer()
     peerRef.current = peer
 
     const attachConn = (conn: DataConnection) => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import QRCode from 'qrcode'
+import * as QRCode from 'qrcode'
 import { useGameStore } from '../store/useGameStore'
 
 function currentBaseUrl() {
@@ -130,4 +130,3 @@ export function MultiplayerPanel() {
     </div>
   )
 }
-
