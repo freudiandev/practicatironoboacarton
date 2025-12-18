@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://freudiandev.github.io/practicatironoboacarton/sitemap.xml
