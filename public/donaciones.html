@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Donaciones — DOOM: Noboa de Cartón</title>
+    <meta
+      name="description"
+      content="Apoya CiberPunk Ecuador y los Videojuegos Sociales. Donaciones vía QR (Banco Pichincha/De Una), transferencia o PayPal."
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: radial-gradient(110% 90% at 50% 20%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.92)),
+          url('./menu-bg.jpeg') center / cover no-repeat fixed;
+        color: rgba(255, 255, 255, 0.92);
+      }
+      .wrap {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 24px 16px;
+      }
+      .card {
+        background: rgba(5, 0, 12, 0.78);
+        border: 1px solid rgba(255, 0, 170, 0.22);
+        border-radius: 18px;
+        backdrop-filter: blur(10px);
+        padding: 18px 16px;
+      }
+      h1 {
+        margin: 0;
+        text-align: center;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: clamp(20px, 4vw, 34px);
+      }
+      .sub {
+        margin-top: 10px;
+        text-align: center;
+        color: rgba(0, 255, 240, 0.92);
+      }
+      .grid {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 14px;
+        align-items: start;
+      }
+      .qr {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(14, 6, 26, 0.55);
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+        place-items: center;
+      }
+      .qr img {
+        width: min(340px, 100%);
+        height: auto;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .box {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(14, 6, 26, 0.55);
+        padding: 12px;
+        line-height: 1.45;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+        font-variant-numeric: tabular-nums;
+      }
+      .hint {
+        margin-top: 10px;
+        font-size: 13px;
+        opacity: 0.9;
+      }
+      .btnrow {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      a.btn {
+        display: inline-block;
+        text-align: center;
+        padding: 12px 14px;
+        border-radius: 14px;
+        text-decoration: none;
+        color: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(0, 255, 240, 0.18);
+        background: linear-gradient(135deg, rgba(255, 0, 170, 0.55), rgba(0, 255, 240, 0.25));
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      a.btn.secondary {
+        background: rgba(14, 6, 26, 0.62);
+        border-color: rgba(255, 255, 255, 0.14);
+        font-weight: 700;
+      }
+      .footer {
+        margin-top: 14px;
+        text-align: center;
+        font-size: 13px;
+        opacity: 0.88;
+      }
+      .footer a {
+        color: rgba(0, 255, 240, 0.95);
+        text-decoration: none;
+      }
+      .footer a:hover {
+        text-decoration: underline;
+      }
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .btnrow {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Donaciones</h1>
+        <div class="sub">CiberPunk Ecuador · Videojuegos Sociales y Políticos</div>
+
+        <p class="hint">
+          Si este juego te sacó una risa amarga (o te hizo pensar), puedes apoyar el proyecto para mantener vivo el
+          desarrollo, el arte y el hosting. Gracias por sostener la resistencia digital.
+        </p>
+
+        <div class="grid">
+          <div class="qr">
+            <img src="./donations/una-qr.jpg" alt="QR Banco Pichincha (De Una) — donaciones" />
+            <div class="hint">Escanea con tu app (Banco Pichincha / De Una).</div>
+          </div>
+
+          <div class="box">
+            <div><strong>Banco Pichincha (De Una)</strong> · Cuenta de ahorro transaccional</div>
+            <div>Número: <strong class="mono">2206684682</strong></div>
+            <div>Cédula: <strong class="mono">1723625032</strong></div>
+            <div>Nombre: <strong>Samantha Ayleen Rueda Chamorro</strong></div>
+            <div>Referencia: <strong>CiberPunk Ecuador · Videojuegos Sociales</strong></div>
+            <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 10px 0" />
+            <div>PayPal (exterior): <strong class="mono">samantharueda91@gmail.com</strong></div>
+            <div class="hint">Dona 50 centavos, 75 centavos o lo que puedas. Cada aporte cuenta.</div>
+          </div>
+        </div>
+
+        <div class="btnrow">
+          <a class="btn secondary" href="./">← Volver al juego</a>
+          <a class="btn" href="https://www.instagram.com/freudiandev/" target="_blank" rel="noopener noreferrer">
+            Instagram @freudiandev
+          </a>
+        </div>
+
+        <div class="footer">
+          Creado por <strong>Alex Rafael Almeida Orellana</strong> (<strong>freudiandev</strong>).<br />
+          Gracias por apoyar a <strong>CiberPunk Ecuador</strong>.
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

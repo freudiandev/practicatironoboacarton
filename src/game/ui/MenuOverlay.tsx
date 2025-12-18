@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
+import type { CSSProperties } from 'react'
 import { useGameStore } from '../store/useGameStore'
 import './menu.css'
 import { MultiplayerPanel } from './MultiplayerPanel'
+import { SupportPanel } from './SupportPanel'
 
 function formatTime(seconds: number) {
   const s = Math.max(0, Math.floor(seconds))
@@ -19,6 +21,9 @@ export function MenuOverlay() {
   const headshots = useGameStore((s) => s.headshots)
   const timeSeconds = useGameStore((s) => s.timeSeconds)
   const addHighscore = useGameStore((s) => s.addHighscore)
+
+  const menuBgUrl = `${import.meta.env.BASE_URL || '/'}menu-bg.jpeg`
+  const rootStyle = { ['--menu-bg-url' as string]: `url(${menuBgUrl})` } as CSSProperties
 
   const isEnd = gameState === 'win' || gameState === 'gameover'
 
@@ -47,7 +52,7 @@ export function MenuOverlay() {
   if (gameState === 'playing') return null
 
   return (
-    <div className="menu-root" role="dialog" aria-modal="false">
+    <div className="menu-root" role="dialog" aria-modal="false" style={rootStyle}>
       <div className="menu-card">
         <div className="menu-title">{title}</div>
         <div className="menu-sub">{subtitle}</div>
@@ -71,6 +76,7 @@ export function MenuOverlay() {
         </div>
 
         <MultiplayerPanel />
+        <SupportPanel />
 
         <div className="menu-scores">
           <h3>Highscores</h3>

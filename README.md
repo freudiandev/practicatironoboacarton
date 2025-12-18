@@ -43,6 +43,12 @@ Móvil:
 - Swipe (der): mirar
 - Botón `FIRE` (mantener) + `RLD` para recargar
 
+## Donaciones / créditos
+
+- Donaciones in-game (menú): QR Banco Pichincha (De Una) + datos bancarios + PayPal.
+- Página directa: `donaciones.html`
+- Autor: Alex Rafael Almeida Orellana (`freudiandev`) — Instagram: `https://www.instagram.com/freudiandev/`
+
 ## Documentación
 
 - Documentación del proyecto: `DOCUMENTACION.md`
