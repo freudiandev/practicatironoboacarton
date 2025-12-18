@@ -1,37 +1,51 @@
-# DOOM: Noboa de Cartón (practicatironoboacarton)
+# DOOM: Noboa de Cartón (R3F)
 
-Repo con 2 variantes del juego:
+FPS retro “Cardboard Cyberpunk” ambientado en el Centro Histórico de Quito, migrado a una arquitectura moderna:
 
-- **Legacy**: FPS estilo DOOM hecho en HTML/JavaScript (Canvas 2D + raycasting manual) con sprites 2D, HUD y soporte desktop/móvil.
-- **Nueva (WIP)**: migración a **Vite + React + React Three Fiber (R3F) + Zustand** para render GPU (InstancedMesh) y arquitectura moderna.
+- **Vite** (SPA estático)
+- **React + React Three Fiber (R3F)** (render GPU)
+- **Zustand** (estado + `persist` para highscores)
+- **InstancedMesh** para el laberinto (1 draw call para paredes)
+- Enemigos **Billboard** (sprites 2D en mundo 3D) + **shader dissolve** al morir
+- Texturas procedurales “Centro Histórico” (Canvas → `CanvasTexture`) + skybox panorámico
 
-## Ejecutar en local (Legacy)
+> El raycasting Canvas 2D quedó archivado en `legacy/raycast/` (ya no es la versión principal).
 
-Por temas de seguridad del navegador (Pointer Lock, `fetch` de `auto-version.js`, etc.) es mejor usar un servidor local en vez de abrir `index.html` como `file://`.
-
-```bash
-python3 -m http.server 8080
-# luego abre http://localhost:8080/
-```
-
-## Ejecutar en local (Migración R3F)
-
-El subproyecto vive en `doom-noboa/`.
+## Ejecutar en local
 
 ```bash
-cd doom-noboa
 npm install
 npm run dev
 ```
 
+## Build
+
+```bash
+npm run build
+npm run preview
+```
+
+## GitHub Pages (deploy)
+
+Este repo despliega con **GitHub Actions** (build de Vite y publish de `dist/`).
+
+- Workflow: `.github/workflows/pages.yml`
+- `vite.config.ts` ajusta `base` automáticamente a `/<repo>/` en producción (requerido por Pages).
+
+## Controles
+
+Desktop:
+- Click: captura mouse (Pointer Lock)
+- `W/A/S/D`: moverse · `Shift`: correr · `R`: recargar · `ESC`: liberar cursor
+
+Móvil:
+- Joystick (izq): moverse
+- Swipe (der): mirar
+- Botón `FIRE` (mantener) + `RLD` para recargar
+
 ## Documentación
 
-- Documentación completa del proyecto: `DOCUMENTACION.md`
-- Notas técnicas de raycasting: `MEJORAS-RAYCASTING-VISUAL.md`
-- Concepto “Centro Histórico” (p5.js): `CONCEPTO-CENTRO-HISTORICO-P5.md`
-- Guía para contribuir (dev/debug/assets/deploy): `CONTRIBUTING.md`
-
-## Migración R3F (nuevo)
-
-- Nueva base Vite + React + R3F + Zustand: `doom-noboa/README.md`
-- Roadmap completo (render, shaders, power-ups, P2P, gamepad): `MIGRACION-R3F.md`
+- Documentación del proyecto: `DOCUMENTACION.md`
+- Roadmap/arquitectura de migración: `MIGRACION-R3F.md`
+- Concepto original “Centro Histórico” (p5.js legacy): `CONCEPTO-CENTRO-HISTORICO-P5.md`
+- Guía para contribuir: `CONTRIBUTING.md`

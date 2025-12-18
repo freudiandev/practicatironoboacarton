@@ -9,6 +9,8 @@ import { MenuOverlay } from './game/ui/MenuOverlay'
 
 function App() {
   const setIsTouch = useGameStore((s) => s.setIsTouch)
+  const setNetJoinId = useGameStore((s) => s.setNetJoinId)
+  const setNetMode = useGameStore((s) => s.setNetMode)
 
   useEffect(() => {
     const nav = typeof navigator !== 'undefined' ? navigator : null
@@ -19,6 +21,15 @@ function App() {
     const isTouch = ('ontouchstart' in window) || touchPoints > 0 || coarse
     setIsTouch(Boolean(isTouch))
   }, [setIsTouch])
+
+  useEffect(() => {
+    // Deep-link para P2P: `?join=<peerId>`
+    const params = new URLSearchParams(window.location.search)
+    const join = (params.get('join') || '').trim()
+    if (!join) return
+    setNetJoinId(join)
+    setNetMode('join')
+  }, [setNetJoinId, setNetMode])
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>

@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { GRID_COLS, GRID_ROWS } from '../config/maze'
 import { WORLD } from '../config/world'
 import { PlayerController } from '../entities/PlayerController'
+import { RemotePlayerGhost } from '../entities/RemotePlayerGhost'
 import { MazeInstanced } from '../render/MazeInstanced'
 import { MuzzleFlashLight } from '../render/MuzzleFlashLight'
 import { createCardboardWallMaterial } from '../textures/cardboardCyberpunk'
@@ -15,6 +16,7 @@ import { GamepadController } from '../input/useGamepad'
 import { useCentroHistoricoTextures } from '../textures/useCentroHistoricoTextures'
 import { useGameStore } from '../store/useGameStore'
 import { PowerUpSystem } from '../systems/PowerUpSystem'
+import { PeerSystem } from '../net/PeerSystem'
 
 export function GameScene() {
   const neonKeyLight = useRef<THREE.PointLight>(null)
@@ -80,7 +82,9 @@ export function GameScene() {
   return (
     <>
       <PlayerController />
+      <RemotePlayerGhost />
       <GamepadController />
+      <PeerSystem />
       <EnemySystem />
       <CombatSystem />
       <TimeSystem />

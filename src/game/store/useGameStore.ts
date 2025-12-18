@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { SETTINGS } from '../config/settings'
+import type { NetMode, PoseMessage } from '../net/types'
 
 export type GameState = 'menu' | 'playing' | 'paused' | 'gameover' | 'win'
 
@@ -73,6 +74,12 @@ type GameStore = {
   isTouch: boolean
   pointerLocked: boolean
   gamepadActive: boolean
+  netMode: NetMode
+  netPeerId: string
+  netJoinId: string
+  netConnected: boolean
+  netStatus: string
+  netRemotePose: PoseMessage | null
   playerPose: { x: number; y: number; z: number; yaw: number; pitch: number }
   moveAxis: { x: number; z: number }
   lookAxis: { x: number; y: number }
@@ -82,6 +89,12 @@ type GameStore = {
   setPointerLocked: (locked: boolean) => void
   setGamepadActive: (active: boolean) => void
   setFireHeld: (held: boolean) => void
+  setNetMode: (mode: NetMode) => void
+  setNetJoinId: (id: string) => void
+  setNetPeerId: (id: string) => void
+  setNetConnected: (connected: boolean) => void
+  setNetStatus: (status: string) => void
+  setNetRemotePose: (pose: PoseMessage | null) => void
   setPlayerPose: (pose: Partial<GameStore['playerPose']>) => void
   setMoveAxis: (axis: Partial<GameStore['moveAxis']>) => void
   setLookAxis: (axis: Partial<GameStore['lookAxis']>) => void
@@ -142,6 +155,12 @@ export const useGameStore = create<GameStore>()(
       isTouch: false,
       pointerLocked: false,
       gamepadActive: false,
+      netMode: 'off',
+      netPeerId: '',
+      netJoinId: '',
+      netConnected: false,
+      netStatus: '',
+      netRemotePose: null,
       playerPose: { x: 0, y: 1.6, z: 0, yaw: 0, pitch: 0 },
       moveAxis: { x: 0, z: 0 },
       lookAxis: { x: 0, y: 0 },
@@ -151,6 +170,18 @@ export const useGameStore = create<GameStore>()(
       setPointerLocked: (locked) => set({ pointerLocked: locked }),
       setGamepadActive: (active) => set({ gamepadActive: active }),
       setFireHeld: (held) => set({ fireHeld: held }),
+      setNetMode: (mode) =>
+        set({
+          netMode: mode,
+          netConnected: false,
+          netStatus: '',
+          netRemotePose: null
+        }),
+      setNetJoinId: (id) => set({ netJoinId: id }),
+      setNetPeerId: (id) => set({ netPeerId: id }),
+      setNetConnected: (connected) => set({ netConnected: connected }),
+      setNetStatus: (status) => set({ netStatus: status }),
+      setNetRemotePose: (pose) => set({ netRemotePose: pose }),
       setPlayerPose: (pose) =>
         set((s) => ({
           playerPose: {

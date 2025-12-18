@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useGameStore } from '../store/useGameStore'
 import './menu.css'
+import { MultiplayerPanel } from './MultiplayerPanel'
 
 function formatTime(seconds: number) {
   const s = Math.max(0, Math.floor(seconds))
@@ -69,6 +70,8 @@ export function MenuOverlay() {
           )}
         </div>
 
+        <MultiplayerPanel />
+
         <div className="menu-scores">
           <h3>Highscores</h3>
           {highscores.length === 0 ? (
@@ -92,4 +95,3 @@ export function MenuOverlay() {
     </div>
   )
 }
-
