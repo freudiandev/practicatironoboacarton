@@ -1,4 +1,5 @@
 import type { Enemy, EnemyType } from '../store/useGameStore'
+import { useGameStore } from '../store/useGameStore'
 import { MAZE } from '../config/maze'
 import { SETTINGS } from '../config/settings'
 import { WORLD } from '../config/world'
@@ -22,9 +23,10 @@ function pickEnemyType(i: number): EnemyType {
 export function spawnInitialEnemies(options: { count: number; seed?: number; playerX: number; playerZ: number }) {
   const rand = mulberry32(options.seed ?? Date.now())
   const { rows, cols } = getMazeMetrics(MAZE, WORLD.cellSize)
-
+  const quality = useGameStore.getState().quality
   const playerCell = worldToCell(MAZE, WORLD.cellSize, options.playerX, options.playerZ)
   const minCellDist = 6
+  const targetCount = quality === 'low' ? Math.min(options.count, 4) : options.count
 
   const candidates: { cx: number; cz: number; score: number }[] = []
   for (let z = 0; z < rows; z++) {
@@ -50,7 +52,7 @@ export function spawnInitialEnemies(options: { count: number; seed?: number; pla
   const pool = candidates.slice(0, Math.min(140, candidates.length))
 
   const selected: { cx: number; cz: number }[] = []
-  const minBetween = 7
+  const minBetween = quality === 'low' ? 6 : 7
 
   for (let attempt = 0; attempt < 6; attempt++) {
     selected.length = 0
@@ -63,13 +65,13 @@ export function spawnInitialEnemies(options: { count: number; seed?: number; pla
       })
       if (!ok) continue
       selected.push({ cx: c.cx, cz: c.cz })
-      if (selected.length >= options.count) break
+      if (selected.length >= targetCount) break
     }
-    if (selected.length >= options.count) break
+    if (selected.length >= targetCount) break
   }
 
   const enemies: Enemy[] = []
-  for (let i = 0; i < Math.min(options.count, selected.length); i++) {
+  for (let i = 0; i < Math.min(targetCount, selected.length); i++) {
     const spot = selected[i]
     const w = cellToWorldCenter(MAZE, WORLD.cellSize, spot.cx, spot.cz)
     const axis = (() => {

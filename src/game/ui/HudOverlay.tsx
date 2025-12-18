@@ -12,6 +12,7 @@ export function HudOverlay() {
   const headshots = useGameStore((s) => s.headshots)
   const score = useGameStore((s) => s.score)
   const kills = useGameStore((s) => s.kills)
+  const quality = useGameStore((s) => s.quality)
   const [showTouchHint, setShowTouchHint] = useState(false)
   const [showGamepadHint, setShowGamepadHint] = useState(false)
   const blackoutUntil = useGameStore((s) => s.blackoutUntil)
@@ -129,8 +130,8 @@ export function HudOverlay() {
       {gameState === 'playing' && (pointerLocked || isTouch) && (
         <>
           <div className={`hud-crosshair ${showCrosshairHot ? 'hot' : ''}`} aria-hidden />
-          {muzzleUntil > Date.now() && <div className="hud-muzzle" aria-hidden />}
-          {muzzleUntil > Date.now() && <div className="hud-sparks" aria-hidden />}
+          {quality === 'high' && muzzleUntil > Date.now() && <div className="hud-muzzle" aria-hidden />}
+          {quality === 'high' && muzzleUntil > Date.now() && <div className="hud-sparks" aria-hidden />}
           {hitMarkerUntil > Date.now() && <div className="hud-hitmarker" aria-hidden />}
         </>
       )}

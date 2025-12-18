@@ -118,9 +118,9 @@
 
 .tc-arrows {
   position: absolute;
-  right: calc(env(safe-area-inset-right, 0px) + 16px);
-  top: 50%;
-  transform: translateY(-50%);
+  right: calc(env(safe-area-inset-right, 0px) + clamp(110px, 20vw, 160px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+  transform: none;
   display: grid;
   grid-template-rows: auto auto auto;
   gap: 6px;

@@ -2,8 +2,8 @@ import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { generateCentroHistoricoTextures } from './centroHistoricoGenerator'
 
-export function useCentroHistoricoTextures() {
-  const textures = useMemo(() => generateCentroHistoricoTextures(), [])
+export function useCentroHistoricoTextures(lowRes = false) {
+  const textures = useMemo(() => generateCentroHistoricoTextures({ lowRes }), [lowRes])
 
   useEffect(() => {
     return () => {

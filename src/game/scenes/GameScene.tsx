@@ -26,7 +26,8 @@ export function GameScene() {
   const neonFillLight = useRef<THREE.PointLight>(null)
   const skyRef = useRef<THREE.Mesh>(null)
 
-  const centro = useCentroHistoricoTextures()
+  const quality = useGameStore((s) => s.quality)
+  const centro = useCentroHistoricoTextures(quality === 'low')
 
   const { wallMaterial, wallTextures } = useMemo(() => {
     // Base "cartón" (normal corrugado + emissive neon), pero con albedo colonial.
@@ -121,13 +122,15 @@ export function GameScene() {
         intensity={9}
         color={'#ff00aa'}
       />
-      <pointLight
-        ref={neonFillLight}
-        position={[-levelWidth * 0.18, 2.8, -levelDepth * 0.2]}
-        distance={22}
-        intensity={6.5}
-        color={'#00fff0'}
-      />
+      {quality === 'high' && (
+        <pointLight
+          ref={neonFillLight}
+          position={[-levelWidth * 0.18, 2.8, -levelDepth * 0.2]}
+          distance={22}
+          intensity={6.5}
+          color={'#00fff0'}
+        />
+      )}
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, WORLD.floorY, 0]} receiveShadow={false}>
         <planeGeometry args={[levelWidth + 2, levelDepth + 2]} />
@@ -168,8 +171,8 @@ export function GameScene() {
         sectionSize={WORLD.cellSize * 4}
         sectionThickness={0.0}
         sectionColor={'#1e0630'}
-        fadeDistance={22}
-        fadeStrength={1.2}
+        fadeDistance={quality === 'low' ? 12 : 22}
+        fadeStrength={quality === 'low' ? 0.7 : 1.2}
         infiniteGrid={false}
       />
 
