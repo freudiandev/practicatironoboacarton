@@ -69,6 +69,43 @@
   height: 18px;
 }
 
+.hud-hitmarker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.hud-hitmarker::before,
+.hud-hitmarker::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 2px;
+  background: rgba(0, 255, 240, 0.95);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 14px rgba(0, 255, 240, 0.55);
+}
+.hud-hitmarker::after {
+  width: 2px;
+  height: 22px;
+}
+
+.hud-muzzle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 214, 0, 0.55), rgba(255, 0, 170, 0.0) 65%);
+  mix-blend-mode: screen;
+  filter: blur(0.2px);
+}
+
 .hud-hint {
   position: absolute;
   inset: 0;

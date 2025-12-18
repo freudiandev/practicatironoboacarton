@@ -12,10 +12,12 @@ function applyDeadzone(v: number, dz = 0.14) {
 export function GamepadController() {
   const setMoveAxis = useGameStore((s) => s.setMoveAxis)
   const setLookAxis = useGameStore((s) => s.setLookAxis)
+  const setFireHeld = useGameStore((s) => s.setFireHeld)
+  const requestReload = useGameStore((s) => s.requestReload)
   const isTouch = useGameStore((s) => s.isTouch)
   const gameState = useGameStore((s) => s.gameState)
 
-  const lastFire = useRef(false)
+  const lastReload = useRef(false)
 
   useEffect(() => {
     // No-op. Sirve para que React monte el componente en cliente.
@@ -39,15 +41,13 @@ export function GamepadController() {
     setLookAxis({ x: rx * 8, y: ry * 8 })
 
     const trigger = (pad.buttons[7]?.value ?? 0) > 0.65 || Boolean(pad.buttons[7]?.pressed)
-    if (trigger && !lastFire.current) {
-      // MVP: simula mouse down cuando hay pointer lock.
-      // (se mejora cuando exista acción requestFire en store)
-      const e = new MouseEvent('mousedown', { button: 0 })
-      window.dispatchEvent(e)
-    }
-    lastFire.current = trigger
+    setFireHeld(trigger)
+
+    // Recargar con X (o equivalente).
+    const reloadPressed = Boolean(pad.buttons[2]?.pressed)
+    if (reloadPressed && !lastReload.current) requestReload()
+    lastReload.current = reloadPressed
   })
 
   return null
 }
-

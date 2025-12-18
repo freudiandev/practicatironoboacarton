@@ -6,6 +6,7 @@ import { GRID_COLS, GRID_ROWS } from '../config/maze'
 import { WORLD } from '../config/world'
 import { PlayerController } from '../entities/PlayerController'
 import { MazeInstanced } from '../render/MazeInstanced'
+import { MuzzleFlashLight } from '../render/MuzzleFlashLight'
 import { createCardboardWallMaterial } from '../textures/cardboardCyberpunk'
 import { EnemySystem } from '../systems/EnemySystem'
 import { CombatSystem } from '../systems/CombatSystem'
@@ -89,6 +90,7 @@ export function GameScene() {
       <color attach="background" args={['#070012']} />
 
       <ambientLight intensity={0.18} />
+      <MuzzleFlashLight />
       <pointLight
         ref={neonKeyLight}
         position={[levelWidth * 0.15, 3.6, levelDepth * 0.15]}

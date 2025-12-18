@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { SETTINGS } from '../config/settings'
 
 export type GameState = 'menu' | 'playing' | 'paused' | 'gameover' | 'win'
 
@@ -13,6 +14,17 @@ export type Enemy = {
   maxHealth: number
   alive: boolean
   dissolve: number
+  ai?: {
+    state: 'target' | 'charging' | 'retreat'
+    axis: 'x' | 'z'
+    dir: 1 | -1
+    min: number
+    max: number
+    nextResumeAt: number
+    nextMeleeAt: number
+    chargeUntil: number
+    retreatUntil: number
+  }
 }
 
 export type HighScoreEntry = {
@@ -39,6 +51,7 @@ type GameStore = {
   maxHealth: number
   ammo: number
   maxAmmo: number
+  fireHeld: boolean
   score: number
   kills: number
   headshots: number
@@ -50,9 +63,15 @@ type GameStore = {
   ivaUntil: number
   scoreMultiplier: number
   banner: { text: string; until: number }
+  muzzleUntil: number
+  hitMarkerUntil: number
+  reloadUntil: number
+  lastShotUntil: number
+  recoil: number
 
   isTouch: boolean
   pointerLocked: boolean
+  gamepadActive: boolean
   playerPose: { x: number; y: number; z: number; yaw: number; pitch: number }
   moveAxis: { x: number; z: number }
   lookAxis: { x: number; y: number }
@@ -60,6 +79,8 @@ type GameStore = {
   setGameState: (state: GameState) => void
   setIsTouch: (value: boolean) => void
   setPointerLocked: (locked: boolean) => void
+  setGamepadActive: (active: boolean) => void
+  setFireHeld: (held: boolean) => void
   setPlayerPose: (pose: Partial<GameStore['playerPose']>) => void
   setMoveAxis: (axis: Partial<GameStore['moveAxis']>) => void
   setLookAxis: (axis: Partial<GameStore['lookAxis']>) => void
@@ -69,6 +90,11 @@ type GameStore = {
   heal: (amount: number) => void
   spendAmmo: (amount: number) => boolean
   reload: () => void
+  setMuzzleUntil: (until: number) => void
+  setHitMarkerUntil: (until: number) => void
+  setReloadUntil: (until: number) => void
+  requestReload: () => void
+  addRecoil: (amount: number) => void
   addScore: (amount: number) => void
   addKill: () => void
   setEnemies: (enemies: Enemy[]) => void
@@ -94,6 +120,7 @@ export const useGameStore = create<GameStore>()(
       maxHealth: 100,
       ammo: 30,
       maxAmmo: 30,
+      fireHeld: false,
       score: 0,
       kills: 0,
       headshots: 0,
@@ -105,9 +132,15 @@ export const useGameStore = create<GameStore>()(
       ivaUntil: 0,
       scoreMultiplier: 1,
       banner: { text: '', until: 0 },
+      muzzleUntil: 0,
+      hitMarkerUntil: 0,
+      reloadUntil: 0,
+      lastShotUntil: 0,
+      recoil: 0,
 
       isTouch: false,
       pointerLocked: false,
+      gamepadActive: false,
       playerPose: { x: 0, y: 1.6, z: 0, yaw: 0, pitch: 0 },
       moveAxis: { x: 0, z: 0 },
       lookAxis: { x: 0, y: 0 },
@@ -115,6 +148,8 @@ export const useGameStore = create<GameStore>()(
       setGameState: (state) => set({ gameState: state }),
       setIsTouch: (value) => set({ isTouch: value }),
       setPointerLocked: (locked) => set({ pointerLocked: locked }),
+      setGamepadActive: (active) => set({ gamepadActive: active }),
+      setFireHeld: (held) => set({ fireHeld: held }),
       setPlayerPose: (pose) =>
         set((s) => ({
           playerPose: {
@@ -134,6 +169,7 @@ export const useGameStore = create<GameStore>()(
           gameState: 'playing',
           health: s.maxHealth,
           ammo: s.maxAmmo,
+          fireHeld: false,
           score: 0,
           kills: 0,
           headshots: 0,
@@ -143,7 +179,13 @@ export const useGameStore = create<GameStore>()(
           pickups: [],
           blackoutUntil: 0,
           ivaUntil: 0,
-          scoreMultiplier: 1
+          scoreMultiplier: 1,
+          muzzleUntil: 0,
+          hitMarkerUntil: 0,
+          reloadUntil: 0,
+          lastShotUntil: 0,
+          recoil: 0,
+          banner: { text: '', until: 0 }
         })),
       endRun: (outcome) => {
         const s = get()
@@ -165,6 +207,19 @@ export const useGameStore = create<GameStore>()(
         set((s) => ({
           ammo: s.maxAmmo
         })),
+      setMuzzleUntil: (until) => set({ muzzleUntil: until }),
+      setHitMarkerUntil: (until) => set({ hitMarkerUntil: until }),
+      setReloadUntil: (until) => set({ reloadUntil: until }),
+      requestReload: () => {
+        const s = get()
+        if (s.gameState !== 'playing') return
+        if (!SETTINGS.reload.enabled) return
+        if (s.reloadUntil && Date.now() < s.reloadUntil) return
+        if (s.ammo >= s.maxAmmo) return
+        set({ reloadUntil: Date.now() + SETTINGS.reload.reloadMs })
+      },
+      addRecoil: (amount) =>
+        set((s) => ({ recoil: Math.max(0, Math.min(0.2, s.recoil + Math.max(0, amount))) })),
       addScore: (amount) => set((s) => ({ score: s.score + Math.round(amount * (s.scoreMultiplier || 1)) })),
       addKill: () => set((s) => ({ kills: s.kills + 1 })),
       setEnemies: (enemies) => set({ enemies }),

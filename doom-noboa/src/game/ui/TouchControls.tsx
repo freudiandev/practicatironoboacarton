@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGameStore } from '../store/useGameStore'
+import { SETTINGS } from '../config/settings'
 import './touch.css'
 
 function clamp(v: number, min: number, max: number) {
@@ -10,7 +11,12 @@ export function TouchControls() {
   const isTouch = useGameStore((s) => s.isTouch)
   const setMoveAxis = useGameStore((s) => s.setMoveAxis)
   const setLookAxis = useGameStore((s) => s.setLookAxis)
+  const setFireHeld = useGameStore((s) => s.setFireHeld)
+  const requestReload = useGameStore((s) => s.requestReload)
   const gameState = useGameStore((s) => s.gameState)
+  const ammo = useGameStore((s) => s.ammo)
+  const maxAmmo = useGameStore((s) => s.maxAmmo)
+  const reloadUntil = useGameStore((s) => s.reloadUntil)
   const [portrait, setPortrait] = useState(false)
 
   const joyRef = useRef<HTMLDivElement | null>(null)
@@ -94,6 +100,7 @@ export function TouchControls() {
   }
 
   const shootLabel = useMemo(() => 'FIRE', [])
+  const reloadLabel = useMemo(() => 'RLD', [])
 
   if (!isTouch || gameState !== 'playing') return null
 
@@ -120,19 +127,45 @@ export function TouchControls() {
         <div ref={stickRef} className="tc-stick" />
       </div>
 
-      {/* Botón de disparo (MVP: simula un click de mouse para reutilizar el sistema actual). */}
+      {/* Botón de disparo (mantener presionado para auto-fire). */}
       <div
         className="tc-shoot"
         aria-label="Disparar"
         onPointerDown={(e) => {
           e.preventDefault()
           if (gameState !== 'playing') return
-          const evt = new MouseEvent('mousedown', { button: 0 })
-          window.dispatchEvent(evt)
+          setFireHeld(true)
+        }}
+        onPointerUp={(e) => {
+          e.preventDefault()
+          setFireHeld(false)
+        }}
+        onPointerCancel={(e) => {
+          e.preventDefault()
+          setFireHeld(false)
+        }}
+        onPointerLeave={(e) => {
+          e.preventDefault()
+          setFireHeld(false)
         }}
       >
         {shootLabel}
       </div>
+
+      {SETTINGS.reload.enabled && (
+        <button
+          className="tc-reload"
+          type="button"
+          aria-label="Recargar"
+          disabled={reloadUntil > Date.now() || ammo >= maxAmmo}
+          onPointerDown={(e) => {
+            e.preventDefault()
+            requestReload()
+          }}
+        >
+          {reloadLabel}
+        </button>
+      )}
 
       {portrait && (
         <div className="tc-rotate" aria-hidden>

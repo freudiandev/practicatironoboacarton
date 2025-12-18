@@ -15,6 +15,9 @@ export function HudOverlay() {
   const blackoutUntil = useGameStore((s) => s.blackoutUntil)
   const ivaUntil = useGameStore((s) => s.ivaUntil)
   const banner = useGameStore((s) => s.banner)
+  const muzzleUntil = useGameStore((s) => s.muzzleUntil)
+  const hitMarkerUntil = useGameStore((s) => s.hitMarkerUntil)
+  const reloadUntil = useGameStore((s) => s.reloadUntil)
 
   const hintSubtitle = useMemo(() => {
     if (isTouch) return 'Toca para jugar (controles táctiles)'
@@ -49,7 +52,13 @@ export function HudOverlay() {
         </div>
       )}
 
-      {gameState === 'playing' && (pointerLocked || isTouch) && <div className="hud-crosshair" aria-hidden />}
+      {gameState === 'playing' && (pointerLocked || isTouch) && (
+        <>
+          <div className="hud-crosshair" aria-hidden />
+          {muzzleUntil > Date.now() && <div className="hud-muzzle" aria-hidden />}
+          {hitMarkerUntil > Date.now() && <div className="hud-hitmarker" aria-hidden />}
+        </>
+      )}
 
       {gameState === 'playing' && isTouch && showTouchHint && (
         <div className="hud-toast" role="status" aria-live="polite">
@@ -71,7 +80,7 @@ export function HudOverlay() {
         </div>
         <div className="hud-item">
           <span className="hud-label">AMMO</span>
-          <span className="hud-value">{ammo}</span>
+          <span className="hud-value">{reloadUntil > Date.now() ? '...' : ammo}</span>
         </div>
         <div className="hud-item">
           <span className="hud-label">SCORE</span>

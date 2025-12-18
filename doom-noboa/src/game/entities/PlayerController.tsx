@@ -60,6 +60,16 @@ export function PlayerController() {
   }, [locked])
 
   useFrame((_, delta) => {
+    // Recoil (se consume gradualmente).
+    const recoil = useGameStore.getState().recoil
+    if (recoil > 0) {
+      pitch.current -= recoil
+      pitch.current = Math.max(-SETTINGS.player.pitchClamp, Math.min(SETTINGS.player.pitchClamp, pitch.current))
+      // return to 0 rápido (sin drift).
+      const decay = Math.max(0, recoil - SETTINGS.combat.recoilReturn * delta * recoil)
+      useGameStore.setState({ recoil: decay })
+    }
+
     // Touch look: consume deltas y resetear (evita “drift”).
     if (isTouch) {
       if (lookAxis.x || lookAxis.y) {

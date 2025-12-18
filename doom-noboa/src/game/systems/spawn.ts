@@ -72,6 +72,42 @@ export function spawnInitialEnemies(options: { count: number; seed?: number; pla
   for (let i = 0; i < Math.min(options.count, selected.length); i++) {
     const spot = selected[i]
     const w = cellToWorldCenter(MAZE, WORLD.cellSize, spot.cx, spot.cz)
+    const axis = (() => {
+      const freeL = !isWallCell(MAZE, spot.cx - 1, spot.cz)
+      const freeR = !isWallCell(MAZE, spot.cx + 1, spot.cz)
+      const freeU = !isWallCell(MAZE, spot.cx, spot.cz - 1)
+      const freeD = !isWallCell(MAZE, spot.cx, spot.cz + 1)
+      const horizontal = (freeL || freeR) && !(freeU || freeD)
+      return horizontal ? 'x' : 'z'
+    })()
+
+    const bounds = (() => {
+      // recorrer hasta pared y convertir a world.
+      const walk = (dx: number, dz: number) => {
+        let x = spot.cx
+        let z = spot.cz
+        let steps = 0
+        while (!isWallCell(MAZE, x + dx, z + dz) && steps < 64) {
+          x += dx
+          z += dz
+          steps++
+        }
+        return axis === 'x' ? x : z
+      }
+      if (axis === 'x') {
+        const minCell = walk(-1, 0)
+        const maxCell = walk(1, 0)
+        const minW = cellToWorldCenter(MAZE, WORLD.cellSize, minCell, spot.cz).x
+        const maxW = cellToWorldCenter(MAZE, WORLD.cellSize, maxCell, spot.cz).x
+        return { min: Math.min(minW, maxW), max: Math.max(minW, maxW) }
+      }
+      const minCell = walk(0, -1)
+      const maxCell = walk(0, 1)
+      const minW = cellToWorldCenter(MAZE, WORLD.cellSize, spot.cx, minCell).z
+      const maxW = cellToWorldCenter(MAZE, WORLD.cellSize, spot.cx, maxCell).z
+      return { min: Math.min(minW, maxW), max: Math.max(minW, maxW) }
+    })()
+
     enemies.push({
       id: `e_${Date.now()}_${i}_${Math.floor(rand() * 1e6)}`,
       type: pickEnemyType(i),
@@ -79,10 +115,20 @@ export function spawnInitialEnemies(options: { count: number; seed?: number; pla
       health: 100,
       maxHealth: 100,
       alive: true,
-      dissolve: 0
+      dissolve: 0,
+      ai: {
+        state: 'target',
+        axis,
+        dir: rand() < 0.5 ? -1 : 1,
+        min: bounds.min,
+        max: bounds.max,
+        nextResumeAt: 0,
+        nextMeleeAt: 0,
+        chargeUntil: 0,
+        retreatUntil: 0
+      }
     })
   }
 
   return enemies
 }
-
