@@ -22,6 +22,7 @@ export function MenuOverlay() {
   const timeSeconds = useGameStore((s) => s.timeSeconds)
   const addHighscore = useGameStore((s) => s.addHighscore)
   const toggleHelp = useGameStore((s) => s.toggleHelp)
+  const setHelpOpen = useGameStore((s) => s.setHelpOpen)
 
   const menuBgUrl = `${import.meta.env.BASE_URL || '/'}menu-bg.jpeg`
   const rootStyle = { ['--menu-bg-url' as string]: `url(${menuBgUrl})` } as CSSProperties
@@ -88,6 +89,9 @@ export function MenuOverlay() {
               Jugar otra vez (sin guardar)
             </button>
           )}
+          <button type="button" className="menu-btn secondary" onClick={() => setHelpOpen(true)}>
+            Ayuda / Controles
+          </button>
         </div>
 
         <MultiplayerPanel />

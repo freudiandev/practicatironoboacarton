@@ -30,7 +30,7 @@ npm run preview
 Este repo despliega con **GitHub Actions** (build de Vite y publish de `dist/`).
 
 - Workflow: `.github/workflows/pages.yml`
-- `vite.config.ts` ajusta `base` automáticamente a `/<repo>/` en producción (requerido por Pages).
+- `vite.config.ts` usa `base: './'` en producción para que funcione en GitHub Pages (subpath) y en hosting estático.
 
 ## Controles
 
@@ -42,6 +42,7 @@ Móvil:
 - Joystick (izq): moverse
 - Swipe (der): mirar
 - Botón `FIRE` (mantener) + `RLD` para recargar
+- `?` abre ayuda (también `H` en teclado)
 
 ## Donaciones / créditos
 
