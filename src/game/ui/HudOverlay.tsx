@@ -21,7 +21,10 @@ export function HudOverlay() {
   const hitMarkerUntil = useGameStore((s) => s.hitMarkerUntil)
   const reloadUntil = useGameStore((s) => s.reloadUntil)
   const toggleHelp = useGameStore((s) => s.toggleHelp)
+  const hurtUntil = useGameStore((s) => s.hurtUntil)
+  const [orientation, setOrientation] = useState<'landscape' | 'portrait' | 'upside'>('landscape')
   const showCrosshairHot = muzzleUntil > Date.now()
+  const isHurt = hurtUntil > Date.now()
 
   const hintSubtitle = useMemo(() => {
     if (isTouch) return 'Toca para jugar (controles táctiles)'
@@ -58,8 +61,31 @@ export function HudOverlay() {
     return () => window.clearTimeout(t)
   }, [gamepadActive])
 
+  useEffect(() => {
+    const updateOrientation = () => {
+      const angle = (window.screen?.orientation?.angle ?? 0) % 360
+      const portraitLike = window.innerHeight > window.innerWidth * 1.05
+      if (angle === 180) {
+        setOrientation('upside')
+      } else if (portraitLike) {
+        setOrientation('portrait')
+      } else {
+        setOrientation('landscape')
+      }
+    }
+    updateOrientation()
+    window.addEventListener('resize', updateOrientation)
+    window.addEventListener('orientationchange', updateOrientation)
+    return () => {
+      window.removeEventListener('resize', updateOrientation)
+      window.removeEventListener('orientationchange', updateOrientation)
+    }
+  }, [])
+
   return (
     <div className="hud-root" aria-hidden={false}>
+      {isHurt && <div className="hud-hurt" aria-hidden />}
+
       {gameState === 'playing' && (pointerLocked || isTouch) && (
         <button
           type="button"
@@ -90,7 +116,13 @@ export function HudOverlay() {
 
       {gameState !== 'playing' && isTouch && (
         <div className="hud-toast" role="status" aria-live="polite">
-          Toca fuera del juego o el botón atrás para salir/ liberar controles.
+          Toca fuera del juego o el botón atrás para salir/ liberar controles. Si ves la pantalla invertida, gira tu teléfono.
+        </div>
+      )}
+
+      {gameState !== 'playing' && isTouch && (
+        <div className="hud-toast" role="status" aria-live="polite">
+          Pon el teléfono en horizontal, toca <strong>PLAY</strong>, luego arrastra para mirar y pulsa <strong>FIRE</strong> para empezar.
         </div>
       )}
 
@@ -101,6 +133,12 @@ export function HudOverlay() {
           {muzzleUntil > Date.now() && <div className="hud-sparks" aria-hidden />}
           {hitMarkerUntil > Date.now() && <div className="hud-hitmarker" aria-hidden />}
         </>
+      )}
+
+      {gameState === 'playing' && isTouch && orientation !== 'landscape' && (
+        <div className="hud-toast" role="status" aria-live="polite">
+          Gira tu dispositivo para ver mejor (horizontal). Si está al revés, enderézalo antes de seguir.
+        </div>
       )}
 
       {gameState === 'playing' && isTouch && showTouchHint && (
@@ -124,10 +162,10 @@ export function HudOverlay() {
       )}
 
       {gameState === 'playing' && (
-      <div className="hud-panel" aria-label="HUD">
+      <div className={`hud-panel ${isHurt ? 'hurt' : ''}`} aria-label="HUD">
         <div className="hud-item">
           <span className="hud-label">VIDA</span>
-          <span className="hud-value">{health}</span>
+          <span className={`hud-value ${isHurt ? 'hurt' : ''}`}>{health}</span>
         </div>
         <div className="hud-item">
           <span className="hud-label">AMMO</span>

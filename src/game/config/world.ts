@@ -1,7 +1,6 @@
 export const WORLD = {
   cellSize: 1,
-  wallHeight: 1.5,
+  wallHeight: 3.4,
   floorY: 0,
-  wallY: 0.75
+  wallY: 1.7
 } as const
-

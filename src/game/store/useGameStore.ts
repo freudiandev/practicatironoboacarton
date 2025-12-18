@@ -71,6 +71,7 @@ type GameStore = {
   reloadUntil: number
   lastShotUntil: number
   recoil: number
+  hurtUntil: number
 
   isTouch: boolean
   pointerLocked: boolean
@@ -155,6 +156,7 @@ export const useGameStore = create<GameStore>()(
       reloadUntil: 0,
       lastShotUntil: 0,
       recoil: 0,
+      hurtUntil: 0,
 
       isTouch: false,
       pointerLocked: false,
@@ -224,6 +226,7 @@ export const useGameStore = create<GameStore>()(
           reloadUntil: 0,
           lastShotUntil: 0,
           recoil: 0,
+          hurtUntil: 0,
           banner: { text: '', until: 0 }
         })),
       endRun: (outcome) => {
@@ -232,7 +235,10 @@ export const useGameStore = create<GameStore>()(
         set({ gameState: outcome === 'win' ? 'win' : 'gameover' })
       },
       damage: (amount) =>
-        set((s) => ({ health: Math.max(0, s.health - Math.max(0, amount)) })),
+        set((s) => ({
+          health: Math.max(0, s.health - Math.max(0, amount)),
+          hurtUntil: Date.now() + 720
+        })),
       heal: (amount) =>
         set((s) => ({ health: Math.min(s.maxHealth, s.health + Math.max(0, amount)) })),
       spendAmmo: (amount) => {

@@ -10,7 +10,7 @@
 - **Three.js + React Three Fiber + drei** (render 3D en GPU)
 - **Zustand** (estado del juego + `persist` para highscores)
 - **PeerJS (WebRTC)** (multiplayer P2P sin servidor) + **QR** para join
-- **Web Audio API** (audio sintético de arma)
+- **Web Audio API** (audio sintético de arma, música procedural y feedback de daño)
 
 ### Render y mundo
 - Nivel desde matriz `MAZE` renderizado como `InstancedMesh` (paredes): `src/game/render/MazeInstanced.tsx`
@@ -18,7 +18,7 @@
   - `src/game/textures/centroHistoricoGenerator.ts`  
   - `src/game/textures/useCentroHistoricoTextures.ts`
 - Estética “Cardboard Cyberpunk”: material de pared con normal corrugado + emissive: `src/game/textures/cardboardCyberpunk.ts`
-- Nuevo layout de calles/plazas coloniales, postes de luz y fondo de cordillera (`MAZE`, `LampPosts.tsx`, `mountainDetail`).
+- Nuevo layout de calles/plazas coloniales, postes de luz y fondo de cordillera (`MAZE`, `LampPosts.tsx`, `mountainDetail`); muros más altos/anchos con ladrillo + balcones.
 - Pancartas/cárteles satíricos pegados en paredes (instanced planes): `src/game/render/PostersInstanced.tsx`
 
 ### Gameplay (singleplayer)
@@ -27,13 +27,15 @@
   - `src/game/entities/EnemyBillboard.tsx`  
   - `src/game/render/dissolveMaterial.ts`
 - Combate hitscan + recoil + muzzle flash + hitmarker + reload: `src/game/systems/CombatSystem.tsx`
+- Feedback de daño al recibir golpe (audio sintético + overlay rojo): `src/game/audio/usePlayerAudio.ts`, `useGameStore.hurtUntil`, HUD.
 - Power-ups satíricos + blackout: `src/game/systems/PowerUpSystem.tsx` (Consulta, IVA 15%, Apagón, IVA trampa, Cápsula salud) y apagones aleatorios.
 - Copy satírico (banners, titulares, flavor): `src/game/satire/powerupCopy.ts`
 
 ### UI/UX (responsive)
-- HUD responsive + safe areas: `src/game/ui/HudOverlay.tsx`, `src/game/ui/hud.css`
-- Controles móviles (joystick/lookpad + FIRE/RLD + flechas de mirada): `src/game/ui/TouchControls.tsx`, `src/game/ui/touch.css`
+- HUD responsive + safe areas + avisos de orientación móvil y overlay de daño: `src/game/ui/HudOverlay.tsx`, `src/game/ui/hud.css`
+- Controles móviles (joystick/lookpad + FIRE/RLD + flechas de mirada + aviso “gira tu dispositivo”): `src/game/ui/TouchControls.tsx`, `src/game/ui/touch.css`
 - Menú + highscores + panel P2P: `src/game/ui/MenuOverlay.tsx`, `src/game/ui/MultiplayerPanel.tsx`
+- Música contextual (menú/calma/combate/apagón): `src/game/audio/BackgroundMusic.tsx`
 
 ### Multiplayer (MVP)
 - Sistema de red: `src/game/net/PeerSystem.tsx`

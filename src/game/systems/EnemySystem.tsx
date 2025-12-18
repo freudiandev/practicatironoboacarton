@@ -7,6 +7,7 @@ import { MAZE } from '../config/maze'
 import { moveWithGridCollision } from '../physics/gridCollision'
 import { useGameStore } from '../store/useGameStore'
 import { spawnInitialEnemies } from './spawn'
+import { usePlayerAudio } from '../audio/usePlayerAudio'
 
 export function EnemySystem() {
   const gameState = useGameStore((s) => s.gameState)
@@ -16,6 +17,8 @@ export function EnemySystem() {
   const removeEnemy = useGameStore((s) => s.removeEnemy)
   const endRun = useGameStore((s) => s.endRun)
   const playerPose = useGameStore((s) => s.playerPose)
+  const showBanner = useGameStore((s) => s.showBanner)
+  const playerAudio = usePlayerAudio()
 
   useEffect(() => {
     if (gameState !== 'playing') return
@@ -117,6 +120,8 @@ export function EnemySystem() {
 
         const dmg = facingAway ? 18 : SETTINGS.enemyAI.melee.damage
         damagePlayer(dmg)
+        void playerAudio.playHurt()
+        showBanner(`Golpe enemigo (-${dmg} HP)`, 1100)
         if (useGameStore.getState().health <= 0) {
           useGameStore.getState().endRun('loss')
         }

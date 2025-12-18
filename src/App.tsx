@@ -8,6 +8,7 @@ import { useGameStore } from './game/store/useGameStore'
 import { MenuOverlay } from './game/ui/MenuOverlay'
 import { HelpOverlay } from './game/ui/HelpOverlay'
 import { SeoOverlay } from './game/ui/SeoOverlay'
+import { BackgroundMusic } from './game/audio/BackgroundMusic'
 
 function App() {
   const setIsTouch = useGameStore((s) => s.setIsTouch)
@@ -43,6 +44,7 @@ function App() {
       <MenuOverlay />
       <HelpOverlay />
       <SeoOverlay />
+      <BackgroundMusic />
       <Canvas
         dpr={[1, 2]}
         gl={{ antialias: false, powerPreference: 'high-performance' }}

@@ -262,7 +262,7 @@ export function TouchControls() {
         <div className="tc-rotate" aria-hidden>
           <div className="tc-rotate-card">
             <div className="tc-rotate-title">Mejor en horizontal</div>
-            <div className="tc-rotate-sub">Gira tu dispositivo para ver más pantalla.</div>
+            <div className="tc-rotate-sub">Gira tu dispositivo (si está de cabeza, enderézalo) para ver más pantalla.</div>
           </div>
         </div>
       )}

@@ -141,50 +141,51 @@ function buildSky(width = 1024, height = 512) {
 }
 
 function buildFacade(tile = 128) {
-  const { canvas, ctx } = createCanvas(tile, tile)
+  const size = Math.max(160, tile * 1.3)
+  const { canvas, ctx } = createCanvas(size, size)
 
   ctx.fillStyle = '#3b2a45'
-  ctx.fillRect(0, 0, tile, tile)
+  ctx.fillRect(0, 0, size, size)
 
-  // Grilla de estuco/azulejo.
-  ctx.strokeStyle = '#24162e'
+  // Base ladrillo visible (para que no parezca estante bajo).
+  ctx.strokeStyle = 'rgba(22, 10, 26, 0.8)'
   ctx.lineWidth = 1
-  const tileH = 16
-  const tileW = 32
-  for (let y = tileH; y < tile; y += tileH) {
-    ctx.beginPath()
-    ctx.moveTo(0, y + 0.5)
-    ctx.lineTo(tile, y + 0.5)
-    ctx.stroke()
-  }
-  for (let x = tileW; x < tile; x += tileW) {
-    ctx.beginPath()
-    ctx.moveTo(x + 0.5, 0)
-    ctx.lineTo(x + 0.5, tile)
-    ctx.stroke()
-  }
-
-  // Ventanas con balcones.
-  for (let y = 24; y < tile - 32; y += 48) {
-    for (let x = 12; x < tile - 24; x += 40) {
-      ctx.fillStyle = '#bca16f'
-      ctx.fillRect(x, y, 20, 26)
-      ctx.fillStyle = '#20132e'
-      ctx.fillRect(x + 3, y + 4, 14, 12)
-      ctx.fillStyle = '#bca16f'
-      ctx.fillRect(x - 2, y + 22, 24, 6)
-      ctx.fillStyle = '#d8b879'
+  const brickH = 14
+  const brickW = 26
+  for (let y = 12; y < size; y += brickH) {
+    const offset = (y / brickH) % 2 === 0 ? 0 : brickW / 2
+    for (let x = offset; x < size; x += brickW) {
+      ctx.fillStyle = 'rgba(92, 68, 92, 0.35)'
+      ctx.fillRect(x, y, brickW - 2, brickH - 2)
+      ctx.strokeRect(x + 0.5, y + 0.5, brickW - 3, brickH - 3)
     }
   }
 
-  // Cornisa.
+  // Ventanas con balcones (más altas).
+  for (let y = 28; y < size - 48; y += 60) {
+    for (let x = 14; x < size - 36; x += 48) {
+      ctx.fillStyle = '#c9b07a'
+      ctx.fillRect(x, y, 26, 32)
+      ctx.fillStyle = '#20132e'
+      ctx.fillRect(x + 4, y + 5, 18, 16)
+      // Barandal
+      ctx.fillStyle = '#bca16f'
+      ctx.fillRect(x - 2, y + 28, 30, 7)
+      ctx.fillStyle = '#8c734d'
+      ctx.fillRect(x - 2, y + 34, 30, 2)
+    }
+  }
+
+  // Cornisa y base.
   ctx.fillStyle = '#c7b27d'
-  ctx.fillRect(0, 0, tile, 10)
-  ctx.fillRect(0, tile - 10, tile, 10)
+  ctx.fillRect(0, 0, size, 12)
+  ctx.fillRect(0, size - 14, size, 14)
+  ctx.fillStyle = 'rgba(255,255,255,0.05)'
+  ctx.fillRect(0, size - 24, size, 4)
 
   const tex = new THREE.CanvasTexture(canvas)
   setPixelTextureFilters(tex)
-  tex.repeat.set(2, 2)
+  tex.repeat.set(1.4, 1.0)
   return tex
 }
 
