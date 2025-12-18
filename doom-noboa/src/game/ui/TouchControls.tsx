@@ -95,7 +95,7 @@ export function TouchControls() {
 
   const shootLabel = useMemo(() => 'FIRE', [])
 
-  if (!isTouch) return null
+  if (!isTouch || gameState !== 'playing') return null
 
   return (
     <div className="tc-root" aria-label="Controles táctiles">

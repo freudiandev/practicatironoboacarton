@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { Billboard, Grid } from '@react-three/drei'
+import { Grid } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { GRID_COLS, GRID_ROWS } from '../config/maze'
@@ -11,26 +11,36 @@ import { EnemySystem } from '../systems/EnemySystem'
 import { CombatSystem } from '../systems/CombatSystem'
 import { TimeSystem } from '../systems/TimeSystem'
 import { GamepadController } from '../input/useGamepad'
+import { useCentroHistoricoTextures } from '../textures/useCentroHistoricoTextures'
+import { useGameStore } from '../store/useGameStore'
 
 export function GameScene() {
   const neonKeyLight = useRef<THREE.PointLight>(null)
   const neonFillLight = useRef<THREE.PointLight>(null)
+  const skyRef = useRef<THREE.Mesh>(null)
+
+  const centro = useCentroHistoricoTextures()
 
   const { wallMaterial, wallTextures } = useMemo(() => {
+    // Base "cartón" (normal corrugado + emissive neon), pero con albedo colonial.
     const { material, textures } = createCardboardWallMaterial()
+    material.map = centro.wallColonial
+    material.emissiveIntensity = 0.28
+    material.needsUpdate = true
     return { wallMaterial: material, wallTextures: textures }
-  }, [])
+  }, [centro.wallColonial])
 
   const floorMaterial = useMemo(() => {
     const mat = new THREE.MeshStandardMaterial({
       color: new THREE.Color('#1a0b20'),
+      map: centro.floorStones,
       roughness: 0.95,
       metalness: 0.05,
       emissive: new THREE.Color('#13001a'),
       emissiveIntensity: 0.2
     })
     return mat
-  }, [])
+  }, [centro.floorStones])
 
   useEffect(() => {
     return () => {
@@ -48,6 +58,14 @@ export function GameScene() {
     if (neonKeyLight.current) neonKeyLight.current.intensity = 10 * pulse
     if (neonFillLight.current) neonFillLight.current.intensity = 7 * (0.65 + Math.cos(t * 1.3) * 0.25)
     wallMaterial.emissiveIntensity = 0.18 + pulse * 0.45
+
+    // Mantener skybox centrado en el jugador (sin parallax al caminar).
+    if (skyRef.current) {
+      const pose = useGameStore.getState().playerPose
+      skyRef.current.position.set(pose.x, 6.2, pose.z)
+      // Rotar skybox con yaw para un feel DOOM.
+      skyRef.current.rotation.set(0, pose.yaw, 0)
+    }
   })
 
   const levelWidth = GRID_COLS * WORLD.cellSize
@@ -85,6 +103,12 @@ export function GameScene() {
         <primitive object={floorMaterial} attach="material" />
       </mesh>
 
+      {/* Skybox Centro Histórico: cilindro invertido que sigue al jugador */}
+      <mesh ref={skyRef} position={[0, 0, 0]} renderOrder={-10}>
+        <cylinderGeometry args={[45, 45, 18, 48, 1, true]} />
+        <meshBasicMaterial map={centro.sky} side={THREE.BackSide} fog={false} />
+      </mesh>
+
       <MazeInstanced material={wallMaterial} />
 
       <Grid
@@ -101,13 +125,7 @@ export function GameScene() {
         infiniteGrid={false}
       />
 
-      {/* Placeholder visual para enemigos “sprite” (billboard). */}
-      <Billboard position={[0, 1, 0]} follow>
-        <mesh>
-          <planeGeometry args={[0.9, 1.6]} />
-          <meshStandardMaterial color="#ffffff" emissive="#ff00aa" emissiveIntensity={0.8} />
-        </mesh>
-      </Billboard>
+      {/* Nota: EnemySystem ya renderiza enemigos Billboard reales con sprites. */}
     </>
   )
 }

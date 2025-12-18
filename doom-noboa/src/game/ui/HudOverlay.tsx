@@ -46,9 +46,9 @@ export function HudOverlay() {
         </div>
       )}
 
-      {(pointerLocked || isTouch) && <div className="hud-crosshair" aria-hidden />}
+      {gameState === 'playing' && (pointerLocked || isTouch) && <div className="hud-crosshair" aria-hidden />}
 
-      {isTouch && showTouchHint && (
+      {gameState === 'playing' && isTouch && showTouchHint && (
         <div className="hud-toast" role="status" aria-live="polite">
           <strong>Joystick</strong> (izq) para moverte · <strong>Arrastra</strong> (der) para mirar
         </div>
