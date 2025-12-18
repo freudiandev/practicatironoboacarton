@@ -14,7 +14,11 @@ export function PlayerController() {
   const keys = useKeyboard()
   const { gl, camera } = useThree()
   const { locked, request } = usePointerLock()
+  const isTouch = useGameStore((s) => s.isTouch)
+  const moveAxis = useGameStore((s) => s.moveAxis)
+  const lookAxis = useGameStore((s) => s.lookAxis)
   const setPointerLocked = useGameStore((s) => s.setPointerLocked)
+  const setLookAxis = useGameStore((s) => s.setLookAxis)
 
   const yaw = useRef(0)
   const pitch = useRef(0)
@@ -38,10 +42,11 @@ export function PlayerController() {
   }, [locked, setPointerLocked])
 
   useEffect(() => {
+    if (isTouch) return
     const handleClick = () => request(gl.domElement)
     gl.domElement.addEventListener('click', handleClick)
     return () => gl.domElement.removeEventListener('click', handleClick)
-  }, [gl.domElement, request])
+  }, [gl.domElement, isTouch, request])
 
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
@@ -55,10 +60,20 @@ export function PlayerController() {
   }, [locked])
 
   useFrame((_, delta) => {
+    // Touch look: consume deltas y resetear (evita “drift”).
+    if (isTouch) {
+      if (lookAxis.x || lookAxis.y) {
+        yaw.current -= lookAxis.x * SETTINGS.player.mouseSensitivity
+        pitch.current -= lookAxis.y * SETTINGS.player.mouseSensitivity
+        pitch.current = Math.max(-SETTINGS.player.pitchClamp, Math.min(SETTINGS.player.pitchClamp, pitch.current))
+        setLookAxis({ x: 0, y: 0 })
+      }
+    }
+
     // Siempre actualizar rotación (para que se “sienta” inmediato en pointer lock).
     camera.rotation.set(pitch.current, yaw.current, 0, 'YXZ')
 
-    if (!locked) return
+    if (!locked && !isTouch) return
 
     const speed = SETTINGS.player.moveSpeed * (keys.ShiftLeft ? SETTINGS.player.sprintMultiplier : 1)
     const desired = velocity.current
@@ -72,6 +87,12 @@ export function PlayerController() {
     if (keys.KeyS) desired.sub(tmpForward)
     if (keys.KeyD) desired.add(tmpRight)
     if (keys.KeyA) desired.sub(tmpRight)
+
+    // Touch joystick (axis continuo)
+    if (isTouch) {
+      if (moveAxis.z) desired.addScaledVector(tmpForward, moveAxis.z)
+      if (moveAxis.x) desired.addScaledVector(tmpRight, moveAxis.x)
+    }
 
     if (desired.lengthSq() > 0) desired.normalize()
     desired.multiplyScalar(speed * delta)
@@ -98,4 +119,3 @@ export function PlayerController() {
 
   return null
 }
-

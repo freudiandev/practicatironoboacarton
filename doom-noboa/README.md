@@ -14,6 +14,12 @@ npm install
 npm run dev
 ```
 
+## Mobile / responsive
+
+- La UI es responsive y respeta safe-areas (`env(safe-area-inset-*)`).
+- En dispositivos táctiles aparece un **joystick virtual** (izq) + **área de swipe** (der) para mirar.
+- En portrait se muestra una sugerencia para rotar a horizontal (no bloqueante).
+
 ## Estructura recomendada
 
 ```
@@ -46,4 +52,3 @@ El corazón del render de nivel es `src/game/render/MazeInstanced.tsx`, que:
 3. Pinta todas las paredes en un `InstancedMesh` (boxGeometry reutilizada).
 
 Esto elimina el coste CPU del raycasting y lo reemplaza por draw calls estables en GPU.
-

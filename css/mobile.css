@@ -25,6 +25,103 @@
   .right-panel-improved { display: none !important; }
 }
 
+/* === Mobile UX: evitar que el HUD “tape” el juego === */
+@media (max-width: 720px) {
+  .game-layout-improved {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  /* El panel derecho (donaciones) ocupa demasiado en móvil */
+  #hud-panel {
+    display: none !important;
+  }
+
+  /* Convertir el panel izquierdo en una barra compacta superpuesta */
+  #hud-panel-left {
+    position: fixed !important;
+    left: calc(env(safe-area-inset-left, 0px) + 10px) !important;
+    right: calc(env(safe-area-inset-right, 0px) + 10px) !important;
+    top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+    bottom: auto !important;
+    z-index: 9997 !important;
+    border-radius: 14px !important;
+    padding: 10px 10px !important;
+    max-height: none !important;
+    overflow: hidden !important;
+  }
+
+  /* Mostrar sólo lo esencial (vida + ammo) para liberar pantalla */
+  #hud-panel-left .hud-minimap,
+  #hud-panel-left .hud-stats {
+    display: none !important;
+  }
+
+  #hud-panel-left {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  #hud-panel-left .hud-section {
+    max-height: none !important;
+    overflow: hidden !important;
+    padding: 10px 10px 12px !important;
+  }
+
+  #hud-panel-left .section-title {
+    font-size: 11px !important;
+    letter-spacing: 0.18em !important;
+    margin-bottom: 8px !important;
+  }
+
+  #hud-panel-left .life-values {
+    font-size: 16px !important;
+  }
+
+  #hud-panel-left .hud-ammo .info-row {
+    font-size: 12px !important;
+    padding: 4px 0 !important;
+  }
+
+  /* Maximizar el canvas en móvil */
+  #game-container {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Las bandas superiores/inferiores quitan área útil en pantallas pequeñas */
+  #game-container::before,
+  #game-container::after {
+    display: none !important;
+  }
+
+  #gameCanvas {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    height: auto !important;
+    border-radius: 0 !important;
+  }
+
+  /* Separar el overlay de controles del HUD superior */
+  #mobile-controls {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  }
+
+  #mc-shot.mc-shot {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+    right: calc(env(safe-area-inset-right, 0px) + 14px);
+  }
+}
+
 /* Mobile controls overlay */
 #mobile-controls {
   position: fixed;

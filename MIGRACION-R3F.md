@@ -99,13 +99,13 @@ Usar `@react-three/drei`:
 - [ ] Añadir un `Settings` central (`game/config/settings.ts`) para tuning (FOV, speed, sens, fireRate)
 
 ### 1) Control y cámara FPS (single player)
-- [ ] Implementar Pointer Lock + mouse look (desktop)
-- [ ] Movimiento WASD + aceleración suave + fricción (feel DOOM)
-- [ ] Colisiones contra paredes:
-  - opción A (rápida): grid collision (AABB) usando `MAZE`
-  - opción B (robusta): Rapier (`@react-three/rapier`) con collider para paredes y cápsula del player
-- [ ] Soporte móvil básico (joystick/drag look) manteniendo teclado/mouse
-- [ ] Añadir crosshair y “capture hint” (equivalente al popup legacy)
+- [x] Implementar Pointer Lock + mouse look (desktop)
+- [x] Movimiento WASD (feel base)
+- [x] Colisiones contra paredes (grid collision) usando `MAZE`
+- [ ] Movement polish: aceleración/fricción + “camera bob” sutil (opcional)
+- [ ] Colisiones robustas con Rapier (cápsula + colliders) (opcional, upgrade)
+- [x] Soporte móvil básico (joystick/drag look) manteniendo teclado/mouse
+- [x] Añadir crosshair y “capture hint” (equivalente al popup legacy)
 
 ### 2) Estado de juego (Zustand)
 - [x] Store inicial con highscores persistidos
@@ -249,4 +249,3 @@ Usar `@react-three/drei`:
   - power-ups satíricos + evento apagón
   - P2P host/join + sincronización estable (MVP)
   - soporte gamepad
-

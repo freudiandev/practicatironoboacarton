@@ -33,12 +33,18 @@ type GameStore = {
   kills: number
   enemies: Enemy[]
 
+  isTouch: boolean
   pointerLocked: boolean
   playerPose: { x: number; y: number; z: number; yaw: number; pitch: number }
+  moveAxis: { x: number; z: number }
+  lookAxis: { x: number; y: number }
 
   setGameState: (state: GameState) => void
+  setIsTouch: (value: boolean) => void
   setPointerLocked: (locked: boolean) => void
   setPlayerPose: (pose: Partial<GameStore['playerPose']>) => void
+  setMoveAxis: (axis: Partial<GameStore['moveAxis']>) => void
+  setLookAxis: (axis: Partial<GameStore['lookAxis']>) => void
   damage: (amount: number) => void
   heal: (amount: number) => void
   spendAmmo: (amount: number) => boolean
@@ -64,10 +70,14 @@ export const useGameStore = create<GameStore>()(
       kills: 0,
       enemies: [],
 
+      isTouch: false,
       pointerLocked: false,
       playerPose: { x: 0, y: 1.6, z: 0, yaw: 0, pitch: 0 },
+      moveAxis: { x: 0, z: 0 },
+      lookAxis: { x: 0, y: 0 },
 
       setGameState: (state) => set({ gameState: state }),
+      setIsTouch: (value) => set({ isTouch: value }),
       setPointerLocked: (locked) => set({ pointerLocked: locked }),
       setPlayerPose: (pose) =>
         set((s) => ({
@@ -79,6 +89,10 @@ export const useGameStore = create<GameStore>()(
             pitch: pose.pitch ?? s.playerPose.pitch
           }
         })),
+      setMoveAxis: (axis) =>
+        set((s) => ({ moveAxis: { x: axis.x ?? s.moveAxis.x, z: axis.z ?? s.moveAxis.z } })),
+      setLookAxis: (axis) =>
+        set((s) => ({ lookAxis: { x: axis.x ?? s.lookAxis.x, y: axis.y ?? s.lookAxis.y } })),
       damage: (amount) =>
         set((s) => ({ health: Math.max(0, s.health - Math.max(0, amount)) })),
       heal: (amount) =>

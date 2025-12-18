@@ -474,6 +474,7 @@ La base del proyecto nuevo está en `doom-noboa/` y ya incluye:
 - Laberinto `MAZE` → `InstancedMesh` (paredes): `doom-noboa/src/game/render/MazeInstanced.tsx`
 - Texturas procedurales “cartón” (albedo + normal corrugado + emissive): `doom-noboa/src/game/textures/cardboardCyberpunk.ts`
 - Store inicial Zustand (highscores persistidos): `doom-noboa/src/game/store/useGameStore.ts`
+- UX móvil (WIP): HUD responsive + joystick/lookpad táctil: `doom-noboa/src/game/ui/TouchControls.tsx`
 
 ### Qué falta (alto nivel)
 
