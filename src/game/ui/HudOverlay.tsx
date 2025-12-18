@@ -82,6 +82,18 @@ export function HudOverlay() {
         </div>
       )}
 
+      {gameState !== 'playing' && !isTouch && (
+        <div className="hud-toast" role="status" aria-live="polite">
+          Pulsa <strong>ESC</strong> o clic fuera para liberar el cursor.
+        </div>
+      )}
+
+      {gameState !== 'playing' && isTouch && (
+        <div className="hud-toast" role="status" aria-live="polite">
+          Toca fuera del juego o el botón atrás para salir/ liberar controles.
+        </div>
+      )}
+
       {gameState === 'playing' && (pointerLocked || isTouch) && (
         <>
           <div className={`hud-crosshair ${showCrosshairHot ? 'hot' : ''}`} aria-hidden />

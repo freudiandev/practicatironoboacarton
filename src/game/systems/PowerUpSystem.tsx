@@ -145,7 +145,7 @@ export function PowerUpSystem() {
 
     // Evento apagón aleatorio más frecuente (tensión política).
     if (!state.blackoutUntil || now >= state.blackoutUntil) {
-      if (rand() < 0.0009) {
+      if (Math.random() < 0.0009) {
         const until = now + 9000
         useGameStore.setState({ blackoutUntil: until })
         state.showBanner('Apagón: el gobierno de Daniel Noboa otra vez deja sin luz.', 3200)

@@ -65,6 +65,19 @@ export function MenuOverlay() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [gameState, isEnd, onSaveScore, onStart, toggleHelp])
 
+  useEffect(() => {
+    if (gameState === 'playing') return
+    // UX: sugerir liberar cursor cuando termina la partida (solo desktop/pointer lock).
+    const el = document.pointerLockElement
+    if (el) {
+      try {
+        document.exitPointerLock()
+      } catch {
+        // ignore
+      }
+    }
+  }, [gameState])
+
   if (gameState === 'playing') return null
 
   return (
