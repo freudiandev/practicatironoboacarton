@@ -27,6 +27,7 @@ npm run preview
 - Render/escena: `src/game/scenes/GameScene.tsx`
 - Laberinto (GPU instancing): `src/game/render/MazeInstanced.tsx`
 - Pancartas/cárteles satíricos: `src/game/render/PostersInstanced.tsx`, `src/game/satire/powerupCopy.ts`
+- Postes de luz: `src/game/render/LampPosts.tsx`
 - Controles:
   - Player FPS: `src/game/entities/PlayerController.tsx`
   - Móvil: `src/game/ui/TouchControls.tsx`

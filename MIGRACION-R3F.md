@@ -32,6 +32,7 @@ El juego ya está **migrado y unificado en la raíz** (ya no hay un subproyecto 
   - `src/game/textures/cardboardCyberpunk.ts`
   - `src/game/textures/centroHistoricoGenerator.ts`
   - `src/game/textures/useCentroHistoricoTextures.ts`
+- Fondo adicional cordillera (`mountainDetail`) + postes de luz (`render/LampPosts.tsx`)
 - FPS Controller (desktop + touch + gamepad):
   - `src/game/entities/PlayerController.tsx`
   - `src/game/ui/TouchControls.tsx`
@@ -145,21 +146,13 @@ Usar `@react-three/drei`:
   - NO persist de estado de partida en curso
 
 ### 3) Enemigos (billboards) + combate
-- [ ] `EnemyEntity` con `<Billboard>` y textura según `type` (`casual/deportivo/presidencial`)
-- [ ] Spawner (distribuido) basado en `MAZE` (portar idea del legacy):
-  - distancia mínima al player
-  - distancia mínima entre enemigos
-- [ ] IA MVP:
-  - target tracking lateral (tipo “blanco de tiro”)
-  - charge + melee + retreat
-- [ ] Sistema de disparo:
-  - hitscan (raycast) desde cámara al centro (retro FPS) (recomendado)
-  - proyectil simple (opcional; útil si quieres balística visible)
-- [ ] Headshot/bodyshot:
-  - bounding box “en mundo” + zonas relativas (cabeza = 20–25% superior del billboard)
-  - opcional: máscara de colisión con 2 colliders (head/body) si usas Rapier
-- [ ] Knockback y feedback de hit
-- [ ] Condiciones de victoria/derrota (paridad legacy): win si no quedan enemigos; loss si HP=0
+- [x] `EnemyEntity` con `<Billboard>` y textura según `type` (`casual/deportivo/presidencial`)
+- [x] Spawner (distribuido) basado en `MAZE` (distancia mínima al player / entre enemigos)
+- [x] IA MVP: target tracking, charge + melee/backstab, retreat
+- [x] Sistema de disparo: hitscan desde cámara al centro (retro FPS)
+- [x] Headshot/bodyshot (UV top 22%)
+- [x] Knockback/feedback: muzzle flash, hitmarker, audio
+- [x] Condiciones win/loss
 
 ### 4) Audio (hook `useWeaponAudio`) + música
 - [x] Portar `weapon-audio.js` a `src/game/audio/useWeaponAudio.ts`
@@ -212,8 +205,9 @@ Usar `@react-three/drei`:
   - `ConsultaPopular` (Smart Bomb): elimina enemigos visibles / en rango
   - `IVA15` (trampa): +puntos por kill pero drain de vida por segundo
   - `ApagonNacional` (evento): blackout periódico con ventana de tensión
+- [x] IVA trampa (-15 HP) y Cápsula salud (+30/-10) con mensajes satíricos
 - [x] Spawns + UI mínima (MVP): pickups en mapa + banner/flags HUD + efectos base
-- [ ] Balance: definir duración y contras para que no rompa el loop
+- [ ] Balance fino: definir duración/contras para que no rompa el loop
 
 ### 9) Innovación C — Multiplayer P2P sin servidor (PeerJS/WebRTC)
 - [x] Añadir dependencia `peerjs`

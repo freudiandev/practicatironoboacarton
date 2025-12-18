@@ -18,6 +18,7 @@
   - `src/game/textures/centroHistoricoGenerator.ts`  
   - `src/game/textures/useCentroHistoricoTextures.ts`
 - Estética “Cardboard Cyberpunk”: material de pared con normal corrugado + emissive: `src/game/textures/cardboardCyberpunk.ts`
+- Nuevo layout de calles/plazas coloniales, postes de luz y fondo de cordillera (`MAZE`, `LampPosts.tsx`, `mountainDetail`).
 - Pancartas/cárteles satíricos pegados en paredes (instanced planes): `src/game/render/PostersInstanced.tsx`
 
 ### Gameplay (singleplayer)
@@ -26,12 +27,12 @@
   - `src/game/entities/EnemyBillboard.tsx`  
   - `src/game/render/dissolveMaterial.ts`
 - Combate hitscan + recoil + muzzle flash + hitmarker + reload: `src/game/systems/CombatSystem.tsx`
-- Power-ups satíricos + blackout: `src/game/systems/PowerUpSystem.tsx`
+- Power-ups satíricos + blackout: `src/game/systems/PowerUpSystem.tsx` (Consulta, IVA 15%, Apagón, IVA trampa, Cápsula salud) y apagones aleatorios.
 - Copy satírico (banners, titulares, flavor): `src/game/satire/powerupCopy.ts`
 
 ### UI/UX (responsive)
 - HUD responsive + safe areas: `src/game/ui/HudOverlay.tsx`, `src/game/ui/hud.css`
-- Controles móviles (joystick/lookpad + FIRE/RLD): `src/game/ui/TouchControls.tsx`, `src/game/ui/touch.css`
+- Controles móviles (joystick/lookpad + FIRE/RLD + flechas de mirada): `src/game/ui/TouchControls.tsx`, `src/game/ui/touch.css`
 - Menú + highscores + panel P2P: `src/game/ui/MenuOverlay.tsx`, `src/game/ui/MultiplayerPanel.tsx`
 
 ### Multiplayer (MVP)

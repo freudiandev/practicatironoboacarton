@@ -10,6 +10,8 @@ FPS retro “Cardboard Cyberpunk” ambientado en el Centro Histórico de Quito,
 - **InstancedMesh** para el laberinto (1 draw call para paredes)
 - Enemigos **Billboard** (sprites 2D en mundo 3D) + **shader dissolve** al morir
 - Texturas procedurales “Centro Histórico” (Canvas → `CanvasTexture`) + skybox panorámico
+- Nuevo layout tipo calles/plazas coloniales, postes de luz y fondo de cordillera de los Andes.
+- Power-ups satíricos (Consulta, IVA 15%, Apagón, IVA trampa, Cápsula salud) y apagones aleatorios.
 
 > El raycasting Canvas 2D quedó archivado en `legacy/raycast/` (ya no es la versión principal).
 
@@ -38,12 +40,13 @@ Este repo despliega con **GitHub Actions** (build de Vite y publish de `dist/`).
 
 Desktop:
 - Click: captura mouse (Pointer Lock)
-- `W/A/S/D`: moverse · `Shift`: correr · `R`: recargar · `ESC`: liberar cursor
+- `W/A/S/D`: moverse · `Shift`: correr · `R`: recargar · `H`: ayuda · `ESC`: liberar cursor
+- Flechas: girar cámara sin mover al jugador
 
 Móvil:
 - Joystick (izq): moverse
-- Swipe (der): mirar
-- Botón `FIRE` (mantener) + `RLD` para recargar
+- Swipe (der) o flechas transparentes: mirar
+- Botón `FIRE` (mantener) + `RLD` para recargar · `?` abre ayuda
 - `?` abre ayuda (también `H` en teclado)
 
 ## Donaciones / créditos
