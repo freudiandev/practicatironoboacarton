@@ -1,12 +1,10 @@
 /**
- * Layout inspirado en el Centro Histórico (estilo “manzanas” + Plaza central).
- * 0 = walkable, 1 = wall.
- *
- * Nota: mantener un borde de paredes para evitar out-of-bounds.
+ * Nuevo layout “Centro Histórico”: calles empedradas, plazas y patios coloniales.
+ * 0 = caminable, 1 = pared/bloque.
  */
 export const MAZE: number[][] = (() => {
-  const cols = 28
-  const rows = 20
+  const cols = 30
+  const rows = 22
   const g = Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0))
 
   const fill = (x0: number, z0: number, w: number, h: number, v: number) => {
@@ -19,7 +17,7 @@ export const MAZE: number[][] = (() => {
     }
   }
 
-  // Borde.
+  // Borde de murallas.
   for (let x = 0; x < cols; x++) {
     g[0][x] = 1
     g[rows - 1][x] = 1
@@ -29,46 +27,51 @@ export const MAZE: number[][] = (() => {
     g[z][cols - 1] = 1
   }
 
-  // Manzanas (bloques) en las esquinas (simula calles y patios internos).
-  fill(2, 2, 8, 5, 1) // NW
-  fill(18, 2, 8, 5, 1) // NE
-  fill(2, 13, 8, 5, 1) // SW
-  fill(18, 13, 8, 5, 1) // SE
+  // Plazas y manzanas.
+  fill(3, 3, 7, 6, 1) // San Francisco
+  fill(20, 3, 7, 6, 1) // San Agustin
+  fill(3, 13, 7, 5, 1) // San Blas
+  fill(20, 14, 7, 5, 1) // Plaza Grande sur
 
-  // Patios internos (vacíos dentro de manzanas).
-  fill(4, 3, 4, 3, 0)
-  fill(20, 3, 4, 3, 0)
-  fill(4, 14, 4, 3, 0)
-  fill(20, 14, 4, 3, 0)
+  // Patio interiores (vacíos).
+  fill(5, 4, 3, 3, 0)
+  fill(22, 4, 3, 3, 0)
+  fill(5, 14, 3, 2, 0)
+  fill(22, 15, 3, 2, 0)
 
-  // Plaza central: anillo + interior abierto.
-  fill(9, 6, 10, 8, 1) // ring
-  fill(10, 7, 8, 6, 0) // plaza interior
+  // Plaza central (anillo).
+  fill(10, 7, 10, 8, 1)
+  fill(11, 8, 8, 6, 0)
 
-  // Aberturas de la plaza (calles).
-  g[6][13] = 0 // norte
-  g[13][14] = 0 // sur
-  g[9][9] = 0 // oeste
-  g[10][18] = 0 // este
+  // Ejes principales (Gran Colombia / 24 de Mayo).
+  for (let z = 1; z < rows - 1; z++) g[z][14] = 0
+  for (let x = 1; x < cols - 1; x++) g[11][x] = 0
 
-  // Calles principales (carve) en cruz.
-  for (let z = 1; z < rows - 1; z++) g[z][13] = 0
-  for (let x = 1; x < cols - 1; x++) g[10][x] = 0
+  // Aberturas hacia la plaza.
+  g[7][14] = 0
+  g[14][14] = 0
+  g[11][9] = 0
+  g[11][19] = 0
 
-  // Callejones secundarios (un poco de irregularidad).
-  for (let z = 2; z <= 8; z++) g[z][6] = 0
-  for (let z = 11; z <= 17; z++) g[z][21] = 0
-  for (let x = 3; x <= 12; x++) g[4][x] = 0
-  for (let x = 14; x <= 24; x++) g[15][x] = 0
+  // Callejones y diagonales pequeñas.
+  for (let z = 4; z <= 10; z++) g[z][7] = 0
+  for (let z = 12; z <= 18; z++) g[z][23] = 0
+  for (let x = 6; x <= 13; x++) g[4][x] = 0
+  for (let x = 16; x <= 26; x++) g[16][x] = 0
+  g[9][20] = 0
+  g[10][21] = 0
+  g[13][6] = 0
+  g[14][7] = 0
 
-  // Pequeños “pasajes” para que no sea demasiado ortogonal.
-  fill(11, 2, 2, 2, 1)
-  fill(14, 2, 2, 2, 1)
-  fill(11, 16, 2, 2, 1)
-  fill(14, 16, 2, 2, 1)
+  // Placitas y atrios pequeños.
+  fill(9, 2, 2, 2, 1)
+  fill(18, 2, 2, 2, 1)
+  fill(9, 18, 2, 2, 1)
+  fill(18, 18, 2, 2, 1)
 
-  // Asegurar que el spawn quede libre (cerca de la plaza).
-  g[10][13] = 0
+  // Asegurar spawn despejado (cerca del cruce central).
+  g[11][14] = 0
+  g[10][14] = 0
 
   return g
 })()

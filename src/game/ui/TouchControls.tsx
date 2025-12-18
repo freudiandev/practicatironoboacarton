@@ -28,6 +28,8 @@ export function TouchControls() {
 
   const lookPointerId = useRef<number | null>(null)
   const lastLook = useRef({ x: 0, y: 0 })
+  const arrowLook = useRef({ x: 0, y: 0 })
+  const arrowRaf = useRef<number | null>(null)
 
   useEffect(() => {
     const update = () => {
@@ -102,6 +104,29 @@ export function TouchControls() {
 
   const shootLabel = useMemo(() => 'FIRE', [])
   const reloadLabel = useMemo(() => 'RLD', [])
+
+  useEffect(() => {
+    const loop = () => {
+      if (arrowLook.current.x || arrowLook.current.y) {
+        setLookAxis({
+          x: arrowLook.current.x * 10.5,
+          y: arrowLook.current.y * 10.5
+        })
+      }
+      arrowRaf.current = requestAnimationFrame(loop)
+    }
+    loop()
+    return () => {
+      if (arrowRaf.current) cancelAnimationFrame(arrowRaf.current)
+    }
+  }, [setLookAxis])
+
+  const onArrowDown = (dir: { x: number; y: number }) => {
+    arrowLook.current = dir
+  }
+  const onArrowUp = () => {
+    arrowLook.current = { x: 0, y: 0 }
+  }
 
   if (!isTouch || gameState !== 'playing') return null
 
@@ -179,6 +204,59 @@ export function TouchControls() {
       >
         ?
       </button>
+
+      <div className="tc-arrows" aria-label="Girar cámara">
+        <button
+          className="tc-arrow up"
+          aria-label="Mirar arriba"
+          onPointerDown={(e) => {
+            e.preventDefault()
+            onArrowDown({ x: 0, y: -1 })
+          }}
+          onPointerUp={onArrowUp}
+          onPointerCancel={onArrowUp}
+        >
+          ▲
+        </button>
+        <div className="tc-arrow-row">
+          <button
+            className="tc-arrow left"
+            aria-label="Mirar izquierda"
+            onPointerDown={(e) => {
+              e.preventDefault()
+              onArrowDown({ x: -1, y: 0 })
+            }}
+            onPointerUp={onArrowUp}
+            onPointerCancel={onArrowUp}
+          >
+            ◀
+          </button>
+          <button
+            className="tc-arrow right"
+            aria-label="Mirar derecha"
+            onPointerDown={(e) => {
+              e.preventDefault()
+              onArrowDown({ x: 1, y: 0 })
+            }}
+            onPointerUp={onArrowUp}
+            onPointerCancel={onArrowUp}
+          >
+            ▶
+          </button>
+        </div>
+        <button
+          className="tc-arrow down"
+          aria-label="Mirar abajo"
+          onPointerDown={(e) => {
+            e.preventDefault()
+            onArrowDown({ x: 0, y: 1 })
+          }}
+          onPointerUp={onArrowUp}
+          onPointerCancel={onArrowUp}
+        >
+          ▼
+        </button>
+      </div>
 
       {portrait && (
         <div className="tc-rotate" aria-hidden>

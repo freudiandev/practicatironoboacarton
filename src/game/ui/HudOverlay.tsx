@@ -86,6 +86,7 @@ export function HudOverlay() {
         <>
           <div className={`hud-crosshair ${showCrosshairHot ? 'hot' : ''}`} aria-hidden />
           {muzzleUntil > Date.now() && <div className="hud-muzzle" aria-hidden />}
+          {muzzleUntil > Date.now() && <div className="hud-sparks" aria-hidden />}
           {hitMarkerUntil > Date.now() && <div className="hud-hitmarker" aria-hidden />}
         </>
       )}

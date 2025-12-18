@@ -9,6 +9,7 @@ import { RemotePlayerGhost } from '../entities/RemotePlayerGhost'
 import { MazeInstanced } from '../render/MazeInstanced'
 import { MuzzleFlashLight } from '../render/MuzzleFlashLight'
 import { PostersInstanced } from '../render/PostersInstanced'
+import { LampPosts } from '../render/LampPosts'
 import { createCardboardWallMaterial } from '../textures/cardboardCyberpunk'
 import { EnemySystem } from '../systems/EnemySystem'
 import { CombatSystem } from '../systems/CombatSystem'
@@ -48,6 +49,20 @@ export function GameScene() {
     return mat
   }, [centro.floorStones])
 
+  const mountainMaterial = useMemo(() => {
+    const mat = new THREE.MeshBasicMaterial({
+      map: centro.mountainDetail,
+      side: THREE.BackSide,
+      transparent: true,
+      opacity: 0.95
+    })
+    if (mat.map) {
+      mat.map.wrapS = THREE.RepeatWrapping
+      mat.map.repeat.set(2.5, 1)
+    }
+    return mat
+  }, [centro.mountainDetail])
+
   useEffect(() => {
     return () => {
       wallMaterial.dispose()
@@ -55,8 +70,9 @@ export function GameScene() {
       wallTextures.normalMap.dispose()
       wallTextures.emissiveMap.dispose()
       floorMaterial.dispose()
+      mountainMaterial.dispose()
     }
-  }, [floorMaterial, wallMaterial, wallTextures])
+  }, [floorMaterial, mountainMaterial, wallMaterial, wallTextures])
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime()
@@ -123,8 +139,24 @@ export function GameScene() {
         <cylinderGeometry args={[45, 45, 18, 48, 1, true]} />
         <meshBasicMaterial map={centro.sky} side={THREE.BackSide} fog={false} />
       </mesh>
+      <mesh position={[0, 0, 0]} renderOrder={-9}>
+        <cylinderGeometry args={[38, 38, 14, 48, 1, true]} />
+        <primitive attach="material" object={mountainMaterial} />
+      </mesh>
 
       <MazeInstanced material={wallMaterial} />
+      <LampPosts
+        cells={[
+          { x: 14, z: 5 },
+          { x: 14, z: 17 },
+          { x: 7, z: 11 },
+          { x: 21, z: 11 },
+          { x: 10, z: 4 },
+          { x: 18, z: 4 },
+          { x: 10, z: 18 },
+          { x: 18, z: 18 }
+        ]}
+      />
       <PostersInstanced />
 
       <Grid

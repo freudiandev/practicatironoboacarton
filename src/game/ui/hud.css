@@ -138,6 +138,33 @@
   filter: blur(0.2px);
 }
 
+.hud-sparks {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 140px;
+  height: 140px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.55), transparent 45%),
+    radial-gradient(circle at 30% 60%, rgba(255, 200, 0, 0.55), transparent 40%),
+    radial-gradient(circle at 70% 70%, rgba(255, 0, 170, 0.4), transparent 45%);
+  mix-blend-mode: screen;
+  animation: sparks-pop 0.12s ease-out forwards;
+}
+
+@keyframes sparks-pop {
+  from {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0.9;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+}
+
 .hud-hint {
   position: absolute;
   inset: 0;

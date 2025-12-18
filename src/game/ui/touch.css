@@ -116,6 +116,40 @@
   z-index: 2;
 }
 
+.tc-arrows {
+  position: absolute;
+  right: calc(env(safe-area-inset-right, 0px) + 16px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.tc-arrow-row {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 6px;
+}
+
+.tc-arrow {
+  min-width: 46px;
+  min-height: 46px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(5, 0, 12, 0.35);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 900;
+  font-size: 13px;
+  backdrop-filter: blur(8px);
+}
+
+.tc-arrow:active {
+  background: rgba(0, 255, 240, 0.2);
+  border-color: rgba(0, 255, 240, 0.3);
+}
+
 .tc-rotate {
   position: absolute;
   left: 50%;
