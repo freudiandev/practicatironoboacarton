@@ -15,6 +15,7 @@ export function PlayerController() {
   const { gl, camera } = useThree()
   const { locked, request } = usePointerLock()
   const isTouch = useGameStore((s) => s.isTouch)
+  const gamepadActive = useGameStore((s) => s.gamepadActive)
   const moveAxis = useGameStore((s) => s.moveAxis)
   const lookAxis = useGameStore((s) => s.lookAxis)
   const setPointerLocked = useGameStore((s) => s.setPointerLocked)
@@ -70,8 +71,8 @@ export function PlayerController() {
       useGameStore.setState({ recoil: decay })
     }
 
-    // Touch look: consume deltas y resetear (evita “drift”).
-    if (isTouch) {
+    // Touch/Gamepad look: consume deltas y resetear (evita “drift”).
+    if (isTouch || gamepadActive) {
       if (lookAxis.x || lookAxis.y) {
         yaw.current -= lookAxis.x * SETTINGS.player.mouseSensitivity
         pitch.current -= lookAxis.y * SETTINGS.player.mouseSensitivity
@@ -83,7 +84,7 @@ export function PlayerController() {
     // Siempre actualizar rotación (para que se “sienta” inmediato en pointer lock).
     camera.rotation.set(pitch.current, yaw.current, 0, 'YXZ')
 
-    if (!locked && !isTouch) return
+    if (!locked && !isTouch && !gamepadActive) return
 
     const speed = SETTINGS.player.moveSpeed * (keys.ShiftLeft ? SETTINGS.player.sprintMultiplier : 1)
     const desired = velocity.current
@@ -98,8 +99,8 @@ export function PlayerController() {
     if (keys.KeyD) desired.add(tmpRight)
     if (keys.KeyA) desired.sub(tmpRight)
 
-    // Touch joystick (axis continuo)
-    if (isTouch) {
+    // Touch/Gamepad axis continuo
+    if (isTouch || gamepadActive) {
       if (moveAxis.z) desired.addScaledVector(tmpForward, moveAxis.z)
       if (moveAxis.x) desired.addScaledVector(tmpRight, moveAxis.x)
     }

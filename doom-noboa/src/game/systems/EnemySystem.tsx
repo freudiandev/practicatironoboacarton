@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { EnemyBillboard } from '../entities/EnemyBillboard'
 import { SETTINGS } from '../config/settings'
@@ -16,8 +16,6 @@ export function EnemySystem() {
   const removeEnemy = useGameStore((s) => s.removeEnemy)
   const endRun = useGameStore((s) => s.endRun)
   const playerPose = useGameStore((s) => s.playerPose)
-
-  const tmp = useMemo(() => ({ v: { x: 0, z: 0 } }), [])
 
   useEffect(() => {
     if (gameState !== 'playing') return
@@ -39,7 +37,7 @@ export function EnemySystem() {
       return
     }
 
-    const now = performance.now()
+    const now = Date.now()
     const damagePlayer = useGameStore.getState().damage
 
     enemies.forEach((enemy) => {
@@ -56,27 +54,42 @@ export function EnemySystem() {
       const dist = Math.hypot(dx, dz) || 1
 
       const baseSpeed = enemy.type === 'deportivo' ? 1.35 : enemy.type === 'presidencial' ? 1.0 : 1.1
-      const minDist = 2.2
-      const meleeRange = 0.9
-      const chargeRange = 2.4
-      const meleeCooldownMs = 1300
+      const minDist = SETTINGS.enemyAI.separation.minDistance
+      const meleeRange = SETTINGS.enemyAI.melee.range
+      const chargeRange = SETTINGS.enemyAI.charge.range
+      const meleeCooldownMs = SETTINGS.enemyAI.melee.cooldownMs
+      const edgePause = SETTINGS.enemyAI.targetTrack.edgePauseMs
+      const hideChance = SETTINGS.enemyAI.targetTrack.hideAtEdgesChance
+      const hideMs = SETTINGS.enemyAI.targetTrack.hideMs
 
-      const ai = enemy.ai || {
-        state: 'target' as const,
-        axis: 'x' as const,
-        dir: 1 as const,
-        min: enemy.position.x - 1,
-        max: enemy.position.x + 1,
-        nextResumeAt: 0,
-        nextMeleeAt: 0,
-        chargeUntil: 0,
-        retreatUntil: 0
+      const ai = enemy.ai
+        ? { ...enemy.ai, hideUntil: enemy.ai.hideUntil ?? 0 }
+        : {
+            state: 'target' as const,
+            axis: 'x' as const,
+            dir: 1 as const,
+            min: enemy.position.x - 1,
+            max: enemy.position.x + 1,
+            nextResumeAt: 0,
+            nextMeleeAt: 0,
+            chargeUntil: 0,
+            retreatUntil: 0,
+            hideUntil: 0
+          }
+
+      const jitter01 = () =>
+        Math.abs(Math.sin(enemy.position.x * 12.33 + enemy.position.z * 9.7 + now * 0.001)) % 1
+
+      const schedulePause = () => {
+        const jitter = jitter01()
+        const pause = edgePause[0] + jitter * (edgePause[1] - edgePause[0])
+        ai.nextResumeAt = now + pause
       }
 
-      const schedulePause = (minMs = 520, maxMs = 980) => {
-        const jitter = (Math.abs(Math.sin(enemy.position.x * 13.7 + enemy.position.z * 7.3 + now * 0.001)) % 1)
-        const pause = minMs + jitter * (maxMs - minMs)
-        ai.nextResumeAt = now + pause
+      const scheduleHide = () => {
+        const jitter = jitter01()
+        const ms = hideMs[0] + jitter * (hideMs[1] - hideMs[0])
+        ai.hideUntil = now + ms
       }
 
       if (ai.nextResumeAt && now < ai.nextResumeAt) {
@@ -84,31 +97,37 @@ export function EnemySystem() {
         return
       }
 
+      // “Hide at edges”: desaparece un ratito para forzar reacquisición de blanco.
+      if (ai.hideUntil && now < ai.hideUntil) {
+        updateEnemy(enemy.id, { ai: { ...ai } })
+        return
+      }
+
       // Melee si está en rango y cooldown listo.
       if (dist < meleeRange && now >= ai.nextMeleeAt) {
         ai.nextMeleeAt = now + meleeCooldownMs
-        damagePlayer(12)
+        damagePlayer(SETTINGS.enemyAI.melee.damage)
         if (useGameStore.getState().health <= 0) {
           useGameStore.getState().endRun('loss')
         }
         // Retreat breve
         ai.state = 'retreat'
-        ai.retreatUntil = now + 520
+        ai.retreatUntil = now + SETTINGS.enemyAI.retreat.durationMs
       }
 
       let moveX = 0
       let moveZ = 0
 
       if (ai.state === 'charging') {
-        const speed = baseSpeed * 3.1
+        const speed = baseSpeed * SETTINGS.enemyAI.charge.speedMultiplier
         moveX = (dx / dist) * speed * delta
         moveZ = (dz / dist) * speed * delta
         if (now >= ai.chargeUntil || dist < meleeRange * 1.05) {
           ai.state = 'retreat'
-          ai.retreatUntil = now + 520
+          ai.retreatUntil = now + SETTINGS.enemyAI.retreat.durationMs
         }
       } else if (ai.state === 'retreat') {
-        const speed = baseSpeed * 2.0
+        const speed = baseSpeed * SETTINGS.enemyAI.retreat.speedMultiplier
         moveX = (-dx / dist) * speed * delta
         moveZ = (-dz / dist) * speed * delta
         if (now >= ai.retreatUntil || dist > minDist * 1.45) {
@@ -133,9 +152,11 @@ export function EnemySystem() {
           if (nextX <= ai.min) {
             ai.dir = 1
             schedulePause()
+            if (jitter01() < hideChance) scheduleHide()
           } else if (nextX >= ai.max) {
             ai.dir = -1
             schedulePause()
+            if (jitter01() < hideChance) scheduleHide()
           }
         } else {
           if (dist < minDist + 0.25) {
@@ -148,16 +169,18 @@ export function EnemySystem() {
           if (nextZ <= ai.min) {
             ai.dir = 1
             schedulePause()
+            if (jitter01() < hideChance) scheduleHide()
           } else if (nextZ >= ai.max) {
             ai.dir = -1
             schedulePause()
+            if (jitter01() < hideChance) scheduleHide()
           }
         }
 
         // Charge si está lo suficientemente cerca y cooldown listo.
         if (dist < chargeRange && now >= ai.nextMeleeAt) {
           ai.state = 'charging'
-          ai.chargeUntil = now + 650
+          ai.chargeUntil = now + SETTINGS.enemyAI.charge.durationMs
         }
       }
 
@@ -189,6 +212,7 @@ export function EnemySystem() {
           type={enemy.type}
           position={enemy.position}
           alive={enemy.alive}
+          hidden={Boolean(enemy.ai && enemy.ai.hideUntil && Date.now() < enemy.ai.hideUntil)}
           dissolve={enemy.dissolve}
           onDissolveDone={removeEnemy}
         />

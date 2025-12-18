@@ -24,6 +24,7 @@ export function CombatSystem({ enemiesGroupName = 'enemies' }: CombatSystemProps
   const gameState = useGameStore((s) => s.gameState)
   const isTouch = useGameStore((s) => s.isTouch)
   const pointerLocked = useGameStore((s) => s.pointerLocked)
+  const gamepadActive = useGameStore((s) => s.gamepadActive)
   const ammo = useGameStore((s) => s.ammo)
   const spendAmmo = useGameStore((s) => s.spendAmmo)
   const reloadUntil = useGameStore((s) => s.reloadUntil)
@@ -79,8 +80,8 @@ export function CombatSystem({ enemiesGroupName = 'enemies' }: CombatSystemProps
   }, [gameState, requestReload])
 
   useEffect(() => {
-    if (!isTouch && !pointerLocked) setFireHeld(false)
-  }, [isTouch, pointerLocked, setFireHeld])
+    if (!isTouch && !pointerLocked && !gamepadActive) setFireHeld(false)
+  }, [gamepadActive, isTouch, pointerLocked, setFireHeld])
 
   useFrame((_, delta) => {
     void delta
@@ -92,7 +93,7 @@ export function CombatSystem({ enemiesGroupName = 'enemies' }: CombatSystemProps
       setReloadUntil(0)
     }
 
-    const canShoot = (pointerLocked || isTouch)
+    const canShoot = (pointerLocked || isTouch || gamepadActive)
     if (!canShoot) return
 
     const now = performance.now()

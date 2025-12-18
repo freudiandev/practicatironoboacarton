@@ -22,5 +22,30 @@ export const SETTINGS = {
     enabled: true,
     key: 'KeyR',
     reloadMs: 650
+  },
+  enemyAI: {
+    // Inspirado en el legacy: “blanco de tiro” con pausas y pequeños engaños.
+    targetTrack: {
+      edgePauseMs: [800, 1500] as const,
+      hideAtEdgesChance: 0.15,
+      hideMs: [380, 760] as const
+    },
+    separation: {
+      minDistance: 2.2
+    },
+    melee: {
+      range: 0.9,
+      cooldownMs: 1300,
+      damage: 12
+    },
+    charge: {
+      range: 2.4,
+      speedMultiplier: 3.1,
+      durationMs: 650
+    },
+    retreat: {
+      speedMultiplier: 2.0,
+      durationMs: 520
+    }
   }
 } as const

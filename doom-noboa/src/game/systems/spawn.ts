@@ -125,7 +125,8 @@ export function spawnInitialEnemies(options: { count: number; seed?: number; pla
         nextResumeAt: 0,
         nextMeleeAt: 0,
         chargeUntil: 0,
-        retreatUntil: 0
+        retreatUntil: 0,
+        hideUntil: 0
       }
     })
   }

@@ -14,10 +14,12 @@ export function GamepadController() {
   const setLookAxis = useGameStore((s) => s.setLookAxis)
   const setFireHeld = useGameStore((s) => s.setFireHeld)
   const requestReload = useGameStore((s) => s.requestReload)
+  const setGamepadActive = useGameStore((s) => s.setGamepadActive)
   const isTouch = useGameStore((s) => s.isTouch)
   const gameState = useGameStore((s) => s.gameState)
 
   const lastReload = useRef(false)
+  const lastActive = useRef(false)
 
   useEffect(() => {
     // No-op. Sirve para que React monte el componente en cliente.
@@ -28,6 +30,11 @@ export function GamepadController() {
     if (gameState !== 'playing') return
     const pads = navigator.getGamepads ? navigator.getGamepads() : []
     const pad = pads && pads[0]
+    const active = Boolean(pad)
+    if (active !== lastActive.current) {
+      setGamepadActive(active)
+      lastActive.current = active
+    }
     if (!pad) return
 
     const lx = applyDeadzone(pad.axes[0] || 0)

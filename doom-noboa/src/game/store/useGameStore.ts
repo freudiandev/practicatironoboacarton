@@ -24,6 +24,7 @@ export type Enemy = {
     nextMeleeAt: number
     chargeUntil: number
     retreatUntil: number
+    hideUntil: number
   }
 }
 

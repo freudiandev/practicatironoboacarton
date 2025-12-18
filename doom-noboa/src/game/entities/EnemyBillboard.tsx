@@ -10,11 +10,12 @@ export type EnemyBillboardProps = {
   type: 'casual' | 'deportivo' | 'presidencial'
   position: { x: number; y: number; z: number }
   alive: boolean
+  hidden?: boolean
   dissolve: number // 0..1
   onDissolveDone?: (id: string) => void
 }
 
-export function EnemyBillboard({ id, type, position, alive, dissolve, onDissolveDone }: EnemyBillboardProps) {
+export function EnemyBillboard({ id, type, position, alive, hidden, dissolve, onDissolveDone }: EnemyBillboardProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const shaderRef = useRef<THREE.ShaderMaterial | null>(null)
 
@@ -64,6 +65,7 @@ export function EnemyBillboard({ id, type, position, alive, dissolve, onDissolve
     <Billboard follow position={[position.x, position.y, position.z]}>
       <mesh
         ref={meshRef}
+        visible={!hidden}
         userData={{ enemyId: id, enemyType: type }}
         renderOrder={5}
       >
