@@ -54,6 +54,7 @@ type GameStore = {
   ammo: number
   maxAmmo: number
   fireHeld: boolean
+  helpOpen: boolean
   score: number
   kills: number
   headshots: number
@@ -89,6 +90,8 @@ type GameStore = {
   setPointerLocked: (locked: boolean) => void
   setGamepadActive: (active: boolean) => void
   setFireHeld: (held: boolean) => void
+  setHelpOpen: (open: boolean) => void
+  toggleHelp: () => void
   setNetMode: (mode: NetMode) => void
   setNetJoinId: (id: string) => void
   setNetPeerId: (id: string) => void
@@ -135,6 +138,7 @@ export const useGameStore = create<GameStore>()(
       ammo: 30,
       maxAmmo: 30,
       fireHeld: false,
+      helpOpen: false,
       score: 0,
       kills: 0,
       headshots: 0,
@@ -170,6 +174,8 @@ export const useGameStore = create<GameStore>()(
       setPointerLocked: (locked) => set({ pointerLocked: locked }),
       setGamepadActive: (active) => set({ gamepadActive: active }),
       setFireHeld: (held) => set({ fireHeld: held }),
+      setHelpOpen: (open) => set({ helpOpen: open }),
+      toggleHelp: () => set((s) => ({ helpOpen: !s.helpOpen })),
       setNetMode: (mode) =>
         set({
           netMode: mode,
@@ -202,6 +208,7 @@ export const useGameStore = create<GameStore>()(
           health: s.maxHealth,
           ammo: s.maxAmmo,
           fireHeld: false,
+          helpOpen: false,
           score: 0,
           kills: 0,
           headshots: 0,

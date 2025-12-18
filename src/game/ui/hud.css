@@ -6,6 +6,26 @@
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
+.hud-help {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 255, 240, 0.22);
+  background: rgba(5, 0, 12, 0.55);
+  backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+  pointer-events: auto;
+}
+
+.hud-help:focus-visible {
+  outline: 2px solid rgba(255, 0, 170, 0.5);
+  outline-offset: 2px;
+}
+
 .hud-panel {
   position: absolute;
   top: calc(env(safe-area-inset-top, 0px) + 12px);
@@ -157,6 +177,12 @@
 
 /* Mobile: HUD compacto + evita tapar la vista */
 @media (max-width: 720px) {
+  .hud-help {
+    top: calc(env(safe-area-inset-top, 0px) + 8px);
+    right: calc(env(safe-area-inset-right, 0px) + 8px);
+    width: 32px;
+    height: 32px;
+  }
   .hud-panel {
     top: calc(env(safe-area-inset-top, 0px) + 8px);
     left: calc(env(safe-area-inset-left, 0px) + 8px);

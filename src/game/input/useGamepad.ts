@@ -20,6 +20,8 @@ export function GamepadController() {
 
   const lastReload = useRef(false)
   const lastActive = useRef(false)
+  const lastStart = useRef(false)
+  const lastHelp = useRef(false)
 
   useEffect(() => {
     // No-op. Sirve para que React monte el componente en cliente.
@@ -27,7 +29,6 @@ export function GamepadController() {
   }, [isTouch])
 
   useFrame(() => {
-    if (gameState !== 'playing') return
     const pads = navigator.getGamepads ? navigator.getGamepads() : []
     const pad = pads && pads[0]
     const active = Boolean(pad)
@@ -36,6 +37,25 @@ export function GamepadController() {
       lastActive.current = active
     }
     if (!pad) return
+
+    // In menu/end screens: permitir iniciar con Start/A, y no mover cámara/axis.
+    if (gameState !== 'playing') {
+      setMoveAxis({ x: 0, z: 0 })
+      setLookAxis({ x: 0, y: 0 })
+      setFireHeld(false)
+
+      const startPressed = Boolean(pad.buttons[9]?.pressed) || Boolean(pad.buttons[0]?.pressed)
+      if (startPressed && !lastStart.current) {
+        // startRun decide si puede iniciar (siempre que no esté jugando).
+        useGameStore.getState().startRun()
+      }
+      lastStart.current = startPressed
+
+      const helpPressed = Boolean(pad.buttons[8]?.pressed)
+      if (helpPressed && !lastHelp.current) useGameStore.getState().toggleHelp()
+      lastHelp.current = helpPressed
+      return
+    }
 
     const lx = applyDeadzone(pad.axes[0] || 0)
     const ly = applyDeadzone(pad.axes[1] || 0)
@@ -54,6 +74,11 @@ export function GamepadController() {
     const reloadPressed = Boolean(pad.buttons[2]?.pressed)
     if (reloadPressed && !lastReload.current) requestReload()
     lastReload.current = reloadPressed
+
+    // Ayuda con Select/Back.
+    const helpPressed = Boolean(pad.buttons[8]?.pressed)
+    if (helpPressed && !lastHelp.current) useGameStore.getState().toggleHelp()
+    lastHelp.current = helpPressed
   })
 
   return null

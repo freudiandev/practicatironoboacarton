@@ -13,6 +13,7 @@ export function TouchControls() {
   const setLookAxis = useGameStore((s) => s.setLookAxis)
   const setFireHeld = useGameStore((s) => s.setFireHeld)
   const requestReload = useGameStore((s) => s.requestReload)
+  const toggleHelp = useGameStore((s) => s.toggleHelp)
   const gameState = useGameStore((s) => s.gameState)
   const ammo = useGameStore((s) => s.ammo)
   const maxAmmo = useGameStore((s) => s.maxAmmo)
@@ -166,6 +167,18 @@ export function TouchControls() {
           {reloadLabel}
         </button>
       )}
+
+      <button
+        className="tc-help"
+        type="button"
+        aria-label="Ayuda"
+        onPointerDown={(e) => {
+          e.preventDefault()
+          toggleHelp()
+        }}
+      >
+        ?
+      </button>
 
       {portrait && (
         <div className="tc-rotate" aria-hidden>

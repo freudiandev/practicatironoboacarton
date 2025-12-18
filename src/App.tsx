@@ -6,6 +6,7 @@ import { TouchControls } from './game/ui/TouchControls'
 import { useEffect } from 'react'
 import { useGameStore } from './game/store/useGameStore'
 import { MenuOverlay } from './game/ui/MenuOverlay'
+import { HelpOverlay } from './game/ui/HelpOverlay'
 
 function App() {
   const setIsTouch = useGameStore((s) => s.setIsTouch)
@@ -35,10 +36,11 @@ function App() {
   }, [setNetJoinId, setNetMode])
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+    <div className="app-root">
       <HudOverlay />
       <TouchControls />
       <MenuOverlay />
+      <HelpOverlay />
       <Canvas
         dpr={[1, 2]}
         gl={{ antialias: false, powerPreference: 'high-performance' }}

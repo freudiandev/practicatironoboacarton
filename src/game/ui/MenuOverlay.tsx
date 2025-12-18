@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import type { CSSProperties } from 'react'
 import { useGameStore } from '../store/useGameStore'
 import './menu.css'
@@ -21,6 +21,7 @@ export function MenuOverlay() {
   const headshots = useGameStore((s) => s.headshots)
   const timeSeconds = useGameStore((s) => s.timeSeconds)
   const addHighscore = useGameStore((s) => s.addHighscore)
+  const toggleHelp = useGameStore((s) => s.toggleHelp)
 
   const menuBgUrl = `${import.meta.env.BASE_URL || '/'}menu-bg.jpeg`
   const rootStyle = { ['--menu-bg-url' as string]: `url(${menuBgUrl})` } as CSSProperties
@@ -38,16 +39,30 @@ export function MenuOverlay() {
     return 'Cardboard Cyberpunk · R3F Edition'
   }, [headshots, isEnd, kills, score, timeSeconds])
 
-  const onStart = () => {
+  const onStart = useCallback(() => {
     startRun()
-  }
+  }, [startRun])
 
-  const onSaveScore = () => {
+  const onSaveScore = useCallback(() => {
     const name = prompt('Nombre para registrar puntaje:', 'Corredor Ciber') || 'Anónimo'
     const outcome = gameState === 'win' ? 'win' : 'loss'
     addHighscore({ name: name.slice(0, 24), score, kills, time: timeSeconds, outcome })
     startRun()
-  }
+  }, [addHighscore, gameState, kills, score, startRun, timeSeconds])
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (gameState === 'playing') return
+      if (e.code === 'Enter' || e.code === 'Space') {
+        e.preventDefault()
+        if (isEnd) onSaveScore()
+        else onStart()
+      }
+      if (e.code === 'KeyH') toggleHelp()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [gameState, isEnd, onSaveScore, onStart, toggleHelp])
 
   if (gameState === 'playing') return null
 

@@ -19,6 +19,7 @@
   filter: saturate(1.05) contrast(1.08);
   opacity: 0.35;
   transform: scale(1.02);
+  pointer-events: none;
 }
 
 .menu-root::after {
@@ -26,6 +27,7 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(120% 90% at 50% 20%, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.82));
+  pointer-events: none;
 }
 
 .menu-card {
