@@ -1,10 +1,8 @@
 import type { Enemy, EnemyType } from '../store/useGameStore'
-import { useGameStore } from '../store/useGameStore'
 import { MAZE } from '../config/maze'
 import { SETTINGS } from '../config/settings'
 import { WORLD } from '../config/world'
 import { cellToWorldCenter, getMazeMetrics, isWallCell, worldToCell } from '../config/mazeMath'
-import { useGameStore } from '../store/useGameStore'
 
 function mulberry32(seed: number) {
   let t = seed >>> 0
